@@ -1,0 +1,145 @@
+<div class="documents-container">
+  <!-- Page Header -->
+  <div class="page-header">
+    <h2>Documents Management</h2>
+    <p>Manage your uploaded documents and their processing status</p>
+  </div>
+
+  <!-- Action Bar -->
+  <div class="action-bar">
+    <div class="action-buttons">
+      <button (click)="navigateToUpload()" class="btn btn-primary">
+        ➕ Add Document
+      </button>
+      <button 
+        (click)="deleteSelectedDocuments()" 
+        class="btn btn-danger"
+        [disabled]="selectedDocuments.size === 0"
+      >
+        🗑️ Delete Selected ({{selectedDocuments.size}})
+      </button>
+    </div>
+    <div class="table-info">
+      <span>{{documents.length}} document(s) total</span>
+      <div *ngIf="failedDocumentsCount > 0" class="info-note">
+        <span class="material-icons">info</span>
+        {{failedDocumentsCount}} failed document(s) hidden
+      </div>
+    </div>
+  </div>
+
+  <!-- Messages -->
+  <div *ngIf="errorMessage" class="error-message">
+    <p>❌ {{errorMessage}}</p>
+    <button (click)="clearMessages()" class="clear-btn">Clear</button>
+  </div>
+
+  <div *ngIf="successMessage" class="success-message">
+    <p>✅ {{successMessage}}</p>
+    <button (click)="clearMessages()" class="clear-btn">Clear</button>
+  </div>
+
+  <!-- Loading State -->
+  <div *ngIf="isLoading" class="loading-container">
+    <div class="loading-spinner"></div>
+    <p>Loading documents...</p>
+  </div>
+
+  <!-- Documents Table -->
+  <div *ngIf="!isLoading" class="table-container">
+    <table class="documents-table">
+      <thead>
+        <tr>
+          <th class="checkbox-col">
+            <input 
+              type="checkbox" 
+              [checked]="selectedDocuments.size === documents.length && documents.length > 0"
+              [indeterminate]="selectedDocuments.size > 0 && selectedDocuments.size < documents.length"
+              (change)="toggleSelectAll()"
+            />
+          </th>
+          <th>Filename</th>
+          <th>Status</th>
+          <th>Created</th>
+          <th>Processed</th>
+          <th>Actions</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr *ngFor="let document of documents" class="document-row">
+          <td class="checkbox-col">
+            <input 
+              type="checkbox" 
+              [checked]="selectedDocuments.has(document.id)"
+              (change)="toggleDocumentSelection(document.id)"
+            />
+          </td>
+          <td class="filename-col">
+            <div class="filename-info">
+              <span class="filename">{{document.filename}}</span>
+              <small class="doc-id">ID: {{document.id}}</small>
+            </div>
+          </td>
+          <td class="status-col">
+            <span class="status-badge" [ngClass]="getStatusClass(document.status)">
+              {{document.status}}
+            </span>
+            <div *ngIf="document.error_message" class="error-details">
+              <small>{{document.error_message}}</small>
+            </div>
+          </td>
+          <td class="date-col">
+            {{formatDate(document.created_at)}}
+          </td>
+          <td class="date-col">
+            <span *ngIf="document.processed_at; else notProcessed">
+              {{formatDate(document.processed_at)}}
+            </span>
+            <ng-template #notProcessed>
+              <span class="not-processed">Not processed</span>
+            </ng-template>
+          </td>
+          <td class="actions-col">
+            <div class="action-buttons">
+              <!-- Functionality requiring backend routes -->
+              <button 
+                (click)="downloadDocument(document.id)" 
+                class="btn btn-success btn-sm"
+                title="Download Document"
+              >
+                ⬇️ Download
+              </button>
+              <button 
+                (click)="deleteDocument(document.id)" 
+                class="btn btn-danger btn-sm"
+                title="Delete Document"
+              >
+                🗑️ Delete
+              </button>
+            </div>
+          </td>
+        </tr>
+      </tbody>
+    </table>
+
+    <!-- Empty State -->
+    <div *ngIf="documents.length === 0" class="empty-state">
+      <div class="empty-icon">📄</div>
+      <h3>No Documents Found</h3>
+      <p>Upload your first document to get started</p>
+      <button (click)="navigateToUpload()" class="btn btn-primary">Upload Document</button>
+    </div>
+  </div>
+
+
+  <!-- API Information - Development Only -->
+  <div *ngIf="!isProduction" class="api-info">
+    <h3>Backend Route Status</h3>
+    <div class="route-status">
+      <div class="route available">✅ GET /api/v1/documents/ - List documents</div>
+      <div class="route available">✅ DELETE /api/v1/documents/{{ '{' }}id{{ '}' }} - Delete single document</div>
+      <div class="route available">✅ DELETE /api/v1/documents/ - Delete multiple documents</div>
+      <div class="route available">✅ GET /api/v1/documents/{{ '{' }}id{{ '}' }}/download - Download document</div>
+    </div>
+  </div>
+</div>

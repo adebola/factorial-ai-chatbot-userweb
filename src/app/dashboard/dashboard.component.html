@@ -1,0 +1,253 @@
+<!-- Dashboard Header -->
+<div class="dashboard-header">
+  <div class="header-content">
+    <div class="header-info">
+      <img src="/factorialbot_logo.svg" alt="FactorialBot" class="logo">
+      <div class="title-section">
+        <h1>Dashboard</h1>
+        <p class="subtitle">Overview of your FactorialBot account</p>
+      </div>
+    </div>
+    <button class="refresh-btn" (click)="refresh()" [disabled]="loading" title="Refresh Dashboard">
+      <span class="material-icons refresh-icon" [class.spinning]="loading">refresh</span>
+    </button>
+  </div>
+</div>
+
+<!-- Loading State -->
+<div *ngIf="loading" class="loading-container">
+  <div class="loading-spinner"></div>
+  <p>Loading dashboard data...</p>
+</div>
+
+<!-- Error State -->
+<div *ngIf="error && !loading" class="error-container">
+  <div class="error-icon">⚠️</div>
+  <h3>Unable to load dashboard</h3>
+  <p>{{ error }}</p>
+  <button class="retry-btn" (click)="refresh()">Try Again</button>
+</div>
+
+<!-- Dashboard Content -->
+<div *ngIf="!loading && !error" class="dashboard-content">
+  <!-- Organization Info Card -->
+  <div class="info-card organization-card" *ngIf="dashboardData && dashboardData.tenant">
+    <div class="card-header">
+      <h2><span class="material-icons">business</span> Organization Information</h2>
+    </div>
+    <div class="card-body">
+      <div class="org-info">
+        <div class="org-details">
+          <h3>{{ dashboardData.tenant.name }}</h3>
+          <p class="domain" *ngIf="dashboardData.tenant.domain">{{ dashboardData.tenant.domain }}</p>
+          <p class="website" *ngIf="dashboardData.tenant.website_url">
+            <a [href]="dashboardData.tenant.website_url" target="_blank">{{ dashboardData.tenant.website_url }}</a>
+          </p>
+        </div>
+        <div class="subscription-info">
+          <span class="subscription-badge" [ngClass]="getSubscriptionBadgeClass(getCurrentPlanDisplay())">
+            {{ getCurrentPlanDisplay() }}
+          </span>
+          <div class="status-info">
+            <span class="status" [class.active]="dashboardData.tenant.is_active" [class.inactive]="!dashboardData.tenant.is_active">
+              <span *ngIf="dashboardData.tenant.is_active" class="material-icons status-icon">check_circle</span>
+              <span *ngIf="!dashboardData.tenant.is_active" class="material-icons status-icon">cancel</span>
+              {{ dashboardData.tenant.is_active ? 'Active' : 'Inactive' }}
+            </span>
+            <span class="created-date">
+              Member since {{ formatDate(dashboardData.tenant.created_at) }}
+            </span>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Current Plan Card -->
+  <div class="info-card plan-card">
+    <div class="card-header">
+      <h2><span class="material-icons">assignment</span> Current Plan</h2>
+      <button class="manage-plans-btn" (click)="navigateToPlans()" title="Manage Plans">
+        <span class="material-icons">settings</span>
+        Manage Plans
+      </button>
+    </div>
+    <div class="card-body">
+      <div class="plan-info" *ngIf="dashboardData?.currentPlan; else noPlan">
+        <div class="plan-details">
+          <h3>{{ getPlanDisplayName(dashboardData?.currentPlan) }}</h3>
+          <p class="plan-description" *ngIf="dashboardData?.currentPlan?.description">
+            {{ dashboardData?.currentPlan?.description }}
+          </p>
+          <div class="plan-limits">
+            <h4>Plan Limits:</h4>
+            <p>{{ getPlanLimitsText(dashboardData?.currentPlan) }}</p>
+          </div>
+          <div class="plan-pricing" *ngIf="dashboardData?.currentPlan?.monthly_plan_cost">
+            <span class="price-monthly">₦{{ dashboardData?.currentPlan?.monthly_plan_cost }}/month</span>
+            <span class="price-yearly" *ngIf="dashboardData?.currentPlan?.yearly_plan_cost">
+              or ₦{{ dashboardData?.currentPlan?.yearly_plan_cost }}/year
+            </span>
+          </div>
+          <div class="plan-actions">
+            <button class="upgrade-btn" (click)="navigateToPlans()">
+              <span class="material-icons">upgrade</span>
+              View All Plans
+            </button>
+          </div>
+        </div>
+      </div>
+      <ng-template #noPlan>
+        <div class="no-plan">
+          <p>No plan currently selected. Contact support to set up your subscription.</p>
+          <button class="select-plan-btn" (click)="navigateToPlans()">
+            <span class="material-icons">add_circle</span>
+            Select a Plan
+          </button>
+        </div>
+      </ng-template>
+    </div>
+  </div>
+
+  <!-- Statistics Cards -->
+  <div class="stats-grid">
+    <div *ngFor="let card of statCards" class="stat-card" [ngClass]="'stat-card-' + card.color">
+      <div class="stat-icon"><span class="material-icons">{{ card.icon }}</span></div>
+      <div class="stat-content">
+        <div class="stat-value">{{ card.value }}</div>
+        <div class="stat-title">{{ card.title }}</div>
+        <div *ngIf="card.trend" class="stat-trend" [class.positive]="card.trend.isPositive" [class.negative]="!card.trend.isPositive">
+          {{ card.trend.isPositive ? '↗️' : '↘️' }} {{ card.trend.value }}%
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- User Information Card -->
+  <div class="info-card user-card" *ngIf="currentUser">
+    <div class="card-header">
+      <h2><span class="material-icons">person</span> User Information</h2>
+    </div>
+    <div class="card-body">
+      <div class="user-info">
+        <div class="user-avatar">
+          <span class="avatar-text">{{ currentUser.username?.charAt(0).toUpperCase() }}</span>
+        </div>
+        <div class="user-details">
+          <h3>{{ currentUser.username }}</h3>
+          <p class="email" *ngIf="currentUser.email">{{ currentUser.email }}</p>
+          <p class="tenant-id">Tenant ID: {{ currentUser.tenant_id }}</p>
+          <p class="role">Role: {{ currentUser.role || 'User' }}</p>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Activity Summary -->
+  <div class="info-card activity-card">
+    <div class="card-header">
+      <h2><span class="material-icons">analytics</span> Activity Summary</h2>
+    </div>
+    <div class="card-body">
+      <div class="activity-items">
+        <div class="activity-item">
+          <div class="activity-label">Last Activity</div>
+          <div class="activity-value">{{ formatDate(dashboardData?.lastActivityDate || '') }}</div>
+        </div>
+        <div class="activity-item">
+          <div class="activity-label">Storage Used</div>
+          <div class="activity-value">{{ dashboardData?.storageUsed || 'N/A' }}</div>
+        </div>
+        <div class="activity-item">
+          <div class="activity-label">Account Status</div>
+          <div class="activity-value">
+            <span class="status-badge active">Active</span>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Widget Downloads -->
+  <div class="info-card widget-card">
+    <div class="card-header">
+      <h2><span class="material-icons">smart_toy</span> Chat Widget</h2>
+    </div>
+    <div class="card-body">
+      <div class="widget-info" *ngIf="dashboardData?.widgetInfo">
+        <p>Embed a custom AI chat widget on your website to provide instant customer support.</p>
+
+        <div class="widget-actions">
+          <div class="widget-downloads">
+            <h4>Download Widget Files:</h4>
+            <div class="download-buttons">
+              <button class="download-btn" (click)="downloadWidgetFile('javascript')" title="Download Widget JavaScript file">
+                <span class="material-icons btn-icon">code</span>
+                <span class="btn-text">Download Widget JavaScript</span>
+              </button>
+            </div>
+          </div>
+
+          <div class="widget-utilities">
+            <h4>Widget Tools:</h4>
+            <div class="utility-buttons">
+              <button class="utility-btn primary" (click)="viewIntegrationGuide()" title="View integration instructions">
+                <span class="material-icons btn-icon">menu_book</span>
+                <span class="btn-text">Integration Guide</span>
+              </button>
+              <button class="utility-btn secondary" (click)="previewWidget()" title="Preview the widget">
+                <span class="material-icons btn-icon">visibility</span>
+                <span class="btn-text">Preview Widget</span>
+              </button>
+              <button class="utility-btn tertiary" (click)="generateWidget()" title="Regenerate widget files">
+                <span class="material-icons btn-icon">refresh</span>
+                <span class="btn-text">Regenerate</span>
+              </button>
+            </div>
+          </div>
+        </div>
+
+        <div class="widget-status" *ngIf="dashboardData?.widgetInfo">
+          <div class="status-item">
+            <span class="status-label">Status:</span>
+            <span class="status-value active">{{ dashboardData?.widgetInfo?.widget_status }}</span>
+          </div>
+          <div class="status-item">
+            <span class="status-label">API Key:</span>
+            <span class="status-value" [class.configured]="dashboardData?.widgetInfo?.api_key_configured" [class.missing]="!dashboardData?.widgetInfo?.api_key_configured">
+              <span *ngIf="dashboardData?.widgetInfo?.api_key_configured" class="material-icons status-icon">check_circle</span>
+              <span *ngIf="!dashboardData?.widgetInfo?.api_key_configured" class="material-icons status-icon">cancel</span>
+              {{ dashboardData?.widgetInfo?.api_key_configured ? 'Configured' : 'Missing' }}
+            </span>
+          </div>
+        </div>
+      </div>
+      <div *ngIf="!dashboardData?.widgetInfo" class="widget-loading">
+        <p>Loading widget information...</p>
+      </div>
+    </div>
+  </div>
+
+  <!-- Quick Actions -->
+  <div class="info-card actions-card">
+    <div class="card-header">
+      <h2><span class="material-icons">bolt</span> Quick Actions</h2>
+    </div>
+    <div class="card-body">
+      <div class="quick-actions">
+        <a routerLink="/documents" class="action-btn primary">
+          <span class="material-icons action-icon">description</span>
+          <span class="action-text">View Documents</span>
+        </a>
+        <a routerLink="/upload" class="action-btn secondary">
+          <span class="material-icons action-icon">upload</span>
+          <span class="action-text">Upload Document</span>
+        </a>
+        <a routerLink="/websites" class="action-btn tertiary">
+          <span class="material-icons action-icon">web</span>
+          <span class="action-text">Manage Websites</span>
+        </a>
+      </div>
+    </div>
+  </div>
+</div>

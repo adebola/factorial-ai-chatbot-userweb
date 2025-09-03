@@ -1,0 +1,324 @@
+<div class="settings-container">
+  <!-- Page Header -->
+  <div class="page-header">
+    <h2>Settings</h2>
+    <p>Configure your chat widget and company branding settings</p>
+  </div>
+
+  <!-- Messages -->
+  <div *ngIf="errorMessage" class="error-message">
+    <p>❌ {{errorMessage}}</p>
+    <button (click)="clearMessages()" class="clear-btn">Clear</button>
+  </div>
+
+  <div *ngIf="successMessage" class="success-message">
+    <p>✅ {{successMessage}}</p>
+    <button (click)="clearMessages()" class="clear-btn">Clear</button>
+  </div>
+
+  <!-- Loading State -->
+  <div *ngIf="isLoading" class="loading-container">
+    <div class="loading-spinner"></div>
+    <p>Loading settings...</p>
+  </div>
+
+  <!-- Settings Form -->
+  <div *ngIf="!isLoading" class="settings-form">
+    <form (ngSubmit)="saveSettings()" #settingsForm="ngForm">
+      
+      <!-- Chat Widget Configuration Section -->
+      <div class="form-section">
+        <h3 class="section-title">
+          <span class="material-icons">chat</span>
+          Chat Widget Configuration
+        </h3>
+        
+        <div class="form-row">
+          <div class="form-group">
+            <label for="chatTitle">Chat Window Title</label>
+            <input
+              type="text"
+              id="chatTitle"
+              name="chatTitle"
+              [(ngModel)]="settings.chat_window_title"
+              class="form-control"
+              maxlength="100"
+              placeholder="Chat Support"
+              required
+            />
+            <small class="form-text">Maximum 100 characters</small>
+          </div>
+          
+          <div class="form-group">
+            <label for="hoverText">Hover Text</label>
+            <input
+              type="text"
+              id="hoverText"
+              name="hoverText"
+              [(ngModel)]="settings.hover_text"
+              class="form-control"
+              maxlength="255"
+              placeholder="Chat with us!"
+              required
+            />
+            <small class="form-text">Text shown when hovering over chat widget</small>
+          </div>
+        </div>
+
+        <div class="form-group">
+          <label for="welcomeMessage">Welcome Message</label>
+          <textarea
+            id="welcomeMessage"
+            name="welcomeMessage"
+            [(ngModel)]="settings.welcome_message"
+            class="form-control"
+            rows="3"
+            maxlength="2000"
+            placeholder="Hello! How can I help you today?"
+            required
+          ></textarea>
+          <small class="form-text">Message shown when chat starts (max 2000 characters)</small>
+        </div>
+      </div>
+
+      <!-- Color Configuration Section -->
+      <div class="form-section">
+        <h3 class="section-title">
+          <span class="material-icons">palette</span>
+          Color Configuration
+        </h3>
+        
+        <div class="form-row">
+          <div class="form-group color-group">
+            <label for="primaryColor">Primary Color</label>
+            <div class="color-input-wrapper">
+              <input
+                type="color"
+                id="primaryColor"
+                name="primaryColor"
+                [value]="settings.primary_color"
+                (change)="onColorChange('primary', $event)"
+                class="form-control color-picker"
+                required
+              />
+              <input
+                type="text"
+                [value]="settings.primary_color"
+                (input)="onColorTextChange('primary', $event)"
+                class="form-control color-text"
+                pattern="^#[0-9A-Fa-f]{6}$"
+                placeholder="#5D3EC1"
+                maxlength="7"
+              />
+            </div>
+            <small class="form-text">Main theme color for your chat widget</small>
+          </div>
+          
+          <div class="form-group color-group">
+            <label for="secondaryColor">Secondary Color</label>
+            <div class="color-input-wrapper">
+              <input
+                type="color"
+                id="secondaryColor"
+                name="secondaryColor"
+                [value]="settings.secondary_color"
+                (change)="onColorChange('secondary', $event)"
+                class="form-control color-picker"
+                required
+              />
+              <input
+                type="text"
+                [value]="settings.secondary_color"
+                (input)="onColorTextChange('secondary', $event)"
+                class="form-control color-text"
+                pattern="^#[0-9A-Fa-f]{6}$"
+                placeholder="#C15D3E"
+                maxlength="7"
+              />
+            </div>
+            <small class="form-text">Accent color for buttons and highlights</small>
+          </div>
+        </div>
+
+        <!-- Color Preview -->
+        <div class="color-preview">
+          <h4>Preview</h4>
+          <div class="chat-preview">
+            <div 
+              class="chat-header" 
+              [style.background-color]="settings.primary_color"
+            >
+              {{settings.chat_window_title || 'Chat Support'}}
+            </div>
+            <div class="chat-body">
+              <div class="welcome-message">
+                {{settings.welcome_message || 'Hello! How can I help you today?'}}
+              </div>
+              <button 
+                class="chat-button"
+                [style.background-color]="settings.secondary_color"
+              >
+                Send Message
+              </button>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Company Logo Section -->
+      <div class="form-section">
+        <h3 class="section-title">
+          <span class="material-icons">business</span>
+          Company Logo
+        </h3>
+        
+        <div class="logo-section">
+          <div class="current-logo" *ngIf="settings.company_logo_url">
+            <h4>Current Logo</h4>
+            <div class="logo-preview">
+              <img [src]="settings.company_logo_url" alt="Company Logo" />
+              <button 
+                type="button"
+                (click)="deleteLogo()"
+                class="btn btn-danger btn-sm"
+                [disabled]="isUploading"
+              >
+                <span class="material-icons">delete</span>
+                Remove Logo
+              </button>
+            </div>
+          </div>
+
+          <div class="logo-upload">
+            <h4 *ngIf="!settings.company_logo_url">Upload Logo</h4>
+            <h4 *ngIf="settings.company_logo_url">Replace Logo</h4>
+            
+            <div class="file-input-wrapper">
+              <input
+                type="file"
+                id="logoFile"
+                (change)="onLogoSelected($event)"
+                accept="image/png,image/jpeg,image/jpg,image/svg+xml,image/webp"
+                class="file-input"
+              />
+              <label for="logoFile" class="file-input-label">
+                <span class="material-icons">upload</span>
+                Choose Logo File
+              </label>
+            </div>
+            
+            <small class="form-text">
+              Supported formats: PNG, JPEG, JPG, SVG, WebP (max 5MB)
+            </small>
+
+            <div *ngIf="selectedLogo" class="selected-file">
+              <div class="file-preview">
+                <div class="preview-image">
+                  <img [src]="selectedLogoPreview" alt="Logo Preview" />
+                </div>
+                <div class="file-info">
+                  <p><strong>Selected:</strong> {{selectedLogo.name}}</p>
+                  <p><strong>Size:</strong> {{formatFileSize(selectedLogo.size)}}</p>
+                  <p><strong>Type:</strong> {{selectedLogo.type}}</p>
+                </div>
+              </div>
+              <div class="file-actions">
+                <button 
+                  type="button"
+                  (click)="clearSelectedLogo()"
+                  class="btn btn-secondary btn-sm"
+                  [disabled]="isUploading"
+                >
+                  <span class="material-icons">close</span>
+                  Clear
+                </button>
+                <button 
+                  type="button"
+                  (click)="uploadLogo()"
+                  class="btn btn-primary"
+                  [disabled]="isUploading"
+                >
+                  <span *ngIf="!isUploading" class="material-icons">upload</span>
+                  <span *ngIf="isUploading" class="loading-spinner-small"></span>
+                  {{isUploading ? 'Uploading...' : 'Upload Logo'}}
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Advanced Settings Section -->
+      <div class="form-section">
+        <h3 class="section-title">
+          <span class="material-icons">tune</span>
+          Advanced Settings
+        </h3>
+        
+        <div class="form-group">
+          <label for="additionalSettings">Additional Configuration (JSON)</label>
+          <textarea
+            id="additionalSettings"
+            name="additionalSettings"
+            [(ngModel)]="additionalSettingsJson"
+            class="form-control code-input"
+            rows="4"
+            placeholder='{"custom_field": "value"}'
+          ></textarea>
+          <small class="form-text">Advanced settings in JSON format (optional)</small>
+          <div *ngIf="jsonError" class="json-error">
+            Invalid JSON format: {{jsonError}}
+          </div>
+        </div>
+      </div>
+
+      <!-- Form Actions -->
+      <div class="form-actions">
+        <button 
+          type="button"
+          (click)="resetToDefaults()"
+          class="btn btn-secondary"
+          [disabled]="isSaving"
+        >
+          <span class="material-icons">restore</span>
+          Reset to Defaults
+        </button>
+        
+        <div class="primary-actions">
+          <button 
+            type="button"
+            (click)="loadSettings()"
+            class="btn btn-info"
+            [disabled]="isSaving"
+          >
+            <span class="material-icons">refresh</span>
+            Reload
+          </button>
+          
+          <button 
+            type="submit"
+            class="btn btn-primary"
+            [disabled]="!settingsForm.form.valid || isSaving"
+          >
+            <span *ngIf="!isSaving" class="material-icons">save</span>
+            <span *ngIf="isSaving" class="loading-spinner-small"></span>
+            {{isSaving ? 'Saving...' : 'Save Settings'}}
+          </button>
+        </div>
+      </div>
+    </form>
+  </div>
+
+  <!-- API Information - Development Only -->
+  <div *ngIf="!isProduction" class="api-info">
+    <h3>Settings API Endpoints</h3>
+    <div class="route-status">
+      <div class="route available">✅ GET /api/v1/tenants/{{currentTenantId}}/settings - Get settings</div>
+      <div class="route available">✅ PUT /api/v1/tenants/{{currentTenantId}}/settings - Update settings</div>
+      <div class="route available">✅ DELETE /api/v1/tenants/{{currentTenantId}}/settings - Delete settings</div>
+      <div class="route available">✅ POST /api/v1/tenants/{{currentTenantId}}/settings/logo - Upload logo</div>
+      <div class="route available">✅ DELETE /api/v1/tenants/{{currentTenantId}}/settings/logo - Delete logo</div>
+      <div class="route available">✅ GET /api/v1/tenants/{{currentTenantId}}/settings/logo - Get logo info</div>
+    </div>
+  </div>
+</div>

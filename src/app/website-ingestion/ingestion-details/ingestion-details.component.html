@@ -1,0 +1,270 @@
+<div class="ingestion-details-container">
+  <!-- Header -->
+  <div class="page-header">
+    <div class="header-content">
+      <button (click)="goBack()" class="btn btn-secondary">
+        <span class="material-icons">arrow_back</span> Back to Ingestions
+      </button>
+      <div class="title-section">
+        <h2>Ingestion Details</h2>
+        <p *ngIf="stats">{{stats.base_url}}</p>
+      </div>
+      <div class="header-actions">
+        <button 
+          (click)="toggleAutoRefresh()" 
+          class="btn btn-outline"
+          [class.active]="autoRefreshEnabled"
+        >
+          <span class="material-icons">{{ autoRefreshEnabled ? 'pause' : 'play_arrow' }}</span>
+          Auto-refresh
+        </button>
+        <button (click)="loadIngestionDetails(); loadIngestionPages(currentPage)" class="btn btn-outline">
+          <span class="material-icons">refresh</span> Refresh
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Error Message -->
+  <div *ngIf="errorMessage" class="error-message">
+    <span class="material-icons">error</span> {{errorMessage}}
+  </div>
+
+  <!-- Loading State -->
+  <div *ngIf="isLoading" class="loading-container">
+    <div class="loading-spinner"></div>
+    <p>Loading ingestion details...</p>
+  </div>
+
+  <!-- Stats Overview -->
+  <div *ngIf="stats && !isLoading" class="stats-overview">
+    <div class="stats-grid">
+      <div class="stat-card">
+        <div class="stat-icon">
+          <span class="material-icons">web</span>
+        </div>
+        <div class="stat-content">
+          <h3>{{stats.summary.pages_discovered}}</h3>
+          <p>Pages Discovered</p>
+        </div>
+      </div>
+      
+      <div class="stat-card">
+        <div class="stat-icon">
+          <span class="material-icons">done</span>
+        </div>
+        <div class="stat-content">
+          <h3>{{stats.summary.pages_processed}}</h3>
+          <p>Pages Processed</p>
+        </div>
+      </div>
+      
+      <div class="stat-card">
+        <div class="stat-icon">
+          <span class="material-icons">error</span>
+        </div>
+        <div class="stat-content">
+          <h3>{{stats.summary.pages_failed}}</h3>
+          <p>Pages Failed</p>
+        </div>
+      </div>
+      
+      <div class="stat-card">
+        <div class="stat-icon">
+          <span class="material-icons">schedule</span>
+        </div>
+        <div class="stat-content">
+          <h3>{{formatDuration(stats.summary.processing_time_seconds)}}</h3>
+          <p>Processing Time</p>
+        </div>
+      </div>
+    </div>
+
+    <!-- Status and Progress -->
+    <div class="status-section">
+      <div class="status-info">
+        <span class="status-badge" [ngClass]="getStatusClass(stats.status)">
+          {{stats.status}}
+        </span>
+        <div class="progress-bar">
+          <div class="progress-fill" [style.width.%]="getProgressPercentage()"></div>
+        </div>
+        <span class="progress-text">{{getProgressPercentage()}}% Complete</span>
+      </div>
+      
+      <div class="date-info">
+        <div class="date-item">
+          <strong>Started:</strong> {{formatDate(stats.summary.started_at)}}
+        </div>
+        <div class="date-item">
+          <strong>Completed:</strong> {{formatDate(stats.summary.completed_at)}}
+        </div>
+      </div>
+    </div>
+
+    <!-- Content Analysis -->
+    <div class="content-analysis">
+      <h3>Content Analysis</h3>
+      <div class="analysis-grid">
+        <div class="analysis-card">
+          <h4>Unique Content Pages</h4>
+          <p>{{stats.summary.unique_content_pages}} pages</p>
+        </div>
+        <div class="analysis-card">
+          <h4>Estimated Content Size</h4>
+          <p>~{{(stats.estimated_content_size.estimated_total_characters / 1000).toFixed(0)}}K characters</p>
+        </div>
+      </div>
+    </div>
+
+    <!-- Pages by Status -->
+    <div class="status-breakdown" *ngIf="stats.pages_by_status">
+      <h3>Pages by Status</h3>
+      <div class="status-chart">
+        <div *ngFor="let status of getObjectKeys(stats.pages_by_status)" class="status-item">
+          <span class="status-label" [ngClass]="getStatusClass(status)">{{status}}</span>
+          <span class="status-count">{{stats.pages_by_status[status]}}</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- URL Analysis -->
+    <div class="url-analysis" *ngIf="stats.url_analysis && getObjectKeys(stats.url_analysis).length > 0">
+      <h3>URL Analysis</h3>
+      <div class="url-breakdown">
+        <div *ngFor="let url of getObjectKeys(stats.url_analysis)" class="url-item">
+          <div class="url-path">{{url}}</div>
+          <div class="url-stats">
+            <span class="total">{{stats.url_analysis[url].total}} total</span>
+            <span class="completed">{{stats.url_analysis[url].completed}} completed</span>
+            <span class="failed" *ngIf="stats.url_analysis[url].failed > 0">{{stats.url_analysis[url].failed}} failed</span>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Pages List -->
+  <div class="pages-section" *ngIf="!isLoading">
+    <div class="section-header">
+      <h3>Individual Pages</h3>
+      <div class="pagination-info" *ngIf="pagination">
+        <span>Page {{pagination.current_page}} of {{pagination.total_pages_count}} 
+          ({{pagination.total_pages}} total pages)</span>
+      </div>
+    </div>
+
+    <div class="pages-table-container">
+      <table class="pages-table">
+        <thead>
+          <tr>
+            <th>URL</th>
+            <th>Title</th>
+            <th>Status</th>
+            <th>Scraped At</th>
+            <th>Actions</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr *ngFor="let page of pages" class="page-row">
+            <td class="url-cell">
+              <a [href]="page.url" target="_blank" class="page-url">{{page.url}}</a>
+            </td>
+            <td class="title-cell">
+              <span class="page-title">{{page.title || 'No title'}}</span>
+            </td>
+            <td class="status-cell">
+              <span class="status-badge" [ngClass]="getStatusClass(page.status)">
+                {{page.status}}
+              </span>
+              <div *ngIf="page.error_message" class="error-message">
+                <small>{{page.error_message}}</small>
+              </div>
+            </td>
+            <td class="date-cell">
+              {{formatDate(page.scraped_at)}}
+            </td>
+            <td class="actions-cell">
+              <button 
+                (click)="loadPageContent(page)" 
+                class="btn btn-sm btn-outline"
+                title="View Content Preview"
+              >
+                <span class="material-icons">preview</span>
+              </button>
+            </td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+
+    <!-- Pagination -->
+    <div class="pagination" *ngIf="pagination && pagination.total_pages_count > 1">
+      <button 
+        (click)="goToPreviousPage()" 
+        [disabled]="!pagination.has_previous"
+        class="btn btn-outline btn-sm"
+      >
+        <span class="material-icons">chevron_left</span> Previous
+      </button>
+      
+      <div class="page-numbers">
+        <span class="current-page">{{pagination.current_page}}</span>
+        <span class="total-pages">of {{pagination.total_pages_count}}</span>
+      </div>
+      
+      <button 
+        (click)="goToNextPage()" 
+        [disabled]="!pagination.has_next"
+        class="btn btn-outline btn-sm"
+      >
+        Next <span class="material-icons">chevron_right</span>
+      </button>
+    </div>
+  </div>
+
+  <!-- Page Content Modal -->
+  <div *ngIf="selectedPage" class="modal-overlay" (click)="closePageContent()">
+    <div class="modal-content page-content-modal" (click)="$event.stopPropagation()">
+      <div class="modal-header">
+        <h3>Page Content Preview</h3>
+        <button (click)="closePageContent()" class="modal-close">✕</button>
+      </div>
+      <div class="modal-body">
+        <div class="page-info">
+          <div class="info-row">
+            <strong>URL:</strong> 
+            <a [href]="selectedPage.url" target="_blank">{{selectedPage.url}}</a>
+          </div>
+          <div class="info-row">
+            <strong>Title:</strong> {{selectedPage.title || 'No title'}}
+          </div>
+          <div class="info-row">
+            <strong>Status:</strong> 
+            <span class="status-badge" [ngClass]="getStatusClass(selectedPage.status)">
+              {{selectedPage.status}}
+            </span>
+          </div>
+          <div class="info-row" *ngIf="selectedPage.scraped_at">
+            <strong>Scraped:</strong> {{formatDate(selectedPage.scraped_at)}}
+          </div>
+        </div>
+
+        <div class="content-preview">
+          <h4>Content Preview</h4>
+          <div *ngIf="loadingPageContent" class="loading-content">
+            <div class="loading-spinner"></div>
+            <p>Loading content preview...</p>
+          </div>
+          <div *ngIf="pageContent && !loadingPageContent" class="content-text">
+            <p>{{pageContent.content_preview}}</p>
+            <small class="content-note">{{pageContent.note}}</small>
+          </div>
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button (click)="closePageContent()" class="btn btn-secondary">Close</button>
+      </div>
+    </div>
+  </div>
+</div>

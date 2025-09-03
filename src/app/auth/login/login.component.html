@@ -1,0 +1,70 @@
+<div class="auth-container">
+  <div class="auth-card">
+    <div class="auth-header">
+      <h2>Welcome Back</h2>
+      <p class="subtitle">Sign in to your account</p>
+    </div>
+
+    <form (ngSubmit)="onLogin()" #loginForm="ngForm" class="auth-form">
+      <!-- Username Field -->
+      <div class="form-group">
+        <label for="username">Username</label>
+        <input
+          type="text"
+          id="username"
+          name="username"
+          [(ngModel)]="credentials.username"
+          required
+          placeholder="Enter your username"
+          class="form-control"
+          [disabled]="isLoading"
+          (input)="clearError()"
+        />
+      </div>
+
+      <!-- Password Field -->
+      <div class="form-group">
+        <label for="password">Password</label>
+        <input
+          type="password"
+          id="password"
+          name="password"
+          [(ngModel)]="credentials.password"
+          required
+          placeholder="Enter your password"
+          class="form-control"
+          [disabled]="isLoading"
+          (input)="clearError()"
+        />
+      </div>
+
+      <!-- Error Message -->
+      <div *ngIf="errorMessage" class="error-message">
+        <p>❌ {{errorMessage}}</p>
+      </div>
+
+      <!-- Login Button -->
+      <button
+        type="submit"
+        class="auth-btn"
+        [disabled]="!credentials.username || !credentials.password || isLoading || loginForm.invalid"
+      >
+        <span *ngIf="isLoading" class="loading-spinner"></span>
+        {{isLoading ? 'Signing In...' : 'Sign In'}}
+      </button>
+    </form>
+
+    <!-- Signup Link -->
+    <div class="auth-footer">
+      <p>Don't have an account? <a routerLink="/signup" class="auth-link">Create one</a></p>
+    </div>
+  </div>
+
+  <!-- API Information -->
+  <div class="api-info">
+    <h3>Authentication Info</h3>
+    <p><strong>Endpoint:</strong> POST {{ apiUrl }}/auth/login</p>
+    <p><strong>Service:</strong> FactorialBot Onboarding Service</p>
+    <p><strong>Method:</strong> JWT Bearer Token Authentication</p>
+  </div>
+</div>

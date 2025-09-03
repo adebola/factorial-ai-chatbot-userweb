@@ -1,0 +1,146 @@
+<div class="plans-container">
+  <header class="plans-header">
+    <button (click)="goBack()" class="back-button">
+      <span class="material-icons">arrow_back</span>
+      Back to Dashboard
+    </button>
+    <h1>Subscription Plans</h1>
+    <p class="subtitle">Choose the perfect plan for your needs</p>
+  </header>
+
+  <!-- Loading State -->
+  <div *ngIf="loading" class="loading-container">
+    <div class="loading-spinner"></div>
+    <p>Loading plans...</p>
+  </div>
+
+  <!-- Error State -->
+  <div *ngIf="error && !loading" class="error-container">
+    <span class="material-icons">error</span>
+    <p>{{ error }}</p>
+    <button (click)="loadPlansData()" class="retry-button">Retry</button>
+  </div>
+
+  <!-- Success Message -->
+  <div *ngIf="successMessage" class="success-message">
+    <span class="material-icons">check_circle</span>
+    {{ successMessage }}
+  </div>
+
+  <!-- Plans Content -->
+  <div *ngIf="!loading && !error" class="plans-content">
+    <!-- Current Plan Info -->
+    <div *ngIf="currentPlan" class="current-plan-info">
+      <h2>Current Plan</h2>
+      <div class="current-plan-card">
+        <h3>{{ currentPlan.name }}</h3>
+        <p>{{ currentPlan.description }}</p>
+        <div class="current-plan-details">
+          <span>₦{{ formatNumber(getPlanCost(currentPlan)) }}/{{ billingCycle }}</span>
+          <span class="plan-limits">
+            {{ formatNumber(currentPlan.document_limit) }} docs • 
+            {{ formatNumber(currentPlan.website_limit) }} sites • 
+            {{ formatNumber(currentPlan.daily_chat_limit) }} daily chats
+          </span>
+        </div>
+      </div>
+    </div>
+
+    <!-- Billing Cycle Toggle -->
+    <div class="billing-toggle">
+      <label>Billing Cycle:</label>
+      <div class="toggle-buttons">
+        <button 
+          [class.active]="billingCycle === 'monthly'"
+          (click)="setBillingCycle('monthly')"
+          class="toggle-button">
+          Monthly
+        </button>
+        <button 
+          [class.active]="billingCycle === 'yearly'"
+          (click)="setBillingCycle('yearly')"
+          class="toggle-button">
+          Yearly <span class="savings">Save 17%</span>
+        </button>
+      </div>
+    </div>
+
+    <!-- Plans Grid -->
+    <div class="plans-grid">
+      <div 
+        *ngFor="let plan of plans" 
+        class="plan-card"
+        [class.current]="isCurrentPlan(plan)"
+        [class.upgrade]="isUpgrade(plan)"
+        [class.downgrade]="isDowngrade(plan)">
+        
+        <div class="plan-header">
+          <h3>{{ plan.name }}</h3>
+          <div class="plan-badge" *ngIf="isCurrentPlan(plan)">Current Plan</div>
+          <div class="plan-badge upgrade-badge" *ngIf="isUpgrade(plan) && !isCurrentPlan(plan)">Upgrade</div>
+          <div class="plan-badge downgrade-badge" *ngIf="isDowngrade(plan)">Downgrade</div>
+        </div>
+
+        <div class="plan-price">
+          <span class="currency">₦</span>
+          <span class="amount">{{ formatNumber(getPlanCost(plan)) }}</span>
+          <span class="period">/{{ billingCycle }}</span>
+        </div>
+
+        <p class="plan-description">{{ plan.description }}</p>
+
+        <div class="plan-limits">
+          <div class="limit-item">
+            <span class="material-icons">description</span>
+            <span>{{ formatNumber(plan.document_limit) }} documents</span>
+          </div>
+          <div class="limit-item">
+            <span class="material-icons">language</span>
+            <span>{{ formatNumber(plan.website_limit) }} websites</span>
+          </div>
+          <div class="limit-item">
+            <span class="material-icons">chat</span>
+            <span>{{ formatNumber(plan.daily_chat_limit) }} daily chats</span>
+          </div>
+          <div class="limit-item">
+            <span class="material-icons">chat_bubble_outline</span>
+            <span>{{ formatNumber(plan.monthly_chat_limit) }} monthly chats</span>
+          </div>
+        </div>
+
+        <div class="plan-features" *ngIf="getFeaturesList(plan).length > 0">
+          <h4>Features</h4>
+          <ul>
+            <li *ngFor="let feature of getFeaturesList(plan)">
+              <span class="material-icons">check</span>
+              {{ feature }}
+            </li>
+          </ul>
+        </div>
+
+        <div class="plan-actions">
+          <button 
+            *ngIf="!isCurrentPlan(plan)"
+            (click)="switchPlan(plan)"
+            [disabled]="switching"
+            class="switch-button"
+            [class.upgrade-button]="isUpgrade(plan)"
+            [class.downgrade-button]="isDowngrade(plan)">
+            <span *ngIf="switching" class="material-icons spinning">sync</span>
+            <span *ngIf="!switching">
+              {{ isUpgrade(plan) ? 'Upgrade' : 'Switch' }} to {{ plan.name }}
+            </span>
+          </button>
+          
+          <button 
+            *ngIf="isCurrentPlan(plan)"
+            disabled
+            class="current-plan-button">
+            <span class="material-icons">check_circle</span>
+            Current Plan
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>

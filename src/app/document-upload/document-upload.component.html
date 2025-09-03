@@ -1,0 +1,71 @@
+<div class="upload-container">
+  <!-- Page Header -->
+  <div class="page-header">
+    <h2>Document Upload</h2>
+    <p class="description">Upload documents to the FactorialBot onboarding service</p>
+  </div>
+
+  <form (ngSubmit)="onUpload()" #uploadForm="ngForm" class="upload-form">
+    <!-- File Upload -->
+    <div class="form-group">
+      <label for="fileInput">Document *</label>
+      <input
+        type="file"
+        id="fileInput"
+        name="fileInput"
+        (change)="onFileSelected($event)"
+        accept=".pdf,.txt,.docx"
+        required
+        class="form-control"
+        [disabled]="isUploading"
+      />
+      <small class="file-info">Supported formats: PDF, TXT, DOCX</small>
+    </div>
+
+    <!-- Selected File Info -->
+    <div *ngIf="selectedFile" class="selected-file">
+      <p><strong>Selected file:</strong> {{selectedFile.name}}</p>
+      <p><strong>Size:</strong> {{(selectedFile.size / 1024 / 1024).toFixed(2)}} MB</p>
+      <p><strong>Type:</strong> {{selectedFile.type}}</p>
+      <div *ngIf="!isValidFileType(selectedFile)" class="warning">
+        ⚠️ This file type may not be supported by the API
+      </div>
+    </div>
+
+    <!-- Upload Button -->
+    <button
+      type="submit"
+      class="upload-btn"
+      [disabled]="!selectedFile || isUploading || uploadForm.invalid"
+    >
+      <span *ngIf="isUploading" class="loading-spinner"></span>
+      {{isUploading ? 'Uploading...' : 'Upload Document'}}
+    </button>
+  </form>
+
+  <!-- Error Message -->
+  <div *ngIf="errorMessage" class="error-message">
+    <p>❌ {{errorMessage}}</p>
+    <button (click)="clearResults()" class="clear-btn">Clear</button>
+  </div>
+
+  <!-- Success Message -->
+  <div *ngIf="uploadResult" class="success-message">
+    <h3>✅ Upload Successful!</h3>
+    <div class="result-details">
+      <p><strong>Message:</strong> {{uploadResult.message}}</p>
+      <p><strong>Filename:</strong> {{uploadResult.filename}}</p>
+      <p><strong>Chunks Created:</strong> {{uploadResult.chunks_created}}</p>
+      <p><strong>Tenant:</strong> {{uploadResult.tenant_name}} ({{uploadResult.tenant_id}})</p>
+    </div>
+    <button (click)="clearResults()" class="clear-btn">Upload Another Document</button>
+  </div>
+
+  <!-- API Information -->
+  <div class="api-info">
+    <h3>API Information</h3>
+    <p><strong>Endpoint:</strong> POST {{ apiUrl }}/documents/upload</p>
+    <p><strong>Service:</strong> FactorialBot Onboarding Service</p>
+    <p><strong>Authentication:</strong> Bearer Token (JWT)</p>
+  </div>
+</div>

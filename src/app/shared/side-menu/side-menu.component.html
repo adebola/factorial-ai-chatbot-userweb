@@ -1,0 +1,72 @@
+<!-- Mobile backdrop -->
+<div
+  *ngIf="isMobile && !isCollapsed"
+  class="mobile-backdrop"
+  (click)="onBackdropClick()">
+</div>
+
+<!-- Side Menu -->
+<aside class="side-menu" [class.collapsed]="isCollapsed" [class.mobile]="isMobile">
+  <!-- Header with Logo and Toggle -->
+  <div class="menu-header">
+    <div class="logo-container" [class.hidden]="isCollapsed">
+      <img src="/factorialbot_logo.svg" alt="FactorialBot" class="menu-logo">
+      <span class="app-title">FactorialBot</span>
+    </div>
+    <button class="menu-toggle" (click)="toggleMenu()" [title]="isCollapsed ? 'Expand menu' : 'Collapse menu'">
+      <span class="material-icons hamburger" [class.collapsed]="isCollapsed">menu</span>
+    </button>
+  </div>
+
+  <!-- User Info -->
+  <div class="user-info" [class.hidden]="isCollapsed" *ngIf="currentUser">
+    <div class="user-avatar">
+      <span class="avatar-text">{{currentUser.username?.charAt(0).toUpperCase()}}</span>
+    </div>
+    <div class="user-details">
+      <div class="username">{{currentUser.username}}</div>
+      <div class="tenant-id">{{currentUser.tenant_id}}</div>
+    </div>
+  </div>
+
+  <!-- Navigation Menu -->
+  <nav class="menu-nav">
+    <ul class="menu-list">
+      <li
+        *ngFor="let item of menuItems"
+        class="menu-item"
+        [class.active]="item.active"
+      >
+        <button
+          class="menu-link"
+          (click)="navigateToItem(item)"
+          [title]="isCollapsed ? item.label : ''"
+        >
+          <span class="material-icons menu-icon">{{item.icon}}</span>
+          <span class="menu-label" [class.hidden]="isCollapsed">{{item.label}}</span>
+        </button>
+      </li>
+    </ul>
+  </nav>
+
+  <!-- Logout Button -->
+  <div class="menu-footer">
+    <button
+      class="logout-button"
+      (click)="logout()"
+      [title]="isCollapsed ? 'Logout' : ''"
+    >
+      <span class="material-icons menu-icon">logout</span>
+      <span class="menu-label" [class.hidden]="isCollapsed">Logout</span>
+    </button>
+  </div>
+</aside>
+
+<!-- Mobile Menu Toggle Button (fixed position) -->
+<button
+  *ngIf="isMobile && isCollapsed"
+  class="mobile-menu-toggle"
+  (click)="toggleMenu()"
+>
+  <span class="material-icons">menu</span>
+</button>

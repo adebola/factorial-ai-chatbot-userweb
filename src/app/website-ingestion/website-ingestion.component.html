@@ -1,0 +1,229 @@
+<div class="ingestion-container">
+  <!-- Page Header -->
+  <div class="page-header">
+    <h2>Website Ingestion</h2>
+    <p>Manage website crawling and content ingestion processes</p>
+  </div>
+
+  <!-- Action Bar -->
+  <div class="action-bar">
+    <div class="action-buttons">
+      <button (click)="openAddModal()" class="btn btn-primary">
+        <span class="material-icons">web</span> Add Website
+      </button>
+      <button 
+        (click)="deleteSelectedIngestions()" 
+        class="btn btn-danger"
+        [disabled]="selectedIngestions.size === 0"
+      >
+        <span class="material-icons">delete</span> Delete Selected ({{selectedIngestions.size}})
+      </button>
+    </div>
+    <div class="table-info">
+      <span>{{ingestions.length}} ingestion(s) total</span>
+      <div class="refresh-controls">
+        <button 
+          (click)="toggleAutoRefresh()" 
+          class="btn btn-outline btn-sm"
+          [class.active]="autoRefreshEnabled"
+          title="{{ autoRefreshEnabled ? 'Stop auto-refresh' : 'Start auto-refresh' }}"
+        >
+          <span class="material-icons">{{ autoRefreshEnabled ? 'pause' : 'play_arrow' }}</span>
+          Auto-refresh
+        </button>
+        <button (click)="loadIngestions()" class="btn btn-outline btn-sm">
+          <span class="material-icons">refresh</span> Refresh
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Messages -->
+  <!-- Immediate Feedback for Async Processing -->
+  <div *ngIf="showingFeedback" class="feedback-message async-feedback">
+    <div class="feedback-content">
+      <span class="material-icons">info</span>
+      <div class="feedback-text">
+        <p><strong>Processing Started!</strong></p>
+        <p>{{feedbackMessage}}</p>
+        <small>The ingestion is running in the background. You can see progress updates below.</small>
+      </div>
+    </div>
+  </div>
+
+  <div *ngIf="errorMessage" class="error-message">
+    <p><span class="material-icons">error</span> {{errorMessage}}</p>
+    <button (click)="clearMessages()" class="clear-btn">Clear</button>
+  </div>
+
+  <div *ngIf="successMessage" class="success-message">
+    <p><span class="material-icons">check_circle</span> {{successMessage}}</p>
+    <button (click)="clearMessages()" class="clear-btn">Clear</button>
+  </div>
+
+  <!-- Loading State -->
+  <div *ngIf="isLoading" class="loading-container">
+    <div class="loading-spinner"></div>
+    <p>Loading website ingestions...</p>
+  </div>
+
+  <!-- Ingestions Table -->
+  <div *ngIf="!isLoading" class="table-container">
+    <table class="ingestions-table">
+      <thead>
+        <tr>
+          <th class="checkbox-col">
+            <input 
+              type="checkbox" 
+              [checked]="selectedIngestions.size === ingestions.length && ingestions.length > 0"
+              [indeterminate]="selectedIngestions.size > 0 && selectedIngestions.size < ingestions.length"
+              (change)="toggleSelectAll()"
+            />
+          </th>
+          <th>Website URL</th>
+          <th>Status</th>
+          <th>Progress</th>
+          <th>Started</th>
+          <th>Completed</th>
+          <th>Actions</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr *ngFor="let ingestion of ingestions" class="ingestion-row">
+          <td class="checkbox-col">
+            <input 
+              type="checkbox" 
+              [checked]="selectedIngestions.has(ingestion.id)"
+              (change)="toggleIngestionSelection(ingestion.id)"
+            />
+          </td>
+          <td class="url-col">
+            <div class="url-info">
+              <span class="url">{{ingestion.base_url}}</span>
+              <small class="ingestion-id">ID: {{ingestion.id}}</small>
+            </div>
+          </td>
+          <td class="status-col">
+            <span class="status-badge" [ngClass]="getStatusClass(ingestion.status)">
+              {{ingestion.status}}
+            </span>
+            <div *ngIf="ingestion.error_message" class="error-details">
+              <small>{{ingestion.error_message}}</small>
+            </div>
+          </td>
+          <td class="progress-col">
+            <div class="progress-info">
+              <div class="progress-bar">
+                <div class="progress-fill" [style.width.%]="getProgressPercentage(ingestion)"></div>
+              </div>
+              <small class="progress-text">
+                {{ingestion.pages_processed}}/{{ingestion.pages_discovered}} pages
+                <span *ngIf="ingestion.pages_failed > 0" class="failed-count">
+                  ({{ingestion.pages_failed}} failed)
+                </span>
+              </small>
+            </div>
+          </td>
+          <td class="date-col">
+            {{formatDate(ingestion.started_at)}}
+          </td>
+          <td class="date-col">
+            {{formatDate(ingestion.completed_at)}}
+          </td>
+          <td class="actions-col">
+            <div class="action-buttons">
+              <button 
+                [routerLink]="['/websites', ingestion.id, 'details']"
+                class="btn btn-primary btn-sm"
+                title="View Details"
+              >
+                📊 Details
+              </button>
+              <button 
+                *ngIf="canRetry(ingestion.status)"
+                (click)="retryIngestion(ingestion.id)" 
+                class="btn btn-warning btn-sm"
+                title="Retry Ingestion"
+              >
+                🔄 Retry
+              </button>
+              <button 
+                (click)="deleteIngestion(ingestion.id)" 
+                class="btn btn-danger btn-sm"
+                title="Delete Ingestion"
+              >
+                🗑️ Delete
+              </button>
+            </div>
+          </td>
+        </tr>
+      </tbody>
+    </table>
+
+    <!-- Empty State -->
+    <div *ngIf="ingestions.length === 0" class="empty-state">
+      <div class="empty-icon">🌐</div>
+      <h3>No Website Ingestions Found</h3>
+      <p>Start by adding a website to ingest its content</p>
+      <button (click)="openAddModal()" class="btn btn-primary">Add Website</button>
+    </div>
+  </div>
+
+  <!-- Add Website Modal -->
+  <div *ngIf="showAddModal" class="modal-overlay" (click)="closeAddModal()">
+    <div class="modal-content" (click)="$event.stopPropagation()">
+      <div class="modal-header">
+        <h3>Add Website for Ingestion</h3>
+        <button (click)="closeAddModal()" class="modal-close">✕</button>
+      </div>
+      <div class="modal-body">
+        <p>Enter the website URL you want to ingest. The system will crawl and process all accessible pages.</p>
+        <div class="form-group">
+          <label for="websiteUrl">Website URL *</label>
+          <input 
+            type="url" 
+            id="websiteUrl"
+            [(ngModel)]="newWebsiteUrl"
+            placeholder="https://example.com"
+            class="form-control"
+            [disabled]="isStartingIngestion"
+            (keyup.enter)="startIngestion()"
+          />
+          <small class="url-info">Must start with http:// or https://</small>
+        </div>
+        
+        <div *ngIf="newWebsiteUrl" class="url-preview">
+          <p><strong>URL to ingest:</strong> {{newWebsiteUrl}}</p>
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button (click)="closeAddModal()" class="btn btn-secondary" [disabled]="isStartingIngestion">
+          Cancel
+        </button>
+        <button 
+          (click)="startIngestion()" 
+          class="btn btn-primary"
+          [disabled]="!newWebsiteUrl.trim() || isStartingIngestion"
+        >
+          <span *ngIf="isStartingIngestion" class="loading-spinner"></span>
+          {{isStartingIngestion ? 'Starting...' : 'Start Ingestion'}}
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- API Information - Development Only -->
+  <div *ngIf="!isProduction" class="api-info">
+    <h3>Website Ingestion API Status</h3>
+    <div class="route-status">
+      <div class="route available">✅ POST /api/v1/websites/ingest - Start website ingestion</div>
+      <div class="route available">✅ GET /api/v1/ingestions/ - List ingestions</div>
+      <div class="route available">✅ GET /api/v1/ingestions/{{ '{' }}id{{ '}' }}/status - Get ingestion status</div>
+      <div class="route available">✅ GET /api/v1/ingestions/{{ '{' }}id{{ '}' }}/stats - Get detailed stats</div>
+      <div class="route available">✅ GET /api/v1/ingestions/{{ '{' }}id{{ '}' }}/pages - Get ingestion pages</div>
+      <div class="route available">✅ GET /api/v1/ingestions/{{ '{' }}id{{ '}' }}/pages/{{ '{' }}page_id{{ '}' }}/content - Get page content</div>
+      <div class="route available">✅ DELETE /api/v1/ingestions/{{ '{' }}id{{ '}' }} - Delete ingestion</div>
+      <div class="route available">✅ POST /api/v1/ingestions/{{ '{' }}id{{ '}' }}/retry - Retry failed ingestion</div>
+    </div>
+  </div>
+</div>

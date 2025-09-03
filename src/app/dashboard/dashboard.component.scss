@@ -1,0 +1,1007 @@
+// Variables - Triadic Color Scheme
+$primary-color: #5D3EC1;   // Purple
+$secondary-color: #C15D3E; // Red-Orange
+$tertiary-color: #3EC15D;  // Green
+$success-color: #3EC15D;   // Using tertiary for success
+$info-color: #5D3EC1;      // Using primary for info
+$warning-color: #C15D3E;   // Using secondary for warning
+$danger-color: #C15D3E;    // Using secondary for danger
+$light-gray: #f8f9fa;
+$medium-gray: #6c757d;
+$dark-gray: #343a40;
+$white: #ffffff;
+$border-radius: 8px;
+$box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+$transition: all 0.3s ease;
+
+// Dashboard container
+.dashboard-content {
+  padding: 2rem;
+  background: #ffffff !important;
+  min-height: 100vh;
+  
+  @media (max-width: 768px) {
+    padding: 1rem;
+  }
+}
+
+// Header section
+.dashboard-header {
+  background: $white !important;
+  border-radius: $border-radius;
+  box-shadow: $box-shadow;
+  margin-bottom: 2rem;
+  overflow: hidden;
+
+  .header-content {
+    padding: 2rem;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    
+    @media (max-width: 768px) {
+      padding: 1.5rem;
+      flex-direction: column;
+      gap: 1rem;
+    }
+  }
+
+  .header-info {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+
+    .logo {
+      width: 72px;
+      height: 72px;
+      background: $white;
+      border-radius: 12px;
+      padding: 8px;
+      box-shadow: 0 4px 16px rgba(93, 62, 193, 0.2);
+      border: 2px solid rgba($primary-color, 0.1);
+    }
+
+    .title-section {
+      h1 {
+        margin: 0;
+        font-size: 2rem;
+        font-weight: 700;
+        color: $dark-gray;
+        background: linear-gradient(135deg, $primary-color 0%, $tertiary-color 100%);
+        -webkit-background-clip: text;
+        -webkit-text-fill-color: transparent;
+        background-clip: text;
+        
+        @media (max-width: 768px) {
+          font-size: 1.75rem;
+        }
+      }
+
+      .subtitle {
+        margin: 0.25rem 0 0 0;
+        font-size: 1rem;
+        color: $medium-gray;
+      }
+    }
+  }
+
+  .refresh-btn {
+    background: linear-gradient(135deg, $primary-color 0%, $secondary-color 100%);
+    color: $white;
+    border: none;
+    border-radius: $border-radius;
+    padding: 0.75rem 1.5rem;
+    font-size: 1rem;
+    cursor: pointer;
+    transition: $transition;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+
+    &:hover:not(:disabled) {
+      transform: translateY(-2px);
+      box-shadow: 0 6px 20px rgba(93, 62, 193, 0.3);
+    }
+
+    &:disabled {
+      opacity: 0.6;
+      cursor: not-allowed;
+    }
+
+    .refresh-icon {
+      font-size: 1.2rem;
+      transition: transform 0.5s ease;
+
+      &.spinning {
+        animation: spin 1s linear infinite;
+      }
+    }
+  }
+}
+
+// Loading state
+.loading-container {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  min-height: 400px;
+  background: $white;
+  border-radius: $border-radius;
+  box-shadow: $box-shadow;
+
+  .loading-spinner {
+    width: 48px;
+    height: 48px;
+    border: 4px solid $light-gray;
+    border-top: 4px solid $primary-color;
+    border-radius: 50%;
+    animation: spin 1s linear infinite;
+    margin-bottom: 1rem;
+  }
+
+  p {
+    color: $medium-gray;
+    font-size: 1.1rem;
+    margin: 0;
+  }
+}
+
+// Error state
+.error-container {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  min-height: 400px;
+  background: $white;
+  border-radius: $border-radius;
+  box-shadow: $box-shadow;
+  text-align: center;
+
+  .error-icon {
+    font-size: 4rem;
+    margin-bottom: 1rem;
+  }
+
+  h3 {
+    color: $danger-color;
+    margin: 0 0 1rem 0;
+    font-size: 1.5rem;
+  }
+
+  p {
+    color: $medium-gray;
+    margin: 0 0 2rem 0;
+    font-size: 1.1rem;
+  }
+
+  .retry-btn {
+    background: $danger-color;
+    color: $white;
+    border: none;
+    border-radius: $border-radius;
+    padding: 0.75rem 2rem;
+    font-size: 1rem;
+    cursor: pointer;
+    transition: $transition;
+
+    &:hover {
+      background: #c82333;
+      transform: translateY(-2px);
+    }
+  }
+}
+
+// Statistics grid
+.stats-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+  gap: 1.5rem;
+  margin-bottom: 2rem;
+
+  @media (max-width: 768px) {
+    grid-template-columns: 1fr;
+    gap: 1rem;
+  }
+}
+
+// Stat card
+.stat-card {
+  background: $white !important;
+  border-radius: $border-radius;
+  padding: 2rem;
+  box-shadow: $box-shadow;
+  display: flex;
+  align-items: center;
+  gap: 1.5rem;
+  transition: $transition;
+  position: relative;
+  overflow: hidden;
+
+  &::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: 4px;
+    background: linear-gradient(135deg, $primary-color 0%, $secondary-color 100%);
+  }
+
+  &:hover {
+    transform: translateY(-4px);
+    box-shadow: 0 8px 25px rgba(0, 0, 0, 0.15);
+  }
+
+  .stat-icon {
+    min-width: 60px;
+    text-align: center;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    
+    .material-icons {
+      font-size: 3rem;
+      color: $primary-color;
+    }
+  }
+
+  .stat-content {
+    flex: 1;
+
+    .stat-value {
+      font-size: 2.5rem;
+      font-weight: 700;
+      color: $dark-gray;
+      line-height: 1;
+      margin-bottom: 0.5rem;
+    }
+
+    .stat-title {
+      font-size: 1rem;
+      color: $medium-gray;
+      font-weight: 500;
+      margin-bottom: 0.25rem;
+    }
+
+    .stat-trend {
+      font-size: 0.9rem;
+      font-weight: 600;
+      display: flex;
+      align-items: center;
+      gap: 0.25rem;
+
+      &.positive {
+        color: $success-color;
+      }
+
+      &.negative {
+        color: $danger-color;
+      }
+    }
+  }
+
+  // Color variants
+  &.stat-card-primary::before {
+    background: linear-gradient(135deg, $primary-color 0%, #4a2d9a 100%);
+  }
+
+  &.stat-card-secondary::before {
+    background: linear-gradient(135deg, $secondary-color 0%, #9a4a2d 100%);
+  }
+
+  &.stat-card-success::before {
+    background: linear-gradient(135deg, $success-color 0%, #2d9a4a 100%);
+  }
+
+  &.stat-card-info::before {
+    background: linear-gradient(135deg, $info-color 0%, #4a2d9a 100%);
+  }
+}
+
+// Info cards
+.info-card {
+  background: $white !important;
+  border-radius: $border-radius;
+  box-shadow: $box-shadow;
+  margin-bottom: 2rem;
+  overflow: hidden;
+  transition: $transition;
+
+  &:hover {
+    box-shadow: 0 8px 25px rgba(0, 0, 0, 0.12);
+  }
+
+  .card-header {
+    background: linear-gradient(135deg, $primary-color 0%, $secondary-color 100%);
+    color: $white;
+    padding: 1.5rem 2rem;
+
+    h2 {
+      margin: 0;
+      font-size: 1.5rem;
+      font-weight: 600;
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+    }
+  }
+
+  .card-body {
+    padding: 2rem;
+
+    @media (max-width: 768px) {
+      padding: 1.5rem;
+    }
+  }
+}
+
+// Organization card
+.organization-card {
+  .org-info {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    gap: 2rem;
+
+    @media (max-width: 768px) {
+      flex-direction: column;
+      gap: 1.5rem;
+    }
+
+    .org-details {
+      flex: 1;
+
+      h3 {
+        margin: 0 0 1rem 0;
+        font-size: 1.8rem;
+        color: $dark-gray;
+        font-weight: 700;
+      }
+
+      .domain, .website {
+        margin: 0.5rem 0;
+        color: $medium-gray;
+        font-size: 1rem;
+
+        a {
+          color: $primary-color;
+          text-decoration: none;
+          transition: $transition;
+
+          &:hover {
+            text-decoration: underline;
+            color: #4a2d9a;
+          }
+        }
+      }
+    }
+
+    .subscription-info {
+      display: flex;
+      flex-direction: column;
+      gap: 1rem;
+      align-items: flex-end;
+
+      @media (max-width: 768px) {
+        align-items: flex-start;
+        width: 100%;
+      }
+
+      .subscription-badge {
+        padding: 0.75rem 1.5rem;
+        border-radius: 25px;
+        font-weight: 600;
+        font-size: 0.9rem;
+        white-space: nowrap;
+
+        &.badge-primary {
+          background: linear-gradient(135deg, $primary-color 0%, #4a2d9a 100%);
+          color: $white;
+        }
+
+        &.badge-secondary {
+          background: linear-gradient(135deg, $secondary-color 0%, #9a4a2d 100%);
+          color: $white;
+        }
+
+        &.badge-success {
+          background: linear-gradient(135deg, $success-color 0%, #2d9a4a 100%);
+          color: $white;
+        }
+
+        &.badge-premium {
+          background: linear-gradient(135deg, $tertiary-color 0%, #2d9a4a 100%);
+          color: $white;
+        }
+      }
+
+      .status-info {
+        display: flex;
+        flex-direction: column;
+        gap: 0.5rem;
+        align-items: flex-end;
+        text-align: right;
+
+        @media (max-width: 768px) {
+          align-items: flex-start;
+          text-align: left;
+        }
+
+        .status {
+          font-weight: 600;
+          font-size: 1rem;
+
+          &.active {
+            color: $success-color;
+          }
+
+          &.inactive {
+            color: $danger-color;
+          }
+        }
+
+        .created-date {
+          color: $medium-gray;
+          font-size: 0.9rem;
+        }
+      }
+    }
+  }
+}
+
+// User card
+.user-card {
+  .user-info {
+    display: flex;
+    align-items: center;
+    gap: 1.5rem;
+
+    @media (max-width: 768px) {
+      flex-direction: column;
+      text-align: center;
+    }
+
+    .user-avatar {
+      width: 80px;
+      height: 80px;
+      background: linear-gradient(135deg, $primary-color 0%, $secondary-color 100%);
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      flex-shrink: 0;
+
+      .avatar-text {
+        color: $white;
+        font-weight: 700;
+        font-size: 2rem;
+      }
+    }
+
+    .user-details {
+      flex: 1;
+
+      h3 {
+        margin: 0 0 0.5rem 0;
+        font-size: 1.5rem;
+        color: $dark-gray;
+        font-weight: 700;
+      }
+
+      p {
+        margin: 0.25rem 0;
+        color: $medium-gray;
+        font-size: 1rem;
+
+        &.email {
+          color: $primary-color;
+          font-weight: 500;
+        }
+
+        &.role {
+          font-weight: 600;
+          color: $dark-gray;
+        }
+      }
+    }
+  }
+}
+
+// Activity card
+.activity-card {
+  .activity-items {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    gap: 2rem;
+
+    @media (max-width: 768px) {
+      grid-template-columns: 1fr;
+      gap: 1.5rem;
+    }
+  }
+
+  .activity-item {
+    text-align: center;
+
+    .activity-label {
+      font-size: 0.9rem;
+      color: $medium-gray;
+      margin-bottom: 0.5rem;
+      font-weight: 500;
+    }
+
+    .activity-value {
+      font-size: 1.3rem;
+      font-weight: 700;
+      color: $dark-gray;
+
+      .status-badge {
+        padding: 0.5rem 1rem;
+        border-radius: 20px;
+        font-size: 0.9rem;
+        font-weight: 600;
+
+        &.active {
+          background: $success-color;
+          color: $white;
+        }
+      }
+    }
+  }
+}
+
+// Plan card
+.plan-card {
+  .card-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 1rem;
+
+    .manage-plans-btn {
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+      padding: 0.5rem 1rem;
+      background: linear-gradient(135deg, $primary-color 0%, #523db3 100%);
+      color: $white;
+      border: none;
+      border-radius: $border-radius;
+      cursor: pointer;
+      transition: $transition;
+      font-size: 0.9rem;
+      font-weight: 600;
+
+      &:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 4px 15px rgba(93, 62, 193, 0.3);
+      }
+
+      .material-icons {
+        font-size: 1rem;
+      }
+    }
+
+    @media (max-width: 768px) {
+      flex-direction: column;
+      align-items: flex-start;
+
+      .manage-plans-btn {
+        width: 100%;
+        justify-content: center;
+      }
+    }
+  }
+
+  .plan-info {
+    .plan-details {
+      h3 {
+        margin: 0 0 1rem 0;
+        font-size: 1.5rem;
+        color: $dark-gray;
+        font-weight: 700;
+      }
+
+      .plan-description {
+        color: $medium-gray;
+        margin-bottom: 1.5rem;
+        font-size: 1rem;
+        line-height: 1.5;
+      }
+
+      .plan-limits {
+        margin-bottom: 1.5rem;
+
+        h4 {
+          margin: 0 0 0.5rem 0;
+          font-size: 1.1rem;
+          color: $dark-gray;
+          font-weight: 600;
+        }
+
+        p {
+          margin: 0;
+          color: $medium-gray;
+        }
+      }
+
+      .plan-pricing {
+        display: flex;
+        align-items: center;
+        gap: 1rem;
+        flex-wrap: wrap;
+        margin-bottom: 1.5rem;
+
+        .price-monthly {
+          font-size: 1.3rem;
+          font-weight: 700;
+          color: $primary-color;
+        }
+
+        .price-yearly {
+          font-size: 1rem;
+          color: $medium-gray;
+        }
+      }
+
+      .plan-actions {
+        .upgrade-btn {
+          display: flex;
+          align-items: center;
+          gap: 0.5rem;
+          padding: 0.75rem 1.5rem;
+          background: linear-gradient(135deg, $tertiary-color 0%, #2d9a4a 100%);
+          color: $white;
+          border: none;
+          border-radius: $border-radius;
+          cursor: pointer;
+          transition: $transition;
+          font-size: 1rem;
+          font-weight: 600;
+          width: 100%;
+          justify-content: center;
+
+          &:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 15px rgba(62, 193, 93, 0.3);
+          }
+
+          .material-icons {
+            font-size: 1.2rem;
+          }
+        }
+      }
+    }
+  }
+
+  .no-plan {
+    text-align: center;
+    color: $medium-gray;
+    font-style: italic;
+    margin-bottom: 1.5rem;
+
+    .select-plan-btn {
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+      padding: 1rem 1.5rem;
+      background: linear-gradient(135deg, $secondary-color 0%, #9a4a2d 100%);
+      color: $white;
+      border: none;
+      border-radius: $border-radius;
+      cursor: pointer;
+      transition: $transition;
+      font-size: 1rem;
+      font-weight: 600;
+      margin: 1rem auto 0;
+
+      &:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 4px 15px rgba(193, 93, 62, 0.3);
+      }
+
+      .material-icons {
+        font-size: 1.2rem;
+      }
+    }
+  }
+}
+
+// Widget card
+.widget-card {
+  .widget-info {
+    p {
+      color: $medium-gray;
+      margin-bottom: 2rem;
+      line-height: 1.6;
+    }
+
+    .widget-actions {
+      margin-bottom: 2rem;
+
+      h4 {
+        margin: 0 0 1rem 0;
+        font-size: 1.1rem;
+        color: $dark-gray;
+        font-weight: 600;
+      }
+
+      .download-buttons,
+      .utility-buttons {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+        gap: 1rem;
+        margin-bottom: 2rem;
+
+        @media (max-width: 768px) {
+          grid-template-columns: 1fr;
+        }
+      }
+
+      .download-btn,
+      .utility-btn {
+        display: flex;
+        align-items: center;
+        gap: 0.75rem;
+        padding: 0.75rem 1rem;
+        border: 2px solid $light-gray;
+        background: $white;
+        color: $dark-gray;
+        border-radius: $border-radius;
+        cursor: pointer;
+        transition: $transition;
+        font-size: 0.9rem;
+        font-weight: 500;
+
+        &:hover {
+          border-color: $primary-color;
+          background: rgba($primary-color, 0.05);
+          transform: translateY(-2px);
+        }
+
+        .btn-icon {
+          font-size: 1.2rem;
+        }
+        
+        .material-icons {
+          font-size: 1.2rem;
+        }
+
+        .btn-text {
+          flex: 1;
+        }
+      }
+
+      .utility-btn {
+        &.primary {
+          border-color: $primary-color;
+          color: $primary-color;
+
+          &:hover {
+            background: $primary-color;
+            color: $white;
+          }
+        }
+
+        &.secondary {
+          border-color: $secondary-color;
+          color: $secondary-color;
+
+          &:hover {
+            background: $secondary-color;
+            color: $white;
+          }
+        }
+
+        &.tertiary {
+          border-color: $info-color;
+          color: $info-color;
+
+          &:hover {
+            background: $info-color;
+            color: $white;
+          }
+        }
+      }
+    }
+
+    .widget-status {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+      gap: 1rem;
+      padding: 1.5rem;
+      background: rgba($light-gray, 0.3);
+      border-radius: $border-radius;
+      border-left: 4px solid $primary-color;
+
+      .status-item {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+
+        .status-label {
+          font-weight: 600;
+          color: $dark-gray;
+        }
+
+        .status-value {
+          font-weight: 500;
+
+          &.active {
+            color: $success-color;
+          }
+
+          &.configured {
+            color: $success-color;
+          }
+
+          &.missing {
+            color: $danger-color;
+          }
+        }
+      }
+    }
+  }
+
+  .widget-loading {
+    text-align: center;
+    color: $medium-gray;
+    font-style: italic;
+    padding: 2rem;
+  }
+}
+
+// Actions card
+.actions-card {
+  .quick-actions {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    gap: 1.5rem;
+
+    @media (max-width: 768px) {
+      grid-template-columns: 1fr;
+    }
+  }
+
+  .action-btn {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    padding: 1.5rem;
+    border-radius: $border-radius;
+    text-decoration: none;
+    transition: $transition;
+    font-weight: 600;
+    font-size: 1rem;
+    border: 2px solid transparent;
+
+    &.primary {
+      background: linear-gradient(135deg, $primary-color 0%, #523db3 100%);
+      color: $white;
+
+      &:hover {
+        transform: translateY(-3px);
+        box-shadow: 0 8px 25px rgba(93, 62, 193, 0.3);
+      }
+    }
+
+    &.secondary {
+      background: linear-gradient(135deg, $secondary-color 0%, #7da73a 100%);
+      color: $white;
+
+      &:hover {
+        transform: translateY(-3px);
+        box-shadow: 0 8px 25px rgba(193, 93, 62, 0.3);
+      }
+    }
+
+    &.tertiary {
+      background: $white;
+      color: $dark-gray;
+      border-color: rgba($primary-color, 0.3);
+
+      &:hover {
+        background: $primary-color;
+        color: $white;
+        transform: translateY(-3px);
+        box-shadow: 0 8px 25px rgba(93, 62, 193, 0.3);
+      }
+    }
+
+    .action-icon {
+      font-size: 1.5rem;
+    }
+    
+    .material-icons {
+      font-size: 1.5rem;
+    }
+
+    .action-text {
+      flex: 1;
+    }
+  }
+}
+
+// Material Icons Styling
+.material-icons {
+  vertical-align: middle;
+  
+  &.status-icon {
+    font-size: 1rem;
+    margin-right: 0.25rem;
+    
+    &.check_circle {
+      color: $success-color;
+    }
+    
+    &.cancel {
+      color: $danger-color;
+    }
+  }
+}
+
+// Card header Material Icons
+.card-header .material-icons {
+  font-size: 1.5rem;
+  margin-right: 0.5rem;
+}
+
+// Animations
+@keyframes spin {
+  0% { transform: rotate(0deg); }
+  100% { transform: rotate(360deg); }
+}
+
+@keyframes fadeIn {
+  from { opacity: 0; transform: translateY(20px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+// Apply fade-in animation to cards
+.info-card,
+.stat-card {
+  animation: fadeIn 0.6s ease-out;
+}
+
+// Responsive improvements
+@media (max-width: 768px) {
+  .stats-grid {
+    .stat-card {
+      padding: 1.5rem;
+      
+      .stat-icon {
+        font-size: 2.5rem;
+        min-width: 50px;
+      }
+
+      .stat-content {
+        .stat-value {
+          font-size: 2rem;
+        }
+      }
+    }
+  }
+}
+
+// Dark mode support disabled - keeping cards white
+// @media (prefers-color-scheme: dark) {
+//   .dashboard-content {
+//     background: #1a1d29;
+//   }
+//
+//   .info-card,
+//   .stat-card,
+//   .dashboard-header .header-content {
+//     background: #2d3748;
+//     color: #e2e8f0;
+//   }
+//
+//   .stat-card .stat-content .stat-value,
+//   .org-details h3,
+//   .user-details h3 {
+//     color: #e2e8f0;
+//   }
+// }

@@ -1,0 +1,30 @@
+.layout-container {
+  display: flex;
+  height: 100vh;
+  overflow: hidden;
+}
+
+.main-content {
+  flex: 1;
+  margin-left: 280px; // Default sidebar width
+  transition: margin-left 0.3s ease;
+  overflow-y: auto;
+  background: #f8f9fa;
+  padding: 2rem;
+
+  &.sidebar-collapsed {
+    margin-left: 60px; // Collapsed sidebar width
+  }
+
+  &.mobile {
+    margin-left: 0; // No margin on mobile, sidebar overlays
+  }
+}
+
+// Responsive adjustments
+@media (max-width: 768px) {
+  .main-content {
+    margin-left: 0; // No margin on mobile, sidebar overlays
+    padding: 1rem;
+  }
+}

@@ -1,0 +1,354 @@
+<div class="messages-container">
+  <!-- Page Header -->
+  <div class="page-header">
+    <h2>Chat Messages</h2>
+    <p>View and manage chat conversations and messages</p>
+  </div>
+
+  <!-- Navigation Tabs -->
+  <div class="tab-navigation">
+    <button 
+      (click)="showSessions()" 
+      class="tab-btn" 
+      [class.active]="currentView === 'sessions'"
+    >
+      💬 Sessions ({{sessions.length}})
+    </button>
+    <button 
+      (click)="showSearch()" 
+      class="tab-btn" 
+      [class.active]="currentView === 'search'"
+    >
+      🔍 Search Messages
+    </button>
+    <button 
+      (click)="showStats()" 
+      class="tab-btn" 
+      [class.active]="currentView === 'stats'"
+    >
+      📊 Statistics
+    </button>
+  </div>
+
+  <!-- Messages -->
+  <div *ngIf="errorMessage" class="error-message">
+    <p>❌ {{errorMessage}}</p>
+    <button (click)="clearMessages()" class="clear-btn">Clear</button>
+  </div>
+
+  <div *ngIf="successMessage" class="success-message">
+    <p>✅ {{successMessage}}</p>
+    <button (click)="clearMessages()" class="clear-btn">Clear</button>
+  </div>
+
+  <!-- Sessions View -->
+  <div *ngIf="currentView === 'sessions'" class="sessions-view">
+    <!-- Action Bar -->
+    <div class="action-bar">
+      <div class="action-buttons">
+        <button (click)="loadSessions()" class="btn btn-primary">
+          🔄 Refresh Sessions
+        </button>
+        <button 
+          (click)="toggleActiveFilter()" 
+          class="btn btn-outline"
+          [class.active]="showActiveOnly"
+        >
+          {{ showActiveOnly ? '👁️ Show All' : '✨ Active Only' }}
+        </button>
+      </div>
+      <div class="table-info">
+        <span>{{sessions.length}} session(s) loaded</span>
+      </div>
+    </div>
+
+    <!-- Loading State -->
+    <div *ngIf="isLoading" class="loading-container">
+      <div class="loading-spinner"></div>
+      <p>Loading chat sessions...</p>
+    </div>
+
+    <!-- Sessions Table -->
+    <div *ngIf="!isLoading" class="table-container">
+      <table class="sessions-table">
+        <thead>
+          <tr>
+            <th>Session</th>
+            <th>User</th>
+            <th>Status</th>
+            <th>Messages</th>
+            <th>Created</th>
+            <th>Last Activity</th>
+            <th>Actions</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr *ngFor="let session of sessions" class="session-row">
+            <td class="session-col">
+              <div class="session-info">
+                <span class="session-id">{{session.session_id}}</span>
+                <small class="session-uuid">{{session.id}}</small>
+              </div>
+            </td>
+            <td class="user-col">
+              <span *ngIf="session.user_identifier; else noUser">
+                {{session.user_identifier}}
+              </span>
+              <ng-template #noUser>
+                <span class="no-user">Anonymous</span>
+              </ng-template>
+            </td>
+            <td class="status-col">
+              <span class="status-badge" [ngClass]="getSessionStatusClass(session.is_active)">
+                {{session.is_active ? 'Active' : 'Inactive'}}
+              </span>
+            </td>
+            <td class="messages-col">
+              <span class="message-count">{{session.message_count}}</span>
+            </td>
+            <td class="date-col">
+              {{formatDate(session.created_at)}}
+            </td>
+            <td class="date-col">
+              <span *ngIf="session.last_activity; else noActivity">
+                {{formatDate(session.last_activity)}}
+              </span>
+              <ng-template #noActivity>
+                <span class="no-activity">Never</span>
+              </ng-template>
+            </td>
+            <td class="actions-col">
+              <button 
+                (click)="viewSessionMessages(session)" 
+                class="btn btn-primary btn-sm"
+                [disabled]="session.message_count === 0"
+              >
+                💬 View Messages
+              </button>
+            </td>
+          </tr>
+        </tbody>
+      </table>
+
+      <!-- Empty State -->
+      <div *ngIf="sessions.length === 0" class="empty-state">
+        <div class="empty-icon">💬</div>
+        <h3>No Chat Sessions Found</h3>
+        <p>No chat conversations have been recorded yet</p>
+      </div>
+    </div>
+
+    <!-- Load More Button -->
+    <div *ngIf="sessions.length > 0" class="load-more-container">
+      <button (click)="loadMoreSessions()" class="btn btn-outline">
+        Load More Sessions
+      </button>
+    </div>
+  </div>
+
+  <!-- Session Detail View -->
+  <div *ngIf="currentView === 'session-detail'" class="session-detail-view">
+    <div class="session-detail-header">
+      <button (click)="showSessions()" class="btn btn-secondary">
+        ← Back to Sessions
+      </button>
+      <div class="session-detail-info">
+        <h3>Session: {{selectedSession?.session_id}}</h3>
+        <p *ngIf="selectedSession?.user_identifier">
+          User: {{selectedSession?.user_identifier}}
+        </p>
+        <p>Messages: {{selectedSession?.message_count}}</p>
+      </div>
+    </div>
+
+    <!-- Loading Messages -->
+    <div *ngIf="isLoadingMessages" class="loading-container">
+      <div class="loading-spinner"></div>
+      <p>Loading messages...</p>
+    </div>
+
+    <!-- Messages List -->
+    <div *ngIf="!isLoadingMessages" class="messages-list">
+      <div 
+        *ngFor="let message of sessionMessages" 
+        class="message-item"
+        [ngClass]="getMessageTypeClass(message.message_type)"
+      >
+        <div class="message-header">
+          <span class="message-type">{{message.message_type}}</span>
+          <span class="message-time">{{formatDate(message.created_at)}}</span>
+        </div>
+        <div class="message-content">
+          {{message.content}}
+        </div>
+        <div *ngIf="message.message_metadata && hasMetadata(message.message_metadata)" 
+             class="message-metadata">
+          <details>
+            <summary>Metadata</summary>
+            <pre>{{message.message_metadata | json}}</pre>
+          </details>
+        </div>
+      </div>
+
+      <!-- Empty Messages -->
+      <div *ngIf="sessionMessages.length === 0" class="empty-state">
+        <div class="empty-icon">💭</div>
+        <h3>No Messages Found</h3>
+        <p>This session has no recorded messages</p>
+      </div>
+    </div>
+
+    <!-- Load More Messages -->
+    <div *ngIf="sessionMessages.length > 0" class="load-more-container">
+      <button (click)="loadMoreMessages()" class="btn btn-outline">
+        Load More Messages
+      </button>
+    </div>
+  </div>
+
+  <!-- Search View -->
+  <div *ngIf="currentView === 'search'" class="search-view">
+    <!-- Search Form -->
+    <div class="search-form">
+      <div class="form-row">
+        <div class="form-group">
+          <label for="searchQuery">Search Query *</label>
+          <input 
+            type="text" 
+            id="searchQuery"
+            [(ngModel)]="searchQuery"
+            placeholder="Enter search terms..."
+            class="form-control"
+            (keyup.enter)="searchMessages()"
+          />
+        </div>
+        <div class="form-group">
+          <label for="messageType">Message Type</label>
+          <select 
+            id="messageType"
+            [(ngModel)]="searchMessageType"
+            class="form-control"
+          >
+            <option value="">All Types</option>
+            <option value="user">User Messages</option>
+            <option value="assistant">Assistant Messages</option>
+          </select>
+        </div>
+      </div>
+      <div class="form-row">
+        <div class="form-group">
+          <label for="sessionId">Session ID (Optional)</label>
+          <input 
+            type="text" 
+            id="sessionId"
+            [(ngModel)]="searchSessionId"
+            placeholder="Filter by session ID..."
+            class="form-control"
+          />
+        </div>
+        <div class="form-group">
+          <button 
+            (click)="searchMessages()" 
+            class="btn btn-primary"
+            [disabled]="!searchQuery.trim() || isLoadingSearch"
+          >
+            <span *ngIf="isLoadingSearch" class="loading-spinner"></span>
+            {{isLoadingSearch ? 'Searching...' : '🔍 Search Messages'}}
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Search Results -->
+    <div *ngIf="!isLoadingSearch && searchResults.length > 0" class="search-results">
+      <h3>Search Results ({{searchResults.length}})</h3>
+      <div class="messages-list">
+        <div 
+          *ngFor="let message of searchResults" 
+          class="message-item search-result"
+          [ngClass]="getMessageTypeClass(message.message_type)"
+        >
+          <div class="message-header">
+            <span class="message-type">{{message.message_type}}</span>
+            <span class="session-id">Session: {{message.session_id}}</span>
+            <span class="message-time">{{formatDate(message.created_at)}}</span>
+          </div>
+          <div class="message-content">
+            {{message.content}}
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- No Search Results -->
+    <div *ngIf="!isLoadingSearch && searchResults.length === 0 && searchQuery" class="empty-state">
+      <div class="empty-icon">🔍</div>
+      <h3>No Messages Found</h3>
+      <p>No messages match your search criteria</p>
+    </div>
+  </div>
+
+  <!-- Stats View -->
+  <div *ngIf="currentView === 'stats'" class="stats-view">
+    <div *ngIf="chatStats" class="stats-grid">
+      <div class="stat-card">
+        <div class="stat-icon">💬</div>
+        <div class="stat-content">
+          <h3>{{chatStats.total_sessions}}</h3>
+          <p>Total Sessions</p>
+        </div>
+      </div>
+      
+      <div class="stat-card">
+        <div class="stat-icon">✨</div>
+        <div class="stat-content">
+          <h3>{{chatStats.active_sessions}}</h3>
+          <p>Active Sessions</p>
+        </div>
+      </div>
+      
+      <div class="stat-card">
+        <div class="stat-icon">📝</div>
+        <div class="stat-content">
+          <h3>{{chatStats.total_messages}}</h3>
+          <p>Total Messages</p>
+        </div>
+      </div>
+      
+      <div class="stat-card">
+        <div class="stat-icon">👤</div>
+        <div class="stat-content">
+          <h3>{{chatStats.user_messages}}</h3>
+          <p>User Messages</p>
+        </div>
+      </div>
+      
+      <div class="stat-card">
+        <div class="stat-icon">🤖</div>
+        <div class="stat-content">
+          <h3>{{chatStats.assistant_messages}}</h3>
+          <p>Assistant Messages</p>
+        </div>
+      </div>
+      
+      <div class="stat-card">
+        <div class="stat-icon">🕒</div>
+        <div class="stat-content">
+          <h3>{{chatStats.recent_messages_24h}}</h3>
+          <p>Messages (24h)</p>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- API Information - Development Only -->
+  <div *ngIf="!isProduction" class="api-info">
+    <h3>Chat Messages API Status</h3>
+    <div class="route-status">
+      <div class="route available">✅ GET /api/v1/chat/admin/sessions - List chat sessions</div>
+      <div class="route available">✅ GET /api/v1/chat/admin/sessions/{{ '{' }}id{{ '}' }}/messages - Get session messages</div>
+      <div class="route available">✅ GET /api/v1/chat/admin/messages/search - Search messages</div>
+      <div class="route available">✅ GET /api/v1/chat/admin/stats - Get chat statistics</div>
+    </div>
+  </div>
+</div>

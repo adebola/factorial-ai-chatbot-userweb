@@ -1,0 +1,153 @@
+<div class="auth-container">
+  <div class="auth-card">
+    <div class="auth-header">
+      <h2>Create Account</h2>
+      <p class="subtitle">Join FactorialBot today</p>
+    </div>
+
+    <form (ngSubmit)="onSignup()" #signupForm="ngForm" class="auth-form">
+      <!-- Organization Name -->
+      <div class="form-group">
+        <label for="name">Organization Name *</label>
+        <input
+          type="text"
+          id="name"
+          name="name"
+          [(ngModel)]="signupData.name"
+          required
+          placeholder="Enter organization name"
+          class="form-control"
+          [disabled]="isLoading"
+          (input)="clearMessages()"
+        />
+      </div>
+
+      <!-- Domain -->
+      <div class="form-group">
+        <label for="domain">Domain *</label>
+        <input
+          type="text"
+          id="domain"
+          name="domain"
+          [(ngModel)]="signupData.domain"
+          required
+          placeholder="e.g., company.com"
+          class="form-control"
+          [disabled]="isLoading"
+          (input)="clearMessages()"
+        />
+      </div>
+
+      <!-- Username -->
+      <div class="form-group">
+        <label for="username">Username *</label>
+        <input
+          type="text"
+          id="username"
+          name="username"
+          [(ngModel)]="signupData.username"
+          required
+          placeholder="Choose a username"
+          class="form-control"
+          [disabled]="isLoading"
+          (input)="clearMessages()"
+        />
+      </div>
+
+      <!-- Email -->
+      <div class="form-group">
+        <label for="email">Email</label>
+        <input
+          type="email"
+          id="email"
+          name="email"
+          [(ngModel)]="signupData.email"
+          placeholder="your@email.com (optional)"
+          class="form-control"
+          [disabled]="isLoading"
+          (input)="clearMessages()"
+        />
+      </div>
+
+      <!-- Website URL -->
+      <div class="form-group">
+        <label for="website_url">Website URL</label>
+        <input
+          type="url"
+          id="website_url"
+          name="website_url"
+          [(ngModel)]="signupData.website_url"
+          placeholder="https://yourwebsite.com (optional)"
+          class="form-control"
+          [disabled]="isLoading"
+          (input)="clearMessages()"
+        />
+      </div>
+
+      <!-- Password -->
+      <div class="form-group">
+        <label for="password">Password *</label>
+        <input
+          type="password"
+          id="password"
+          name="password"
+          [(ngModel)]="signupData.password"
+          required
+          placeholder="Create a password (min 6 characters)"
+          class="form-control"
+          [disabled]="isLoading"
+          (input)="clearMessages()"
+        />
+      </div>
+
+      <!-- Confirm Password -->
+      <div class="form-group">
+        <label for="confirmPassword">Confirm Password *</label>
+        <input
+          type="password"
+          id="confirmPassword"
+          name="confirmPassword"
+          [(ngModel)]="confirmPassword"
+          required
+          placeholder="Confirm your password"
+          class="form-control"
+          [disabled]="isLoading"
+          (input)="clearMessages()"
+        />
+      </div>
+
+      <!-- Error Message -->
+      <div *ngIf="errorMessage" class="error-message">
+        <p>❌ {{errorMessage}}</p>
+      </div>
+
+      <!-- Success Message -->
+      <div *ngIf="successMessage" class="success-message">
+        <p>✅ {{successMessage}}</p>
+      </div>
+
+      <!-- Signup Button -->
+      <button
+        type="submit"
+        class="auth-btn"
+        [disabled]="isLoading || signupForm.invalid"
+      >
+        <span *ngIf="isLoading" class="loading-spinner"></span>
+        {{isLoading ? 'Creating Account...' : 'Create Account'}}
+      </button>
+    </form>
+
+    <!-- Login Link -->
+    <div class="auth-footer">
+      <p>Already have an account? <a routerLink="/login" class="auth-link">Sign in</a></p>
+    </div>
+  </div>
+
+  <!-- API Information -->
+  <div class="api-info">
+    <h3>Registration Info</h3>
+    <p><strong>Endpoint:</strong> POST {{ apiUrl }}/tenants/</p>
+    <p><strong>Service:</strong> FactorialBot Onboarding Service</p>
+    <p><strong>Method:</strong> Tenant Registration</p>
+  </div>
+</div>
