@@ -5,28 +5,37 @@ import { catchError, tap } from 'rxjs/operators';
 import { environment } from '../../environments/environment';
 import { AuthService } from './auth.service';
 
+// Updated interface to match authorization-server2 backend
 export interface TenantSettings {
   id?: string;
-  tenant_id: string;
-  primary_color: string;
-  secondary_color: string;
-  company_logo_url?: string;
-  hover_text: string;
-  welcome_message: string;
-  chat_window_title: string;
-  additional_settings?: Record<string, any>;
-  is_active?: boolean;
-  created_at?: string;
-  updated_at?: string;
+  tenantId: string;
+  primaryColor: string;
+  secondaryColor: string;
+  companyLogoUrl?: string;
+  hoverText: string;
+  welcomeMessage: string;
+  chatWindowTitle: string;
+  chatLogo?: ChatLogoInfo;
+  additionalSettings?: Record<string, any>;
+  isActive?: boolean;
+  createdAt?: string;
+  updatedAt?: string;
 }
 
+export interface ChatLogoInfo {
+  type: 'url' | 'initials';
+  url?: string;
+  initials?: string;
+}
+
+// Updated interface to match TenantSettingsRequest from backend
 export interface SettingsUpdate {
-  primary_color?: string;
-  secondary_color?: string;
-  hover_text?: string;
-  welcome_message?: string;
-  chat_window_title?: string;
-  additional_settings?: Record<string, any>;
+  primaryColor?: string;
+  secondaryColor?: string;
+  hoverText?: string;
+  welcomeMessage?: string;
+  chatWindowTitle?: string;
+  additionalSettings?: Record<string, any>;
 }
 
 export interface LogoUploadResponse {
@@ -119,7 +128,7 @@ export class SettingsService {
     formData.append('file', file);
 
     return this.http.post<LogoUploadResponse>(
-      `${this.baseUrl}/tenants/${tenantId}/settings/logo`,
+      `${this.baseUrl}/settings-logo/upload`,
       formData
     ).pipe(
       tap(response => {
@@ -135,7 +144,7 @@ export class SettingsService {
   deleteLogo(): Observable<ApiResponse> {
     const tenantId = this.getCurrentTenantId();
     return this.http.delete<ApiResponse>(
-      `${this.baseUrl}/tenants/${tenantId}/settings/logo`
+      `${this.baseUrl}/settings-logo`
     ).pipe(
       tap(response => {
         console.log('✅ Logo deleted successfully:', response);
@@ -150,7 +159,7 @@ export class SettingsService {
   getLogoInfo(): Observable<LogoInfo> {
     const tenantId = this.getCurrentTenantId();
     return this.http.get<LogoInfo>(
-      `${this.baseUrl}/tenants/${tenantId}/settings/logo`
+      `${this.baseUrl}/settings-logo`
     ).pipe(
       tap(logoInfo => {
         console.log('✅ Logo info retrieved successfully:', logoInfo);
@@ -169,12 +178,12 @@ export class SettingsService {
 
   getDefaultSettings(): Partial<TenantSettings> {
     return {
-      primary_color: '#5D3EC1',
-      secondary_color: '#C15D3E',
-      hover_text: 'Chat with us!',
-      welcome_message: 'Hello! How can I help you today?',
-      chat_window_title: 'Chat Support',
-      additional_settings: {}
+      primaryColor: '#5D3EC1',
+      secondaryColor: '#C15D3E',
+      hoverText: 'Chat with us!',
+      welcomeMessage: 'Hello! How can I help you today?',
+      chatWindowTitle: 'Chat Support',
+      additionalSettings: {}
     };
   }
 }

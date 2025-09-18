@@ -4,19 +4,36 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## Project Overview
 
-This is an Angular 19 application using standalone components and the new application builder. The project uses TypeScript with strict mode enabled and SCSS for styling.
+**ChatCraft** is a production-grade Angular 19 application providing an intelligent conversational AI platform with document ingestion and multi-tenant support. The application uses standalone components, OAuth2 authentication via Spring Authorization Server, and integrates with a microservices backend architecture.
 
-## Key Architecture Features
+## Application Architecture
 
-- **Standalone Components**: Uses Angular's standalone component architecture (no NgModules)
-- **Application Bootstrap**: Uses `bootstrapApplication()` in `src/main.ts` with configuration from `src/app/app.config.ts`
-- **Routing**: Router configuration is in `src/app/app.routes.ts` (currently empty)
-- **Styling**: Uses SCSS with global styles in `src/styles.scss`
-- **TypeScript Configuration**: Strict mode enabled with Angular-specific compiler options
+### Frontend (Angular 19)
+- **Framework**: Angular 19 with standalone components architecture
+- **Authentication**: OAuth2 Authorization Code flow with PKCE via Spring Authorization Server
+- **Styling**: SCSS with responsive design and ChatCraft branding
+- **State Management**: RxJS with BehaviorSubject for user state
+- **HTTP Client**: Angular HttpClient with authentication interceptor
+- **Routing**: Feature-based routing with auth guards
 
-## Development Commands
+### Key Features
+- **Multi-Tenant Authentication**: OAuth2-based tenant isolation
+- **Document Management**: Upload and process PDF, DOCX, TXT files
+- **Website Ingestion**: Crawl and index website content
+- **Real-time Chat**: WebSocket-based AI conversations
+- **Settings Management**: Tenant customization and branding
+- **Plans & Subscriptions**: Tiered service offerings
 
-### Start Development Server
+## Development Environment
+
+### Prerequisites
+- Node.js 18+ and npm
+- Angular CLI 19+
+- Backend services running (see Backend Integration section)
+
+### Development Commands
+
+#### Start Development Server
 ```bash
 npm start
 # or
@@ -24,15 +41,15 @@ ng serve
 ```
 Runs on `http://localhost:4200/` with automatic reload
 
-### Build Project
+#### Build for Production
 ```bash
 npm run build
 # or 
-ng build
+ng build --configuration production
 ```
-Outputs to `dist/test-project/` directory
+Outputs to `dist/chatcraft/` directory
 
-### Run Tests
+#### Run Tests
 ```bash
 npm test
 # or
@@ -40,141 +57,195 @@ ng test
 ```
 Uses Karma test runner with Jasmine framework
 
-### Watch Mode for Development
+#### Build Analysis
 ```bash
-npm run watch
-# or
-ng build --watch --configuration development
+npm run build -- --source-map
+npx webpack-bundle-analyzer dist/chatcraft/main.*.js
 ```
 
-### Generate Components/Services
+#### Code Quality
 ```bash
-ng generate component component-name
-ng generate service service-name
-ng generate --help  # for all available schematics
+ng lint                    # ESLint analysis
+npm run build -- --stats-json  # Build statistics
 ```
 
 ## Project Structure
 
-- `src/app/` - Main application code with standalone components
-- `src/app/app.component.*` - Root component files
-- `src/app/app.config.ts` - Application configuration (providers, etc.)
-- `src/app/app.routes.ts` - Routing configuration
-- `src/main.ts` - Application entry point
-- `public/` - Static assets
-- TypeScript configurations: `tsconfig.json`, `tsconfig.app.json`, `tsconfig.spec.json`
-
-## Key Configuration Details
-
-- Angular CLI version: 19.0.0
-- Component prefix: `app`
-- Default style extension: `.scss`
-- Test framework: Jasmine with Karma
-- Build output: `dist/test-project`
-- Bundle budgets: 500kB warning, 1MB error for initial bundle
-
-## Backend Reference Projects
-
-This Angular test project is designed to integrate with the FactorialBot backend services through a Spring Cloud Gateway. The backend services are located at:
-`~/Documents/Dropbox/ProjectsMacBook/FactorialSystems/Projects/factorialbot/dev/backend/`
-
-### API Gateway Integration
-
-All API calls now go through the Spring Cloud Gateway service which routes requests to appropriate microservices:
-
-**Development Environment:**
-- Gateway URL: `http://localhost:8080`
-- All API calls: `http://localhost:8080/api/v1/*`
-- WebSocket chat: `ws://localhost:8080/api/v1/chat`
-
-**Production Environment:**
-- Gateway URL: `https://gateway.factorialbot.com`
-- All API calls: `https://gateway.factorialbot.com/api/v1/*`
-- WebSocket chat: `wss://gateway.factorialbot.com/api/v1/chat`
-
-### Backend Services Architecture
-
-The FactorialBot backend consists of two microservices:
-
-#### 1. Chat Service (Port 8000)
-**Location**: `chat-service/`
-**Purpose**: Real-time chat with AI responses via WebSockets
-
-**Key Endpoints**:
-- `GET /` - Health check
-- `GET /health` - Service health status  
-- `WS /api/v1/ws/chat?api_key={api_key}&user_identifier={user_id}` - WebSocket chat endpoint
-
-**WebSocket Message Format**:
-```json
-{"message": "What services do you offer?"}
+```
+src/
+├── app/
+│   ├── auth/              # Authentication components (login, signup, callback)
+│   ├── dashboard/         # Main dashboard view
+│   ├── documents/         # Document management
+│   ├── messages/          # Chat interface
+│   ├── plans/            # Subscription plans
+│   ├── settings/         # Tenant settings
+│   ├── shared/           # Shared components (side-menu, etc.)
+│   ├── guards/           # Route guards
+│   ├── interceptors/     # HTTP interceptors
+│   ├── services/         # Business logic services
+│   ├── website-ingestion/ # Website crawling interface
+│   ├── app.component.*   # Root component
+│   ├── app.config.ts     # Application providers
+│   └── app.routes.ts     # Route configuration
+├── environments/         # Environment configurations
+├── assets/              # Static assets
+└── public/              # Public files (logos, favicon)
 ```
 
-#### 2. Onboarding Service (Port 8001)
-**Location**: `onboarding-service/`  
-**Purpose**: Tenant management and document/website ingestion
+## Configuration
 
-**Key Endpoints**:
+### Environment Configuration
 
-**Tenant Management**:
-- `POST /api/v1/tenants/` - Create new tenant
-- `GET /api/v1/tenants/{tenant_id}` - Get tenant details
-- `PUT /api/v1/tenants/{tenant_id}/config` - Update tenant configuration
-
-**Document Management**:
-- `POST /api/v1/documents/upload` - Upload document (PDF, DOCX, TXT)
-- `GET /api/v1/documents/?api_key={api_key}` - List tenant documents
-
-**Website Ingestion**:
-- `POST /api/v1/websites/ingest` - Start website scraping
-- `GET /api/v1/ingestions/{ingestion_id}/status?api_key={api_key}` - Check ingestion status
-- `GET /api/v1/ingestions/?api_key={api_key}` - List tenant ingestions
-
-### Authentication
-- All endpoints require API key authentication via `api_key` parameter
-- API keys are tenant-specific and obtained during tenant creation
-
-#### 3. Gateway Service (Port 8080)
-**Location**: `gateway-service/`  
-**Purpose**: Spring Cloud Gateway for routing and load balancing
-
-**Routes configured:**
-- `/api/v1/documents/**` → Onboarding Service
-- `/api/v1/tenants/**` → Onboarding Service
-- `/api/v1/websites/**` → Onboarding Service
-- `/api/v1/ingestions/**` → Onboarding Service
-- `/api/v1/auth/**` → Onboarding Service
-- `/api/v1/plans/**` → Onboarding Service
-- `/api/v1/subscriptions/**` → Onboarding Service
-- `/api/v1/payments/**` → Onboarding Service
-- `/api/v1/widgets/**` → Onboarding Service
-- `/api/v1/chat/**` → Chat Service
-- `/api/v1/vectors/**` → Chat Service
-
-### Running Backend Services
-```bash
-# Navigate to backend directory
-cd ~/Documents/Dropbox/ProjectsMacBook/FactorialSystems/Projects/factorialbot/dev/backend/
-
-# Start infrastructure
-docker-compose up -d postgres redis minio
-
-# Start services with gateway
-./scripts/start-dev.sh
-# OR manually:
-# Terminal 1: cd chat-service && uvicorn app.main:app --host 0.0.0.0 --port 8000 --reload
-# Terminal 2: cd onboarding-service && uvicorn app.main:app --host 0.0.0.0 --port 8001 --reload
-# Terminal 3: cd gateway-service && ./mvnw spring-boot:run
+#### Development (`environment.ts`)
+```typescript
+export const environment = {
+  production: false,
+  apiUrl: 'http://localhost:8080/api/v1',
+  chatServiceUrl: 'ws://localhost:8080/api/v1/chat',
+  gatewayUrl: 'http://localhost:8080',
+  authServiceUrl: 'http://localhost:9002/auth',
+  clientId: 'webclient',
+  clientSecret: 'webclient-secret',
+  redirectUri: 'http://localhost:4200/callback',
+  scope: 'openid profile read write',
+  appName: 'ChatCraft'
+};
 ```
 
-### Test Integration Workflow
-1. Create a tenant via onboarding service
-2. Upload documents or ingest websites for the tenant  
-3. Use the API key to connect via WebSocket to chat service
-4. Test chat interactions with the ingested knowledge base
+#### Production (`environment.prod.ts`)
+```typescript
+export const environment = {
+  production: true,
+  apiUrl: 'https://api.chatcraft.com/api/v1',
+  chatServiceUrl: 'wss://api.chatcraft.com/api/v1/chat',
+  gatewayUrl: 'https://api.chatcraft.com',
+  authServiceUrl: 'https://auth.chatcraft.com/auth',
+  // OAuth2 configuration managed by deployment
+  appName: 'ChatCraft'
+};
+```
 
-### Multi-Tenancy Notes
-- Each tenant has isolated data and vector stores
-- API keys provide tenant-scoped access
-- WebSocket connections are tenant-specific
-- All data processing maintains strict tenant isolation
+## Authentication Architecture
+
+### OAuth2 Flow with Spring Authorization Server
+- **Authorization Server**: Spring Authorization Server on port 9002
+- **Client Type**: Public client with PKCE (Proof Key for Code Exchange)
+- **Grant Type**: Authorization Code flow
+- **Token Storage**: JWT tokens in localStorage with automatic refresh
+- **Multi-tenancy**: Tenant-scoped authentication and authorization
+
+### Authentication Flow
+1. User accesses protected route → Auth Guard redirects to `/login`
+2. Login component redirects to Spring Authorization Server
+3. User authenticates on OAuth2 server
+4. Authorization server redirects back to `/callback` with auth code
+5. Angular app exchanges auth code for JWT tokens
+6. Tokens stored in localStorage, user info extracted from JWT
+7. Auth interceptor adds Bearer token to all API requests
+
+## Backend Integration
+
+### Backend Server Location
+**Backend Server Path**: `~/Documents/Dropbox/ProjectsMacBook/FactorialSystems/Projects/factorialbot/dev/backend`
+
+### API Gateway Architecture
+All API requests go through the Spring Cloud Gateway which routes to appropriate microservices:
+
+**Development URLs:**
+- **API Gateway**: `http://localhost:8080/api/v1/*`
+- **OAuth2 Server**: `http://localhost:9002/auth/*`
+- **WebSocket Chat**: `ws://localhost:8080/api/v1/chat`
+
+**Production URLs:**
+- **API Gateway**: `https://api.chatcraft.com/api/v1/*`
+- **OAuth2 Server**: `https://auth.chatcraft.com/auth/*`
+- **WebSocket Chat**: `wss://api.chatcraft.com/api/v1/chat`
+
+### Microservices
+1. **Chat Service** - Real-time AI conversations via WebSocket
+2. **Onboarding Service** - Tenant management, documents, website ingestion
+3. **Gateway Service** - Request routing and load balancing
+4. **Authorization Service** - OAuth2 authentication and authorization (includes tenant settings management migrated from onboarding service)
+
+### Key API Endpoints
+
+#### Authentication
+- `POST /auth/oauth2/token` - Token exchange
+- `GET /auth/oauth2/userinfo` - User information
+- `POST /auth/register` - Tenant registration
+
+#### Documents
+- `GET /api/v1/documents/` - List tenant documents
+- `POST /api/v1/documents/upload` - Upload document
+- `DELETE /api/v1/documents/{id}` - Delete document
+
+#### Chat
+- `WS /api/v1/chat` - WebSocket chat endpoint
+
+#### Tenants
+- `GET /api/v1/tenants/{id}/settings` - Get tenant settings
+- `PUT /api/v1/tenants/{id}/settings` - Update tenant settings
+
+## Security
+
+### Authentication & Authorization
+- **JWT Tokens**: Stateless authentication with tenant claims
+- **Auth Interceptor**: Automatic Bearer token injection
+- **Route Guards**: Protect authenticated routes
+- **CORS Configuration**: Proper cross-origin handling
+- **Token Refresh**: Automatic token renewal
+
+### Multi-Tenancy
+- **Tenant Isolation**: Data segregation per tenant
+- **Scoped Permissions**: Role-based access control
+- **API Key Management**: Service-to-service authentication
+
+## Deployment
+
+### Build Configuration
+- **Angular CLI**: Production-optimized builds
+- **Bundle Analysis**: Size optimization and tree shaking
+- **Source Maps**: Debug support in production
+- **Service Worker**: Optional PWA capabilities
+
+### Production Checklist
+- [ ] Environment variables configured
+- [ ] OAuth2 client registered
+- [ ] CORS policies updated
+- [ ] SSL certificates in place
+- [ ] CDN configuration
+- [ ] Error monitoring setup
+- [ ] Performance monitoring
+
+## Monitoring & Analytics
+
+### Error Tracking
+- **Frontend Errors**: JavaScript error reporting
+- **API Failures**: HTTP error logging
+- **Authentication Issues**: OAuth2 flow monitoring
+
+### Performance Metrics
+- **Core Web Vitals**: Loading, interactivity, visual stability
+- **Bundle Size**: Track asset optimization
+- **API Response Times**: Monitor backend performance
+
+## Contributing
+
+### Development Workflow
+1. Feature branches from `main`
+2. Local development with backend services
+3. Testing with OAuth2 flow
+4. Code review and testing
+5. Deployment to staging/production
+
+### Code Standards
+- **TypeScript Strict Mode**: Type safety enforcement
+- **ESLint Configuration**: Code quality rules
+- **SCSS Guidelines**: Consistent styling patterns
+- **Component Architecture**: Standalone components preferred
+
+---
+
+**ChatCraft** - Intelligent Conversational AI Platform
+*Production deployment with enterprise-grade architecture*

@@ -4,7 +4,12 @@ export const environment = {
   chatServiceUrl: 'wss://ai.factorialsystems.io/api/v1/chat',
   gatewayUrl: 'https://ai.factorialsystems.io',
   useGateway: true,
-  appName: 'FactorialBot',
+  authServiceUrl: 'https://ai.factorialsystems.io/auth',
+  clientId: 'webclient',
+  clientSecret: 'webclient-secret',
+  redirectUri: 'https://app.chatcraft.cc/callback',
+  scope: 'openid profile read write',
+  appName: 'ChatCraft',
   version: '1.0.0',
   enableLogging: false,
   maxFileSize: 10485760, // 10MB in bytes

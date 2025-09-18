@@ -2,10 +2,10 @@
 <div class="dashboard-header">
   <div class="header-content">
     <div class="header-info">
-      <img src="/factorialbot_logo.svg" alt="FactorialBot" class="logo">
+      <img src="/chatcraft-logo2.png" alt="ChatCraft" class="logo">
       <div class="title-section">
         <h1>Dashboard</h1>
-        <p class="subtitle">Overview of your FactorialBot account</p>
+        <p class="subtitle">Overview of your ChatCraft account</p>
       </div>
     </div>
     <button class="refresh-btn" (click)="refresh()" [disabled]="loading" title="Refresh Dashboard">
@@ -49,13 +49,13 @@
             {{ getCurrentPlanDisplay() }}
           </span>
           <div class="status-info">
-            <span class="status" [class.active]="dashboardData.tenant.is_active" [class.inactive]="!dashboardData.tenant.is_active">
-              <span *ngIf="dashboardData.tenant.is_active" class="material-icons status-icon">check_circle</span>
-              <span *ngIf="!dashboardData.tenant.is_active" class="material-icons status-icon">cancel</span>
-              {{ dashboardData.tenant.is_active ? 'Active' : 'Inactive' }}
+            <span class="status" [class.active]="dashboardData.tenant.isActive" [class.inactive]="!dashboardData.tenant.isActive">
+              <span *ngIf="dashboardData.tenant.isActive" class="material-icons status-icon">check_circle</span>
+              <span *ngIf="!dashboardData.tenant.isActive" class="material-icons status-icon">cancel</span>
+              {{ dashboardData.tenant.isActive ? 'Active' : 'Inactive' }}
             </span>
             <span class="created-date">
-              Member since {{ formatDate(dashboardData.tenant.created_at) }}
+              Member since {{ formatDate(dashboardData.tenant.createdAt) }}
             </span>
           </div>
         </div>
@@ -131,10 +131,10 @@
     <div class="card-body">
       <div class="user-info">
         <div class="user-avatar">
-          <span class="avatar-text">{{ currentUser.username?.charAt(0).toUpperCase() }}</span>
+          <span class="avatar-text">{{ (currentUser.full_name || currentUser.email)?.charAt(0).toUpperCase() }}</span>
         </div>
         <div class="user-details">
-          <h3>{{ currentUser.username }}</h3>
+          <h3>{{ currentUser.full_name || currentUser.email }}</h3>
           <p class="email" *ngIf="currentUser.email">{{ currentUser.email }}</p>
           <p class="tenant-id">Tenant ID: {{ currentUser.tenant_id }}</p>
           <p class="role">Role: {{ currentUser.role || 'User' }}</p>
@@ -163,6 +163,127 @@
           <div class="activity-value">
             <span class="status-badge active">Active</span>
           </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Usage Statistics Card -->
+  <div class="info-card usage-card" *ngIf="dashboardData?.currentUsage">
+    <div class="card-header">
+      <h2><span class="material-icons">data_usage</span> Usage Statistics</h2>
+      <span class="usage-period" *ngIf="getBillingPeriod()">
+        {{ getBillingPeriod() }}
+      </span>
+    </div>
+    <div class="card-body">
+      <div class="usage-items" *ngIf="dashboardData?.currentUsage">
+        <!-- Documents Usage -->
+        <div class="usage-item" *ngIf="dashboardData?.currentUsage?.documents">
+          <div class="usage-header">
+            <span class="usage-label">
+              <span class="material-icons">description</span>
+              Documents
+            </span>
+            <span class="usage-count">
+              {{ dashboardData?.currentUsage?.documents?.used }} / {{ dashboardData?.currentUsage?.documents?.limit }}
+            </span>
+          </div>
+          <div class="progress-bar" [attr.data-percentage]="dashboardData?.currentUsage?.documents?.percentage">
+            <div class="progress-fill" 
+                 [style.width.%]="dashboardData?.currentUsage?.documents?.percentage"
+                 [class.warning]="(dashboardData?.currentUsage?.documents?.percentage || 0) >= 80"
+                 [class.danger]="(dashboardData?.currentUsage?.documents?.percentage || 0) >= 100">
+            </div>
+          </div>
+          <div class="usage-info">
+            <span class="percentage">{{ dashboardData?.currentUsage?.documents?.percentage }}% used</span>
+            <span class="remaining">{{ dashboardData?.currentUsage?.documents?.remaining }} remaining</span>
+          </div>
+        </div>
+
+        <!-- Websites Usage -->
+        <div class="usage-item" *ngIf="dashboardData?.currentUsage?.websites">
+          <div class="usage-header">
+            <span class="usage-label">
+              <span class="material-icons">web</span>
+              Websites
+            </span>
+            <span class="usage-count">
+              {{ dashboardData?.currentUsage?.websites?.used }} / {{ dashboardData?.currentUsage?.websites?.limit }}
+            </span>
+          </div>
+          <div class="progress-bar">
+            <div class="progress-fill" 
+                 [style.width.%]="dashboardData?.currentUsage?.websites?.percentage"
+                 [class.warning]="(dashboardData?.currentUsage?.websites?.percentage || 0) >= 80"
+                 [class.danger]="(dashboardData?.currentUsage?.websites?.percentage || 0) >= 100">
+            </div>
+          </div>
+          <div class="usage-info">
+            <span class="percentage">{{ dashboardData?.currentUsage?.websites?.percentage }}% used</span>
+            <span class="remaining">{{ dashboardData?.currentUsage?.websites?.remaining }} remaining</span>
+          </div>
+        </div>
+
+        <!-- Daily Chats Usage -->
+        <div class="usage-item" *ngIf="dashboardData?.currentUsage?.daily_chats">
+          <div class="usage-header">
+            <span class="usage-label">
+              <span class="material-icons">chat</span>
+              Daily Chats
+            </span>
+            <span class="usage-count">
+              {{ dashboardData?.currentUsage?.daily_chats?.used }} / {{ dashboardData?.currentUsage?.daily_chats?.limit }}
+            </span>
+          </div>
+          <div class="progress-bar">
+            <div class="progress-fill" 
+                 [style.width.%]="dashboardData?.currentUsage?.daily_chats?.percentage"
+                 [class.warning]="(dashboardData?.currentUsage?.daily_chats?.percentage || 0) >= 80"
+                 [class.danger]="(dashboardData?.currentUsage?.daily_chats?.percentage || 0) >= 100">
+            </div>
+          </div>
+          <div class="usage-info">
+            <span class="percentage">{{ dashboardData?.currentUsage?.daily_chats?.percentage }}% used</span>
+            <span class="remaining" *ngIf="dashboardData?.currentUsage?.daily_chats?.resets_at">
+              Resets {{ getResetTime(dashboardData?.currentUsage?.daily_chats?.resets_at!) }}
+            </span>
+          </div>
+        </div>
+
+        <!-- Monthly Chats Usage -->
+        <div class="usage-item" *ngIf="dashboardData?.currentUsage?.monthly_chats">
+          <div class="usage-header">
+            <span class="usage-label">
+              <span class="material-icons">smart_toy</span>
+              Monthly Chats
+            </span>
+            <span class="usage-count">
+              {{ dashboardData?.currentUsage?.monthly_chats?.used }} / {{ dashboardData?.currentUsage?.monthly_chats?.limit }}
+            </span>
+          </div>
+          <div class="progress-bar">
+            <div class="progress-fill" 
+                 [style.width.%]="dashboardData?.currentUsage?.monthly_chats?.percentage"
+                 [class.warning]="(dashboardData?.currentUsage?.monthly_chats?.percentage || 0) >= 80"
+                 [class.danger]="(dashboardData?.currentUsage?.monthly_chats?.percentage || 0) >= 100">
+            </div>
+          </div>
+          <div class="usage-info">
+            <span class="percentage">{{ dashboardData?.currentUsage?.monthly_chats?.percentage }}% used</span>
+            <span class="remaining" *ngIf="dashboardData?.currentUsage?.monthly_chats?.resets_at">
+              Resets {{ getResetTime(dashboardData?.currentUsage?.monthly_chats?.resets_at!) }}
+            </span>
+          </div>
+        </div>
+      </div>
+
+      <!-- Usage Warnings -->
+      <div class="usage-warnings" *ngIf="getUsageWarnings().length > 0">
+        <div class="warning-message" *ngFor="let warning of getUsageWarnings()">
+          <span class="material-icons">warning</span>
+          {{ warning }}
         </div>
       </div>
     </div>

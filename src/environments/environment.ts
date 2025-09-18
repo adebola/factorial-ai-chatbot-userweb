@@ -4,7 +4,13 @@ export const environment = {
   chatServiceUrl: 'ws://localhost:8080/api/v1/chat',
   gatewayUrl: 'http://localhost:8080',
   useGateway: true,
-  appName: 'FactorialBot',
+  clientId: 'webclient',
+  clientSecret: 'webclient-secret',
+  redirectUri: 'http://localhost:4200/callback',
+  scope: 'openid profile read write',
+  authServiceUrl: 'http://localhost:9002/auth',
+
+  appName: 'ChatCraft',
   version: '1.0.0',
   enableLogging: true,
   maxFileSize: 10485760, // 10MB in bytes

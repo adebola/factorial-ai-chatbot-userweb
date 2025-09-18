@@ -52,8 +52,11 @@ $transition: all 0.3s ease;
     gap: 1rem;
 
     .logo {
-      width: 72px;
-      height: 72px;
+      max-width: 150px;
+      max-height: 100px;
+      width: auto;
+      height: auto;
+      object-fit: contain;
       background: $white;
       border-radius: 12px;
       padding: 8px;
@@ -114,6 +117,152 @@ $transition: all 0.3s ease;
 
       &.spinning {
         animation: spin 1s linear infinite;
+      }
+    }
+  }
+}
+
+// Usage Statistics Card
+.usage-card {
+  .card-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    
+    .usage-period {
+      font-size: 0.875rem;
+      color: $medium-gray;
+      font-weight: normal;
+    }
+  }
+  
+  .usage-items {
+    display: flex;
+    flex-direction: column;
+    gap: 1.5rem;
+  }
+  
+  .usage-item {
+    padding-bottom: 1.5rem;
+    border-bottom: 1px solid rgba(0, 0, 0, 0.05);
+    
+    &:last-child {
+      padding-bottom: 0;
+      border-bottom: none;
+    }
+  }
+  
+  .usage-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 0.75rem;
+  }
+  
+  .usage-label {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    font-weight: 500;
+    color: $dark-gray;
+    
+    .material-icons {
+      font-size: 1.25rem;
+      color: $primary-color;
+    }
+  }
+  
+  .usage-count {
+    font-weight: 600;
+    color: $dark-gray;
+    font-size: 0.95rem;
+  }
+  
+  .progress-bar {
+    width: 100%;
+    height: 8px;
+    background: #e9ecef;
+    border-radius: 4px;
+    overflow: hidden;
+    margin-bottom: 0.5rem;
+    position: relative;
+  }
+  
+  .progress-fill {
+    height: 100%;
+    background: linear-gradient(90deg, $tertiary-color, darken($tertiary-color, 10%));
+    border-radius: 4px;
+    transition: width 0.3s ease, background 0.3s ease;
+    position: relative;
+    
+    &::after {
+      content: '';
+      position: absolute;
+      top: 0;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      background: linear-gradient(90deg, 
+        rgba(255, 255, 255, 0.2) 0%, 
+        rgba(255, 255, 255, 0) 50%, 
+        rgba(255, 255, 255, 0.2) 100%);
+      animation: shimmer 2s infinite;
+    }
+    
+    &.warning {
+      background: linear-gradient(90deg, #f39c12, #e67e22);
+    }
+    
+    &.danger {
+      background: linear-gradient(90deg, #e74c3c, #c0392b);
+    }
+  }
+  
+  @keyframes shimmer {
+    0% { transform: translateX(-100%); }
+    100% { transform: translateX(100%); }
+  }
+  
+  .usage-info {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    font-size: 0.85rem;
+    
+    .percentage {
+      color: $medium-gray;
+      font-weight: 500;
+    }
+    
+    .remaining {
+      color: $primary-color;
+      font-weight: 500;
+    }
+  }
+  
+  .usage-warnings {
+    margin-top: 1.5rem;
+    padding-top: 1.5rem;
+    border-top: 1px solid rgba(0, 0, 0, 0.05);
+    
+    .warning-message {
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+      padding: 0.75rem 1rem;
+      background: #fff3cd;
+      border: 1px solid #ffc107;
+      border-radius: 6px;
+      color: #856404;
+      margin-bottom: 0.5rem;
+      
+      &:last-child {
+        margin-bottom: 0;
+      }
+      
+      .material-icons {
+        font-size: 1.25rem;
+        color: #ffc107;
       }
     }
   }

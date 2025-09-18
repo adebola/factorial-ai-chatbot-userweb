@@ -22,7 +22,7 @@ export class DocumentsComponent implements OnInit {
   currentUser: any = null;
   failedDocumentsCount = 0;
   isProduction = environment.production;
-  
+
 
   constructor(
     private documentsService: DocumentsService,
@@ -39,26 +39,26 @@ export class DocumentsComponent implements OnInit {
   loadDocuments(): void {
     this.isLoading = true;
     this.errorMessage = '';
-    
+
     this.documentsService.getDocuments().subscribe({
       next: (response: DocumentsListResponse) => {
         // Store all documents for reference
         this.allDocuments = response.documents;
-        
+
         // Filter out failed documents - only show completed and processing documents
-        this.documents = response.documents.filter(doc => 
+        this.documents = response.documents.filter(doc =>
           doc.status !== 'failed' && doc.status !== 'error'
         );
-        
+
         // Count failed documents for informational purposes
-        this.failedDocumentsCount = response.documents.filter(doc => 
+        this.failedDocumentsCount = response.documents.filter(doc =>
           doc.status === 'failed' || doc.status === 'error'
         ).length;
-        
+
         // Log failed documents information if any exist
         if (this.failedDocumentsCount > 0) {
           console.info(`${this.failedDocumentsCount} failed document(s) hidden from view`);
-          const failedDocs = response.documents.filter(doc => 
+          const failedDocs = response.documents.filter(doc =>
             doc.status === 'failed' || doc.status === 'error'
           );
           console.info('Failed documents:', failedDocs.map(doc => ({
@@ -67,7 +67,7 @@ export class DocumentsComponent implements OnInit {
             created_at: doc.created_at
           })));
         }
-        
+
         this.isLoading = false;
         this.selectedDocuments.clear();
       },
@@ -114,7 +114,7 @@ export class DocumentsComponent implements OnInit {
     }
 
     const documentIds = Array.from(this.selectedDocuments);
-    
+
     this.documentsService.deleteMultipleDocuments(documentIds).subscribe({
       next: (response) => {
         this.successMessage = `Documents deleted successfully: ${response.deleted_count}/${response.total_requested}`;
@@ -151,14 +151,14 @@ export class DocumentsComponent implements OnInit {
       next: (blob) => {
         const document = this.documents.find(d => d.id === documentId);
         const filename = document?.filename || 'document';
-        
+
         const url = window.URL.createObjectURL(blob);
         const a = window.document.createElement('a');
         a.href = url;
         a.download = filename;
         a.click();
         window.URL.revokeObjectURL(url);
-        
+
         this.successMessage = `Document downloaded: ${filename}`;
         setTimeout(() => this.successMessage = '', 3000);
       },

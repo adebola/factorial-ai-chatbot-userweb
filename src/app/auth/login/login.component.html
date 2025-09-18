@@ -1,70 +1,49 @@
 <div class="auth-container">
   <div class="auth-card">
     <div class="auth-header">
+      <img src="/chatcraft-logo2.png" alt="ChatCraft" class="logo">
       <h2>Welcome Back</h2>
-      <p class="subtitle">Sign in to your account</p>
+      <p class="subtitle">Sign in to your ChatCraft account</p>
     </div>
 
-    <form (ngSubmit)="onLogin()" #loginForm="ngForm" class="auth-form">
-      <!-- Username Field -->
-      <div class="form-group">
-        <label for="username">Username</label>
-        <input
-          type="text"
-          id="username"
-          name="username"
-          [(ngModel)]="credentials.username"
-          required
-          placeholder="Enter your username"
-          class="form-control"
-          [disabled]="isLoading"
-          (input)="clearError()"
-        />
+    <!-- OAuth2 Error State -->
+    <div *ngIf="hasOAuth2Error" class="oauth-error-message">
+      <div class="error-icon">⚠️</div>
+      <h3>Authentication Failed</h3>
+      <p>{{oauthError}}</p>
+      <div class="error-actions">
+        <button (click)="retryLogin()" class="auth-btn primary">
+          <span class="material-icons">refresh</span>
+          Try Again
+        </button>
       </div>
+    </div>
 
-      <!-- Password Field -->
-      <div class="form-group">
-        <label for="password">Password</label>
-        <input
-          type="password"
-          id="password"
-          name="password"
-          [(ngModel)]="credentials.password"
-          required
-          placeholder="Enter your password"
-          class="form-control"
-          [disabled]="isLoading"
-          (input)="clearError()"
-        />
+    <!-- Manual Login State (from logout) -->
+    <div *ngIf="isFromLogout && !hasOAuth2Error && !isLoading" class="manual-login-section">
+      <div class="logout-message">
+        <p>✅ You have been successfully logged out.</p>
       </div>
-
-      <!-- Error Message -->
-      <div *ngIf="errorMessage" class="error-message">
-        <p>❌ {{errorMessage}}</p>
-      </div>
-
-      <!-- Login Button -->
-      <button
-        type="submit"
-        class="auth-btn"
-        [disabled]="!credentials.username || !credentials.password || isLoading || loginForm.invalid"
-      >
-        <span *ngIf="isLoading" class="loading-spinner"></span>
-        {{isLoading ? 'Signing In...' : 'Sign In'}}
+      <button (click)="initiateLogin()" class="auth-btn primary">
+        <span class="material-icons">login</span>
+        Sign In
       </button>
-    </form>
+    </div>
 
-    <!-- Signup Link -->
-    <div class="auth-footer">
-      <p>Don't have an account? <a routerLink="/signup" class="auth-link">Create one</a></p>
+    <!-- Loading State -->
+    <div *ngIf="isLoading" class="redirecting-section">
+      <div class="spinner"></div>
+      <h3>Signing In</h3>
+      <p class="message">Redirecting to authorization server...</p>
+    </div>
+
+    <!-- Auto-Redirecting State (normal access) -->
+    <div *ngIf="!hasOAuth2Error && !isFromLogout && !isLoading" class="redirecting-section">
+      <div class="spinner"></div>
+      <h3>Redirecting to Login</h3>
+      <p class="message">You will be redirected to the authorization server for authentication...</p>
+      <small class="submessage">If you are not redirected automatically, <button (click)="initiateLogin()" class="link-btn">click here</button></small>
     </div>
   </div>
 
-  <!-- API Information -->
-  <div class="api-info">
-    <h3>Authentication Info</h3>
-    <p><strong>Endpoint:</strong> POST {{ apiUrl }}/auth/login</p>
-    <p><strong>Service:</strong> FactorialBot Onboarding Service</p>
-    <p><strong>Method:</strong> JWT Bearer Token Authentication</p>
-  </div>
 </div>

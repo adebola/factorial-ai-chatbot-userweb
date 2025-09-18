@@ -2,6 +2,7 @@ import { Injectable } from '@angular/core';
 import { HttpClient, HttpHeaders } from '@angular/common/http';
 import { Observable } from 'rxjs';
 import { AuthService } from './auth.service';
+import { SettingsService, TenantSettings } from './settings.service';
 import { environment } from '../../environments/environment';
 
 export interface TenantInfo {
@@ -9,10 +10,9 @@ export interface TenantInfo {
   name: string;
   domain: string;
   website_url: string;
-  subscription_tier?: string;
-  plan_id?: string;
-  is_active: boolean;
-  created_at: string;
+  planId?: string;
+  isActive: boolean;
+  createdAt: string;
   config?: any;
   username: string;
   email: string;
@@ -104,9 +104,40 @@ export interface DashboardData {
   totalChats: number;
   totalResponses: number;
   currentPlan?: PlanDetails;
+  currentUsage?: UsageStatistics;
   widgetInfo?: WidgetInfo;
+  tenantSettings?: TenantSettings;
   lastActivityDate?: string;
   storageUsed?: string;
+}
+
+export interface UsageStatistics {
+  documents: {
+    used: number;
+    limit: number;
+    percentage: number;
+    remaining: number;
+  };
+  websites: {
+    used: number;
+    limit: number;
+    percentage: number;
+    remaining: number;
+  };
+  daily_chats: {
+    used: number;
+    limit: number;
+    percentage: number;
+    remaining: number;
+    resets_at?: string;
+  };
+  monthly_chats: {
+    used: number;
+    limit: number;
+    percentage: number;
+    remaining: number;
+    resets_at?: string;
+  };
 }
 
 @Injectable({
@@ -117,7 +148,8 @@ export class DashboardService {
 
   constructor(
     private http: HttpClient,
-    private authService: AuthService
+    private authService: AuthService,
+    private settingsService: SettingsService
   ) {}
 
   private getHttpHeaders(): HttpHeaders {
@@ -131,7 +163,7 @@ export class DashboardService {
   getTenantInfo(): Observable<TenantInfo> {
     const currentUser = this.authService.getCurrentUser();
     const tenantId = currentUser?.tenant_id;
-    
+
     if (!tenantId) {
       throw new Error('No tenant ID found for current user');
     }
@@ -173,13 +205,13 @@ export class DashboardService {
   getWidgetInfo(): Observable<WidgetInfo> {
     const currentUser = this.authService.getCurrentUser();
     const tenantId = currentUser?.tenant_id;
-    
+
     if (!tenantId) {
       throw new Error('No tenant ID found for current user');
     }
 
     return this.http.get<WidgetInfo>(
-      `${this.baseUrl}/tenants/${tenantId}/widget/status`,
+      `${this.baseUrl}/widget/status`,
       { headers: this.getHttpHeaders() }
     );
   }
@@ -187,13 +219,13 @@ export class DashboardService {
   generateWidget(): Observable<any> {
     const currentUser = this.authService.getCurrentUser();
     const tenantId = currentUser?.tenant_id;
-    
+
     if (!tenantId) {
       throw new Error('No tenant ID found for current user');
     }
 
     return this.http.get(
-      `${this.baseUrl}/tenants/${tenantId}/widget/generate`,
+      `${this.baseUrl}/widget/generate`,
       { headers: this.getHttpHeaders() }
     );
   }
@@ -201,7 +233,7 @@ export class DashboardService {
   downloadWidgetFile(fileType: 'javascript' | 'css' | 'demo' | 'guide' | 'all_files'): Observable<Blob> {
     const currentUser = this.authService.getCurrentUser();
     const tenantId = currentUser?.tenant_id;
-    
+
     if (!tenantId) {
       throw new Error('No tenant ID found for current user');
     }
@@ -214,7 +246,7 @@ export class DashboardService {
       all_files: 'download-all'
     };
 
-    const url = `${this.baseUrl}/tenants/${tenantId}/widget/${fileEndpoints[fileType]}`;
+    const url = `${this.baseUrl}/widget/${fileEndpoints[fileType]}`;
     return this.http.get(url, {
       headers: this.getHttpHeaders(),
       responseType: 'blob'
@@ -224,12 +256,12 @@ export class DashboardService {
   previewWidget(): Observable<any> {
     const currentUser = this.authService.getCurrentUser();
     const tenantId = currentUser?.tenant_id;
-    
+
     if (!tenantId) {
       throw new Error('No tenant ID found for current user');
     }
 
-    const url = `${this.baseUrl}/tenants/${tenantId}/widget/preview`;
+    const url = `${this.baseUrl}/widget/preview`;
     return this.http.get(url, {
       headers: this.getHttpHeaders(),
       responseType: 'text'
@@ -237,16 +269,17 @@ export class DashboardService {
   }
 
   // Plan management methods
-  getTenantCurrentPlan(): Observable<any> {
-    const currentUser = this.authService.getCurrentUser();
-    const tenantId = currentUser?.tenant_id;
-    
-    if (!tenantId) {
-      throw new Error('No tenant ID found for current user');
-    }
-
+  getPlanDetails(planId: string): Observable<any> {
     return this.http.get(
-      `${this.baseUrl}/tenants/${tenantId}/current-plan`,
+      `${this.baseUrl}/plans/${planId}`,
+      { headers: this.getHttpHeaders() }
+    );
+  }
+
+  // Get current usage statistics
+  getCurrentUsage(): Observable<any> {
+    return this.http.get(
+      `${this.baseUrl}/subscriptions/usage/current`,
       { headers: this.getHttpHeaders() }
     );
   }
@@ -258,13 +291,13 @@ export class DashboardService {
   switchTenantPlan(newPlanId: string, billingCycle: 'monthly' | 'yearly' = 'monthly'): Observable<any> {
     const currentUser = this.authService.getCurrentUser();
     const tenantId = currentUser?.tenant_id;
-    
+
     if (!tenantId) {
       throw new Error('No tenant ID found for current user');
     }
 
     return this.http.post(
-      `${this.baseUrl}/tenants/${tenantId}/switch-plan`,
+      `${this.baseUrl}/plans/tenants/${tenantId}/switch-plan`,
       {
         new_plan_id: newPlanId,
         billing_cycle: billingCycle
@@ -276,29 +309,81 @@ export class DashboardService {
   getDashboardData(): Observable<DashboardData> {
     return new Observable(observer => {
       const dashboardData: Partial<DashboardData> = {};
-      
+
       // Get tenant info
       this.getTenantInfo().subscribe({
         next: (tenant) => {
           dashboardData.tenant = tenant;
-          
-          // Get current plan if plan_id exists
-          if (tenant.plan_id) {
-            this.getPlanById(tenant.plan_id).subscribe({
+
+          // Get tenant settings
+          this.settingsService.getSettings().subscribe({
+            next: (settings) => {
+              dashboardData.tenantSettings = settings;
+            },
+            error: (error) => {
+              console.error('Error fetching tenant settings:', error);
+              // Continue without settings if it fails
+            }
+          });
+
+          // Get the current plan using plan_id from the tenant
+          if (tenant.planId) {
+            this.getPlanDetails(tenant.planId).subscribe({
               next: (planResponse) => {
-                dashboardData.currentPlan = planResponse.plan;
-                this.loadRemainingData(dashboardData, observer);
+                if (planResponse.plan) {
+                  dashboardData.currentPlan = planResponse.plan;
+                }
+                // Get usage statistics
+                this.getCurrentUsage().subscribe({
+                  next: (usageResponse) => {
+                    if (usageResponse.usage_statistics) {
+                      dashboardData.currentUsage = usageResponse.usage_statistics;
+                    }
+                    this.loadRemainingData(dashboardData, observer);
+                  },
+                  error: () => {
+                    // Continue without usage info if it fails
+                    this.loadRemainingData(dashboardData, observer);
+                  }
+                });
               },
               error: () => {
                 // Continue without plan info if it fails
-                this.loadRemainingData(dashboardData, observer);
+                // Still try to get usage statistics
+                this.getCurrentUsage().subscribe({
+                  next: (usageResponse) => {
+                    if (usageResponse.usage_statistics) {
+                      dashboardData.currentUsage = usageResponse.usage_statistics;
+                    }
+                    this.loadRemainingData(dashboardData, observer);
+                  },
+                  error: () => {
+                    // Continue without usage info if it fails
+                    this.loadRemainingData(dashboardData, observer);
+                  }
+                });
               }
             });
           } else {
-            this.loadRemainingData(dashboardData, observer);
+            // No plan_id, still try to get usage statistics
+            this.getCurrentUsage().subscribe({
+              next: (usageResponse) => {
+                if (usageResponse.usage_statistics) {
+                  dashboardData.currentUsage = usageResponse.usage_statistics;
+                }
+                this.loadRemainingData(dashboardData, observer);
+              },
+              error: () => {
+                // Continue without usage info if it fails
+                this.loadRemainingData(dashboardData, observer);
+              }
+            });
           }
         },
-        error: (error) => observer.error(error)
+        error: (error) => {
+          console.error('Error fetching tenant info:', error);
+          observer.error(error)
+        }
       });
     });
   }
@@ -308,12 +393,12 @@ export class DashboardService {
     this.getDocuments().subscribe({
       next: (docs) => {
         dashboardData.documentsCount = docs.documents?.length || 0;
-        
+
         // Get websites count
         this.getWebsiteIngestions().subscribe({
           next: (websites) => {
             dashboardData.websitesCount = websites.total_ingestions || 0;
-            
+
             // Get widget info
             this.getWidgetInfo().subscribe({
               next: (widgetInfo) => {
@@ -339,7 +424,7 @@ export class DashboardService {
     dashboardData.totalResponses = 0; // Placeholder - would come from chat API
     dashboardData.lastActivityDate = new Date().toISOString();
     dashboardData.storageUsed = 'N/A'; // Placeholder - would come from storage API
-    
+
     observer.next(dashboardData as DashboardData);
     observer.complete();
   }

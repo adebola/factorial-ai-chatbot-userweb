@@ -23,6 +23,6 @@ export class UploadService {
     const formData = new FormData();
     formData.append('file', file);
 
-    return this.http.post<UploadResponse>(`${this.baseUrl}/documents/upload`, formData);
+    return this.http.post<UploadResponse>(`${this.baseUrl}/settings-logo/upload`, formData);
   }
 }

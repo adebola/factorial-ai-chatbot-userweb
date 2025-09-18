@@ -13,28 +13,28 @@ import { environment } from '../../environments/environment';
 })
 export class SettingsComponent implements OnInit {
   settings: TenantSettings = {
-    tenant_id: '',
-    primary_color: '#5D3EC1',
-    secondary_color: '#C15D3E',
-    hover_text: 'Chat with us!',
-    welcome_message: 'Hello! How can I help you today?',
-    chat_window_title: 'Chat Support',
-    additional_settings: {}
+    tenantId: '',
+    primaryColor: '#5D3EC1',
+    secondaryColor: '#C15D3E',
+    hoverText: 'Chat with us!',
+    welcomeMessage: 'Hello! How can I help you today?',
+    chatWindowTitle: 'Chat Support',
+    additionalSettings: {}
   };
 
   additionalSettingsJson: string = '{}';
   selectedLogo: File | null = null;
   selectedLogoPreview: string | null = null;
-  
+
   isLoading = false;
   isSaving = false;
   isUploading = false;
   isProduction = environment.production;
-  
+
   errorMessage: string = '';
   successMessage: string = '';
   jsonError: string = '';
-  
+
   currentTenantId: string = '';
 
   constructor(
@@ -52,11 +52,11 @@ export class SettingsComponent implements OnInit {
   loadSettings(): void {
     this.isLoading = true;
     this.clearMessages();
-    
+
     this.settingsService.getSettings().subscribe({
       next: (settings) => {
         this.settings = settings;
-        this.additionalSettingsJson = JSON.stringify(settings.additional_settings || {}, null, 2);
+        this.additionalSettingsJson = JSON.stringify(settings.additionalSettings || {}, null, 2);
         this.isLoading = false;
         console.log('✅ Settings loaded successfully:', settings);
       },
@@ -72,7 +72,7 @@ export class SettingsComponent implements OnInit {
     this.isSaving = true;
     this.clearMessages();
     this.validateJson();
-    
+
     if (this.jsonError) {
       this.isSaving = false;
       this.errorMessage = 'Please fix the JSON format error before saving.';
@@ -80,12 +80,12 @@ export class SettingsComponent implements OnInit {
     }
 
     const updateData: SettingsUpdate = {
-      primary_color: this.settings.primary_color,
-      secondary_color: this.settings.secondary_color,
-      hover_text: this.settings.hover_text,
-      welcome_message: this.settings.welcome_message,
-      chat_window_title: this.settings.chat_window_title,
-      additional_settings: this.parseAdditionalSettings()
+      primaryColor: this.settings.primaryColor,
+      secondaryColor: this.settings.secondaryColor,
+      hoverText: this.settings.hoverText,
+      welcomeMessage: this.settings.welcomeMessage,
+      chatWindowTitle: this.settings.chatWindowTitle,
+      additionalSettings: this.parseAdditionalSettings()
     };
 
     this.settingsService.updateSettings(updateData).subscribe({
@@ -138,13 +138,13 @@ export class SettingsComponent implements OnInit {
   clearSelectedLogo(): void {
     this.selectedLogo = null;
     this.selectedLogoPreview = null;
-    
+
     // Reset file input
     const fileInput = document.getElementById('logoFile') as HTMLInputElement;
     if (fileInput) {
       fileInput.value = '';
     }
-    
+
     this.clearMessages();
   }
 
@@ -162,7 +162,7 @@ export class SettingsComponent implements OnInit {
         this.isUploading = false;
         this.clearSelectedLogo();
         this.successMessage = 'Logo uploaded successfully!';
-        
+
         // Reload settings to get updated logo URL
         this.loadSettings();
         console.log('✅ Logo uploaded successfully:', response);
@@ -182,7 +182,7 @@ export class SettingsComponent implements OnInit {
 
     this.settingsService.deleteLogo().subscribe({
       next: (response) => {
-        this.settings.company_logo_url = undefined;
+        this.settings.companyLogoUrl = undefined;
         this.successMessage = 'Logo deleted successfully!';
         console.log('✅ Logo deleted successfully:', response);
       },
@@ -203,9 +203,9 @@ export class SettingsComponent implements OnInit {
       ...this.settings,
       ...defaults
     };
-    this.additionalSettingsJson = JSON.stringify(defaults.additional_settings || {}, null, 2);
+    this.additionalSettingsJson = JSON.stringify(defaults.additionalSettings || {}, null, 2);
     this.clearSelectedLogo();
-    
+
     this.successMessage = 'Settings reset to defaults. Click "Save Settings" to apply changes.';
   }
 
@@ -238,7 +238,7 @@ export class SettingsComponent implements OnInit {
     if (!this.additionalSettingsJson.trim()) {
       return {};
     }
-    
+
     try {
       return JSON.parse(this.additionalSettingsJson);
     } catch (error) {
@@ -249,13 +249,13 @@ export class SettingsComponent implements OnInit {
   onColorChange(colorType: 'primary' | 'secondary', event: any): void {
     const hexColor = event.target.value;
     console.log(`Color picker changed: ${colorType} = ${hexColor}`);
-    
+
     if (colorType === 'primary') {
-      this.settings.primary_color = hexColor;
+      this.settings.primaryColor = hexColor;
     } else {
-      this.settings.secondary_color = hexColor;
+      this.settings.secondaryColor = hexColor;
     }
-    
+
     // Force change detection
     this.settings = { ...this.settings };
   }
@@ -263,14 +263,14 @@ export class SettingsComponent implements OnInit {
   onColorTextChange(colorType: 'primary' | 'secondary', event: any): void {
     const hexColor = event.target.value;
     console.log(`Color text changed: ${colorType} = ${hexColor}`);
-    
+
     // Always update the value for typing, but validate for color picker sync
     if (colorType === 'primary') {
-      this.settings.primary_color = hexColor;
+      this.settings.primaryColor = hexColor;
     } else {
-      this.settings.secondary_color = hexColor;
+      this.settings.secondaryColor = hexColor;
     }
-    
+
     // If it's a valid hex color, sync with color picker
     if (this.settingsService.isValidHexColor(hexColor)) {
       // Force change detection

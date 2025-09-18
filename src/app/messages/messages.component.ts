@@ -2,12 +2,12 @@ import { Component, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { Router, RouterModule } from '@angular/router';
-import { 
-  MessagesService, 
-  ChatSession, 
-  ChatMessage, 
-  ChatStats, 
-  SearchMessagesRequest 
+import {
+  MessagesService,
+  ChatSession,
+  ChatMessage,
+  ChatStats,
+  SearchMessagesRequest
 } from '../services/messages.service';
 import { AuthService } from '../services/auth.service';
 import { environment } from '../../environments/environment';
@@ -65,8 +65,8 @@ export class MessagesComponent implements OnInit {
     this.errorMessage = '';
 
     this.messagesService.getChatSessions(
-      this.sessionLimit, 
-      this.sessionOffset, 
+      this.sessionLimit,
+      this.sessionOffset,
       this.showActiveOnly
     ).subscribe({
       next: (sessions) => {
@@ -188,8 +188,8 @@ export class MessagesComponent implements OnInit {
     if (this.selectedSession) {
       this.messageOffset += this.messageLimit;
       this.messagesService.getSessionMessages(
-        this.selectedSession.session_id, 
-        this.messageLimit, 
+        this.selectedSession.session_id,
+        this.messageLimit,
         this.messageOffset
       ).subscribe({
         next: (messages) => {

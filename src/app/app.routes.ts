@@ -9,6 +9,7 @@ import { MessagesComponent } from './messages/messages.component';
 import { SettingsComponent } from './settings/settings.component';
 import { LoginComponent } from './auth/login/login.component';
 import { SignupComponent } from './auth/signup/signup.component';
+import { CallbackComponent } from './auth/callback/callback.component';
 import { MainLayoutComponent } from './shared/main-layout/main-layout.component';
 import { authGuard } from './guards/auth.guard';
 
@@ -16,6 +17,7 @@ export const routes: Routes = [
   { path: '', redirectTo: '/login', pathMatch: 'full' },
   { path: 'login', component: LoginComponent },
   { path: 'signup', component: SignupComponent },
+  { path: 'callback', component: CallbackComponent },
   {
     path: '',
     component: MainLayoutComponent,

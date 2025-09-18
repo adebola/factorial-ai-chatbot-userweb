@@ -1,6 +1,6 @@
 {
   "hosting": {
-    "public": "dist/test-project/browser",
+    "public": "dist/chatcraft/browser",
     "ignore": [
       "firebase.json",
       "**/.*",

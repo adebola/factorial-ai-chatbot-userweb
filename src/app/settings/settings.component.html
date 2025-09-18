@@ -40,7 +40,7 @@
               type="text"
               id="chatTitle"
               name="chatTitle"
-              [(ngModel)]="settings.chat_window_title"
+              [(ngModel)]="settings.chatWindowTitle"
               class="form-control"
               maxlength="100"
               placeholder="Chat Support"
@@ -55,7 +55,7 @@
               type="text"
               id="hoverText"
               name="hoverText"
-              [(ngModel)]="settings.hover_text"
+              [(ngModel)]="settings.hoverText"
               class="form-control"
               maxlength="255"
               placeholder="Chat with us!"
@@ -70,7 +70,7 @@
           <textarea
             id="welcomeMessage"
             name="welcomeMessage"
-            [(ngModel)]="settings.welcome_message"
+            [(ngModel)]="settings.welcomeMessage"
             class="form-control"
             rows="3"
             maxlength="2000"
@@ -96,14 +96,14 @@
                 type="color"
                 id="primaryColor"
                 name="primaryColor"
-                [value]="settings.primary_color"
+                [value]="settings.primaryColor"
                 (change)="onColorChange('primary', $event)"
                 class="form-control color-picker"
                 required
               />
               <input
                 type="text"
-                [value]="settings.primary_color"
+                [value]="settings.primaryColor"
                 (input)="onColorTextChange('primary', $event)"
                 class="form-control color-text"
                 pattern="^#[0-9A-Fa-f]{6}$"
@@ -121,14 +121,14 @@
                 type="color"
                 id="secondaryColor"
                 name="secondaryColor"
-                [value]="settings.secondary_color"
+                [value]="settings.secondaryColor"
                 (change)="onColorChange('secondary', $event)"
                 class="form-control color-picker"
                 required
               />
               <input
                 type="text"
-                [value]="settings.secondary_color"
+                [value]="settings.secondaryColor"
                 (input)="onColorTextChange('secondary', $event)"
                 class="form-control color-text"
                 pattern="^#[0-9A-Fa-f]{6}$"
@@ -146,17 +146,17 @@
           <div class="chat-preview">
             <div 
               class="chat-header" 
-              [style.background-color]="settings.primary_color"
+              [style.background-color]="settings.primaryColor"
             >
-              {{settings.chat_window_title || 'Chat Support'}}
+              {{settings.chatWindowTitle || 'Chat Support'}}
             </div>
             <div class="chat-body">
               <div class="welcome-message">
-                {{settings.welcome_message || 'Hello! How can I help you today?'}}
+                {{settings.welcomeMessage || 'Hello! How can I help you today?'}}
               </div>
               <button 
                 class="chat-button"
-                [style.background-color]="settings.secondary_color"
+                [style.background-color]="settings.secondaryColor"
               >
                 Send Message
               </button>
@@ -173,10 +173,10 @@
         </h3>
         
         <div class="logo-section">
-          <div class="current-logo" *ngIf="settings.company_logo_url">
+          <div class="current-logo" *ngIf="settings.companyLogoUrl">
             <h4>Current Logo</h4>
             <div class="logo-preview">
-              <img [src]="settings.company_logo_url" alt="Company Logo" />
+              <img [src]="settings.companyLogoUrl" alt="Company Logo" />
               <button 
                 type="button"
                 (click)="deleteLogo()"
@@ -190,8 +190,8 @@
           </div>
 
           <div class="logo-upload">
-            <h4 *ngIf="!settings.company_logo_url">Upload Logo</h4>
-            <h4 *ngIf="settings.company_logo_url">Replace Logo</h4>
+            <h4 *ngIf="!settings.companyLogoUrl">Upload Logo</h4>
+            <h4 *ngIf="settings.companyLogoUrl">Replace Logo</h4>
             
             <div class="file-input-wrapper">
               <input

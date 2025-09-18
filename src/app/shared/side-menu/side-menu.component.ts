@@ -113,8 +113,8 @@ export class SideMenuComponent implements OnInit {
   }
 
   logout(): void {
-    this.authService.logout();
-    this.router.navigate(['/login']);
+    this.authService.logout(true); // User explicitly clicked logout
+    // Navigation is now handled by the auth service redirecting to auth server
   }
 
   // Close menu when clicking outside on mobile

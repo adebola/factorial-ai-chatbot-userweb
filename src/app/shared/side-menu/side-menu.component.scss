@@ -81,13 +81,16 @@ $border-color: #e0e0e0;     // Light gray borders
     }
 
     .menu-logo {
-      width: 32px;
-      height: 32px;
-      background: linear-gradient(135deg, $primary-color 0%, $tertiary-color 100%);
+      max-width: 64px;
+      max-height: 48px;
+      width: auto;
+      height: auto;
+      object-fit: contain;
+      background: none;
       border-radius: 4px;
-      padding: 4px;
+      padding: 0;
       flex-shrink: 0;
-      border: 1px solid rgba($primary-color, 0.2);
+      border: none;
     }
 
     .app-title {

@@ -1,9 +1,9 @@
 import { Component, OnInit, OnDestroy } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { ActivatedRoute, Router, RouterModule } from '@angular/router';
-import { 
-  WebsiteIngestionService, 
-  IngestionStatsResponse, 
+import {
+  WebsiteIngestionService,
+  IngestionStatsResponse,
   IngestionPagesResponse,
   WebsitePage,
   PageContentResponse
@@ -25,11 +25,11 @@ export class IngestionDetailsComponent implements OnInit, OnDestroy {
   errorMessage = '';
   currentPage = 1;
   pageSize = 20;
-  
+
   selectedPage: WebsitePage | null = null;
   pageContent: PageContentResponse | null = null;
   loadingPageContent = false;
-  
+
   private refreshInterval: any;
   autoRefreshEnabled = false;
 
@@ -83,7 +83,7 @@ export class IngestionDetailsComponent implements OnInit, OnDestroy {
 
   loadIngestionPages(page: number = 1): void {
     this.currentPage = page;
-    
+
     this.websiteIngestionService.getIngestionPages(this.ingestionId, page, this.pageSize).subscribe({
       next: (response) => {
         this.pages = response.pages;
@@ -187,12 +187,12 @@ export class IngestionDetailsComponent implements OnInit, OnDestroy {
     if (this.refreshInterval) {
       clearInterval(this.refreshInterval);
     }
-    
+
     this.autoRefreshEnabled = true;
     this.refreshInterval = setInterval(() => {
       this.loadIngestionDetails();
       this.loadIngestionPages(this.currentPage);
-      
+
       if (this.stats?.status !== 'in_progress' && this.stats?.status !== 'processing') {
         this.stopAutoRefresh();
       }

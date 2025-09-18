@@ -2,6 +2,7 @@ import { Component, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { Router } from '@angular/router';
 import { DashboardService } from '../services/dashboard.service';
+import { AuthService } from '../services/auth.service';
 
 interface Plan {
   id: string;
@@ -44,6 +45,7 @@ export class PlansComponent implements OnInit {
 
   constructor(
     private dashboardService: DashboardService,
+    private authService: AuthService,
     private router: Router
   ) {}
 
@@ -55,19 +57,47 @@ export class PlansComponent implements OnInit {
     this.loading = true;
     this.error = null;
 
-    this.dashboardService.getTenantCurrentPlan().subscribe({
-      next: (response: CurrentPlanResponse) => {
-        this.currentPlan = response.current_plan;
-        this.plans = response.available_plans;
-        this.tenantInfo = response.tenant_info;
-        this.loading = false;
-      },
-      error: (error) => {
-        console.error('Error loading plans:', error);
-        // Fallback to public plans if current plan fails
-        this.loadPublicPlans();
-      }
-    });
+    // Get current user and their tenant info
+    const currentUser = this.authService.getCurrentUser();
+    const tenantId = currentUser?.tenant_id;
+
+    if (tenantId) {
+      // First get tenant info to get plan_id
+      this.dashboardService.getTenantInfo().subscribe({
+        next: (tenant) => {
+          this.tenantInfo = tenant;
+
+          // If tenant has a plan, get its details
+          if (tenant.planId) {
+            this.dashboardService.getPlanDetails(tenant.planId).subscribe({
+              next: (response) => {
+                if (response.plan) {
+                  this.currentPlan = response.plan;
+                }
+                // Load all available plans
+                this.loadPublicPlans();
+              },
+              error: (error: any) => {
+                console.error('Error loading current plan:', error);
+                // Still load available plans even if the current plan fails
+                this.loadPublicPlans();
+              }
+            });
+          } else {
+            // No current plan, just load available plans
+            this.loadPublicPlans();
+          }
+        },
+        error: (error: any) => {
+          console.error('Error loading tenant info:', error);
+          // Fallback to public plans
+          this.loadPublicPlans();
+        }
+      });
+    } else {
+      // No tenant ID, just load public plans
+      this.loadPublicPlans();
+    }
   }
 
   loadPublicPlans() {
@@ -76,7 +106,7 @@ export class PlansComponent implements OnInit {
         this.plans = response.plans || [];
         this.loading = false;
       },
-      error: (error) => {
+      error: (error: any) => {
         console.error('Error loading public plans:', error);
         this.error = 'Failed to load plans. Please try again later.';
         this.loading = false;
@@ -94,9 +124,9 @@ export class PlansComponent implements OnInit {
 
   getFeaturesList(plan: Plan): string[] {
     if (!plan.features) return [];
-    
+
     const features: string[] = [];
-    
+
     if (plan.features.support) {
       features.push(`${plan.features.support} support`);
     }
@@ -115,7 +145,7 @@ export class PlansComponent implements OnInit {
     if (plan.features.sso) {
       features.push('Single sign-on (SSO)');
     }
-    
+
     return features;
   }
 
@@ -136,7 +166,7 @@ export class PlansComponent implements OnInit {
   switchPlan(plan: Plan) {
     if (this.isCurrentPlan(plan) || this.switching) return;
 
-    const confirmMessage = this.isUpgrade(plan) 
+    const confirmMessage = this.isUpgrade(plan)
       ? `Upgrade to ${plan.name} plan for ₦${this.formatNumber(this.getPlanCost(plan))}/${this.billingCycle}?`
       : `Downgrade to ${plan.name} plan for ₦${this.formatNumber(this.getPlanCost(plan))}/${this.billingCycle}?`;
 
@@ -155,7 +185,7 @@ export class PlansComponent implements OnInit {
           this.loadPlansData();
         }, 1000);
       },
-      error: (error) => {
+      error: (error: any) => {
         console.error('Error switching plan:', error);
         this.error = error.error?.detail || 'Failed to switch plan. Please try again.';
         this.switching = false;

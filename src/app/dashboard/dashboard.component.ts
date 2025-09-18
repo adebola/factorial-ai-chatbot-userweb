@@ -1,9 +1,9 @@
 import { Component, OnInit, OnDestroy } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { RouterModule, Router } from '@angular/router';
-import { Subject } from 'rxjs';
+import {BehaviorSubject, Subject} from 'rxjs';
 import { takeUntil } from 'rxjs/operators';
-import { DashboardService, DashboardData } from '../services/dashboard.service';
+import {DashboardService, DashboardData, PlanDetails} from '../services/dashboard.service';
 import { AuthService } from '../services/auth.service';
 
 interface StatCard {
@@ -25,14 +25,14 @@ interface StatCard {
 })
 export class DashboardComponent implements OnInit, OnDestroy {
   private destroy$ = new Subject<void>();
-  
+
   dashboardData: DashboardData | null = null;
   loading = true;
   error: string | null = null;
   currentUser: any = null;
-  
+
   statCards: StatCard[] = [];
-  
+
   constructor(
     private dashboardService: DashboardService,
     private authService: AuthService,
@@ -59,14 +59,10 @@ export class DashboardComponent implements OnInit, OnDestroy {
       .subscribe({
         next: (data) => {
           this.dashboardData = data;
-          console.log('📋 Dashboard data loaded:', data);
-          console.log('🏢 Tenant info:', data.tenant);
-          console.log('📊 Current plan:', data.currentPlan);
           this.updateStatCards();
           this.loading = false;
         },
         error: (error) => {
-          console.error('Error loading dashboard data:', error);
           this.error = 'Failed to load dashboard data';
           this.loading = false;
         }
@@ -76,28 +72,30 @@ export class DashboardComponent implements OnInit, OnDestroy {
   private updateStatCards(): void {
     if (!this.dashboardData) return;
 
+    const usage = this.dashboardData.currentUsage;
+
     this.statCards = [
       {
-        title: 'Documents Uploaded',
-        value: this.dashboardData.documentsCount || 0,
+        title: 'Documents',
+        value: usage ? `${usage.documents.used}/${usage.documents.limit}` : `${this.dashboardData.documentsCount || 0}`,
         icon: 'description',
         color: 'primary'
       },
       {
-        title: 'Websites Scraped',
-        value: this.dashboardData.websitesCount || 0,
+        title: 'Websites',
+        value: usage ? `${usage.websites.used}/${usage.websites.limit}` : `${this.dashboardData.websitesCount || 0}`,
         icon: 'web',
         color: 'secondary'
       },
       {
-        title: 'Total Chats',
-        value: this.dashboardData.totalChats || 0,
+        title: 'Daily Chats',
+        value: usage ? `${usage.daily_chats.used}/${usage.daily_chats.limit}` : '0',
         icon: 'chat',
         color: 'success'
       },
       {
-        title: 'Responses Sent',
-        value: this.dashboardData.totalResponses || 0,
+        title: 'Monthly Chats',
+        value: usage ? `${usage.monthly_chats.used}/${usage.monthly_chats.limit}` : '0',
         icon: 'smart_toy',
         color: 'info'
       }
@@ -121,7 +119,7 @@ export class DashboardComponent implements OnInit, OnDestroy {
 
   getSubscriptionBadgeClass(tier: string): string {
     const planName = tier?.toLowerCase();
-    
+
     // Check for specific plan keywords
     if (planName?.includes('free') || planName?.includes('trial')) {
       return 'badge-secondary';
@@ -135,22 +133,18 @@ export class DashboardComponent implements OnInit, OnDestroy {
       return 'badge-primary'; // Default to primary for any subscribed plan
     }
   }
-  
+
   getCurrentPlanDisplay(): string {
     if (this.dashboardData?.currentPlan?.name) {
       return this.dashboardData.currentPlan.name;
     }
-    
-    if (this.dashboardData?.tenant?.subscription_tier) {
-      return this.getSubscriptionTierDisplay(this.dashboardData.tenant.subscription_tier);
-    }
-    
+
     return 'No Plan Selected';
   }
 
   formatDate(dateString: string): string {
     if (!dateString) return 'N/A';
-    
+
     try {
       const date = new Date(dateString);
       return date.toLocaleDateString('en-US', {
@@ -176,8 +170,8 @@ export class DashboardComponent implements OnInit, OnDestroy {
           const url = window.URL.createObjectURL(blob);
           const link = document.createElement('a');
           link.href = url;
-          
-          // Set appropriate filename based on file type
+
+          // Set the appropriate filename based on file type
           const filenames = {
             javascript: 'chat-widget.js',
             css: 'chat-widget.css',
@@ -185,7 +179,7 @@ export class DashboardComponent implements OnInit, OnDestroy {
             guide: 'integration-guide.html',
             all_files: 'widget-files.zip'
           };
-          
+
           link.download = filenames[fileType];
           document.body.appendChild(link);
           link.click();
@@ -208,7 +202,7 @@ export class DashboardComponent implements OnInit, OnDestroy {
           const blob = new Blob([htmlContent], { type: 'text/html' });
           const url = window.URL.createObjectURL(blob);
           window.open(url, '_blank');
-          
+
           // Clean up the blob URL after a delay
           setTimeout(() => {
             window.URL.revokeObjectURL(url);
@@ -244,7 +238,7 @@ export class DashboardComponent implements OnInit, OnDestroy {
           // Create a blob URL and open in new tab
           const url = window.URL.createObjectURL(blob);
           window.open(url, '_blank');
-          
+
           // Clean up the blob URL after a delay
           setTimeout(() => {
             window.URL.revokeObjectURL(url);
@@ -263,16 +257,84 @@ export class DashboardComponent implements OnInit, OnDestroy {
 
   getPlanLimitsText(plan: any): string {
     if (!plan) return 'No plan limits available';
-    
+
     const limits = [];
     if (plan.document_limit) limits.push(`${plan.document_limit} documents`);
     if (plan.website_limit) limits.push(`${plan.website_limit} websites`);
     if (plan.daily_chat_limit) limits.push(`${plan.daily_chat_limit} chats/day`);
-    
+
     return limits.join(', ') || 'No limits specified';
   }
 
   navigateToPlans(): void {
     this.router.navigate(['/plans']);
+  }
+
+  // Usage Statistics Helper Methods
+  getBillingPeriod(): string {
+    // This would come from the backend usage response
+    // For now, returning a placeholder
+    const now = new Date();
+    const endOfMonth = new Date(now.getFullYear(), now.getMonth() + 1, 0);
+    return `Billing period ends ${this.formatDate(endOfMonth.toISOString())}`;
+  }
+
+  getResetTime(resetDate: string): string {
+    if (!resetDate) return '';
+
+    const now = new Date();
+    const reset = new Date(resetDate);
+    const diffTime = Math.abs(reset.getTime() - now.getTime());
+    const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+    const diffHours = Math.ceil(diffTime / (1000 * 60 * 60));
+
+    if (diffDays > 1) {
+      return `in ${diffDays} days`;
+    } else if (diffHours > 1) {
+      return `in ${diffHours} hours`;
+    } else {
+      return 'soon';
+    }
+  }
+
+  getUsageWarnings(): string[] {
+    const warnings: string[] = [];
+
+    if (!this.dashboardData?.currentUsage) return warnings;
+
+    const usage = this.dashboardData.currentUsage;
+
+    // Check each resource type for high usage
+    if (usage.documents.percentage >= 100) {
+      warnings.push('Document limit reached. Upgrade your plan to add more documents.');
+    } else if (usage.documents.percentage >= 80) {
+      warnings.push(`You've used ${usage.documents.percentage}% of your document limit.`);
+    }
+
+    if (usage.websites.percentage >= 100) {
+      warnings.push('Website limit reached. Upgrade your plan to add more websites.');
+    } else if (usage.websites.percentage >= 80) {
+      warnings.push(`You've used ${usage.websites.percentage}% of your website limit.`);
+    }
+
+    if (usage.daily_chats.percentage >= 100) {
+      warnings.push('Daily chat limit reached. Your limit will reset tomorrow.');
+    } else if (usage.daily_chats.percentage >= 80) {
+      warnings.push(`You've used ${usage.daily_chats.percentage}% of your daily chat limit.`);
+    }
+
+    if (usage.monthly_chats.percentage >= 100) {
+      warnings.push('Monthly chat limit reached. Consider upgrading your plan.');
+    } else if (usage.monthly_chats.percentage >= 80) {
+      warnings.push(`You've used ${usage.monthly_chats.percentage}% of your monthly chat limit.`);
+    }
+
+    return warnings;
+  }
+
+  getUsageStatus(percentage: number): 'normal' | 'warning' | 'danger' {
+    if (percentage >= 100) return 'danger';
+    if (percentage >= 80) return 'warning';
+    return 'normal';
   }
 }

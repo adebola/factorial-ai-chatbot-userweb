@@ -1,6 +1,14 @@
 {
-  "name": "test-project",
-  "version": "0.0.0",
+  "name": "chatcraft",
+  "version": "1.0.0",
+  "description": "ChatCraft - Production-grade AI-powered chat application with multi-tenant support",
+  "author": "Adebola Omoboya",
+  "keywords": ["angular", "chatcraft", "ai", "chat", "oauth2", "multi-tenant"],
+  "homepage": "https://chatcraft.com",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/adebola/chatcraft.git"
+  },
   "scripts": {
     "ng": "ng",
     "start": "ng serve",
