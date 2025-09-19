@@ -37,6 +37,12 @@ export class SideMenuComponent implements OnInit {
       active: false
     },
     {
+      label: 'Categories',
+      icon: 'category',
+      route: '/categories',
+      active: false
+    },
+    {
       label: 'Websites',
       icon: 'web',
       route: '/websites',

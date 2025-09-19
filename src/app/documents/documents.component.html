@@ -101,20 +101,29 @@
           </td>
           <td class="actions-col">
             <div class="action-buttons">
-              <!-- Functionality requiring backend routes -->
-              <button 
-                (click)="downloadDocument(document.id)" 
+              <button
+                (click)="viewDocument(document.id)"
+                class="btn btn-info btn-sm"
+                title="View Document Details"
+              >
+                <span class="material-icons">visibility</span>
+                View
+              </button>
+              <button
+                (click)="downloadDocument(document.id)"
                 class="btn btn-success btn-sm"
                 title="Download Document"
               >
-                ⬇️ Download
+                <span class="material-icons">download</span>
+                Download
               </button>
-              <button 
-                (click)="deleteDocument(document.id)" 
+              <button
+                (click)="deleteDocument(document.id)"
                 class="btn btn-danger btn-sm"
                 title="Delete Document"
               >
-                🗑️ Delete
+                <span class="material-icons">delete</span>
+                Delete
               </button>
             </div>
           </td>
@@ -132,11 +141,210 @@
   </div>
 
 
+  <!-- Document Metadata Modal -->
+  <div *ngIf="isViewModalOpen" class="modal-overlay" (click)="closeViewModal()">
+    <div class="modal-container" (click)="$event.stopPropagation()">
+      <div class="modal-header">
+        <h3>Document Details</h3>
+        <button (click)="closeViewModal()" class="close-btn">
+          <span class="material-icons">close</span>
+        </button>
+      </div>
+
+      <!-- Loading State -->
+      <div *ngIf="isLoadingMetadata" class="modal-loading">
+        <div class="loading-spinner"></div>
+        <p>Loading document metadata...</p>
+      </div>
+
+      <!-- Metadata Content -->
+      <div *ngIf="!isLoadingMetadata && selectedDocumentMetadata" class="modal-content">
+        <!-- Basic Information -->
+        <div class="metadata-section">
+          <h4>
+            <span class="material-icons">info</span>
+            Basic Information
+          </h4>
+          <div class="info-grid">
+            <div class="info-item">
+              <span class="label">Filename:</span>
+              <span class="value">{{ selectedDocumentMetadata.filename }}</span>
+            </div>
+            <div class="info-item">
+              <span class="label">File Size:</span>
+              <span class="value">{{ selectedDocumentMetadata.file_size_formatted }}</span>
+            </div>
+            <div class="info-item">
+              <span class="label">MIME Type:</span>
+              <span class="value">{{ selectedDocumentMetadata.mime_type }}</span>
+            </div>
+            <div class="info-item">
+              <span class="label">Status:</span>
+              <span class="value status-badge" [ngClass]="getStatusClass(selectedDocumentMetadata.status)">
+                {{ selectedDocumentMetadata.status }}
+              </span>
+            </div>
+            <div class="info-item">
+              <span class="label">Created:</span>
+              <span class="value">{{ formatDate(selectedDocumentMetadata.created_at) }}</span>
+            </div>
+            <div class="info-item" *ngIf="selectedDocumentMetadata.processed_at">
+              <span class="label">Processed:</span>
+              <span class="value">{{ formatDate(selectedDocumentMetadata.processed_at) }}</span>
+            </div>
+            <div class="info-item" *ngIf="selectedDocumentMetadata.error_message">
+              <span class="label">Error:</span>
+              <span class="value error-text">{{ selectedDocumentMetadata.error_message }}</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- Processing Statistics -->
+        <div class="metadata-section">
+          <h4>
+            <span class="material-icons">analytics</span>
+            Processing Statistics
+          </h4>
+          <div class="stats-grid">
+            <div class="stat-item">
+              <span class="stat-label">Text Chunks:</span>
+              <span class="stat-value">{{ selectedDocumentMetadata.processing_stats.chunk_count }}</span>
+            </div>
+            <div class="stat-item">
+              <span class="stat-label">Vector Data:</span>
+              <span class="stat-value" [class.success]="selectedDocumentMetadata.processing_stats.has_vector_data" [class.warning]="!selectedDocumentMetadata.processing_stats.has_vector_data">
+                {{ selectedDocumentMetadata.processing_stats.has_vector_data ? 'Available' : 'Not Available' }}
+              </span>
+            </div>
+          </div>
+        </div>
+
+        <!-- Categories -->
+        <div class="metadata-section" *ngIf="selectedDocumentMetadata.categories.length > 0">
+          <h4>
+            <span class="material-icons">category</span>
+            Categories ({{ selectedDocumentMetadata.categories.length }})
+          </h4>
+          <div class="categories-list">
+            <div *ngFor="let category of selectedDocumentMetadata.categories" class="category-item">
+              <div class="category-header">
+                <span
+                  class="category-color"
+                  [style.background-color]="category.color || '#6B7280'"
+                ></span>
+                <span class="category-name">{{ category.name }}</span>
+                <span
+                  *ngIf="category.is_system_category"
+                  class="system-badge"
+                  title="System Category"
+                >
+                  <span class="material-icons">verified</span>
+                </span>
+              </div>
+              <div class="category-meta">
+                <span class="confidence" [style.color]="getConfidenceColor(category.confidence_score)">
+                  {{ formatConfidence(category.confidence_score) }}
+                </span>
+                <span class="assigned-by">{{ category.assigned_by }}</span>
+                <span *ngIf="category.assigned_at" class="assigned-date">
+                  {{ formatDate(category.assigned_at) }}
+                </span>
+              </div>
+              <p *ngIf="category.description" class="category-description">
+                {{ category.description }}
+              </p>
+            </div>
+          </div>
+        </div>
+
+        <!-- Tags -->
+        <div class="metadata-section" *ngIf="selectedDocumentMetadata.tags.length > 0">
+          <h4>
+            <span class="material-icons">local_offer</span>
+            Tags ({{ selectedDocumentMetadata.tags.length }})
+          </h4>
+          <div class="tags-list">
+            <div *ngFor="let tag of selectedDocumentMetadata.tags" class="tag-item">
+              <div class="tag-header">
+                <span
+                  class="material-icons tag-icon"
+                  [style.color]="getConfidenceColor(tag.confidence_score)"
+                >
+                  {{ tag.tag_type === 'auto' ? 'smart_toy' : tag.tag_type === 'system' ? 'verified' : 'person' }}
+                </span>
+                <span class="tag-name">{{ tag.name }}</span>
+                <span class="tag-type">{{ tag.tag_type }}</span>
+              </div>
+              <div class="tag-meta">
+                <span class="confidence" [style.color]="getConfidenceColor(tag.confidence_score)">
+                  {{ formatConfidence(tag.confidence_score) }}
+                </span>
+                <span class="usage-count">{{ tag.usage_count }} uses</span>
+                <span class="assigned-by">{{ tag.assigned_by }}</span>
+                <span *ngIf="tag.assigned_at" class="assigned-date">
+                  {{ formatDate(tag.assigned_at) }}
+                </span>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Categorization Summary -->
+        <div class="metadata-section">
+          <h4>
+            <span class="material-icons">summarize</span>
+            Categorization Summary
+          </h4>
+          <div class="summary-grid">
+            <div class="summary-item">
+              <span class="summary-label">Total Categories:</span>
+              <span class="summary-value">{{ selectedDocumentMetadata.categorization_summary.total_categories }}</span>
+            </div>
+            <div class="summary-item">
+              <span class="summary-label">AI Assigned:</span>
+              <span class="summary-value">{{ selectedDocumentMetadata.categorization_summary.ai_assigned_categories }}</span>
+            </div>
+            <div class="summary-item">
+              <span class="summary-label">User Assigned:</span>
+              <span class="summary-value">{{ selectedDocumentMetadata.categorization_summary.user_assigned_categories }}</span>
+            </div>
+            <div class="summary-item">
+              <span class="summary-label">Total Tags:</span>
+              <span class="summary-value">{{ selectedDocumentMetadata.categorization_summary.total_tags }}</span>
+            </div>
+            <div class="summary-item">
+              <span class="summary-label">Auto Tags:</span>
+              <span class="summary-value">{{ selectedDocumentMetadata.categorization_summary.auto_tags }}</span>
+            </div>
+            <div class="summary-item">
+              <span class="summary-label">Custom Tags:</span>
+              <span class="summary-value">{{ selectedDocumentMetadata.categorization_summary.custom_tags }}</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- No Categories/Tags State -->
+        <div *ngIf="selectedDocumentMetadata.categories.length === 0 && selectedDocumentMetadata.tags.length === 0" class="no-categorization">
+          <div class="no-data-icon">
+            <span class="material-icons">label_off</span>
+          </div>
+          <h4>No Categorization Data</h4>
+          <p>This document hasn't been categorized or tagged yet.</p>
+        </div>
+      </div>
+
+      <div class="modal-footer">
+        <button (click)="closeViewModal()" class="btn btn-secondary">Close</button>
+      </div>
+    </div>
+  </div>
+
   <!-- API Information - Development Only -->
   <div *ngIf="!isProduction" class="api-info">
     <h3>Backend Route Status</h3>
     <div class="route-status">
       <div class="route available">✅ GET /api/v1/documents/ - List documents</div>
+      <div class="route available">✅ GET /api/v1/documents/{{ '{' }}id{{ '}' }}/metadata - Document metadata</div>
       <div class="route available">✅ DELETE /api/v1/documents/{{ '{' }}id{{ '}' }} - Delete single document</div>
       <div class="route available">✅ DELETE /api/v1/documents/ - Delete multiple documents</div>
       <div class="route available">✅ GET /api/v1/documents/{{ '{' }}id{{ '}' }}/download - Download document</div>

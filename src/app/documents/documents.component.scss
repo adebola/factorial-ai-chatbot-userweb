@@ -515,3 +515,451 @@
     margin: 1rem;
   }
 }
+
+// Document Metadata Modal Styles
+.modal-container {
+  background: white;
+  border-radius: 12px;
+  width: 90%;
+  max-width: 800px;
+  max-height: 90vh;
+  overflow: hidden;
+  box-shadow: 0 20px 40px rgba(0, 0, 0, 0.3);
+}
+
+.modal-header {
+  padding: 1.5rem 2rem;
+  border-bottom: 1px solid #e9ecef;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  background: #f8f9fa;
+
+  h3 {
+    margin: 0;
+    color: #333;
+    font-size: 1.5rem;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+  }
+
+  .close-btn {
+    background: none;
+    border: none;
+    cursor: pointer;
+    color: #666;
+    padding: 0.5rem;
+    border-radius: 4px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: all 0.2s ease;
+
+    &:hover {
+      background: #e9ecef;
+      color: #333;
+    }
+
+    .material-icons {
+      font-size: 1.5rem;
+    }
+  }
+}
+
+.modal-loading {
+  padding: 3rem;
+  text-align: center;
+  color: #666;
+
+  .loading-spinner {
+    width: 40px;
+    height: 40px;
+    border: 4px solid #e1e5e9;
+    border-top: 4px solid #667eea;
+    border-radius: 50%;
+    animation: spin 1s linear infinite;
+    margin: 0 auto 1rem auto;
+  }
+
+  p {
+    margin: 0;
+    font-size: 1.1rem;
+  }
+}
+
+.modal-content {
+  max-height: calc(90vh - 140px);
+  overflow-y: auto;
+  padding: 0;
+
+  .metadata-section {
+    padding: 1.5rem 2rem;
+    border-bottom: 1px solid #f3f4f6;
+
+    &:last-child {
+      border-bottom: none;
+    }
+
+    h4 {
+      margin: 0 0 1rem 0;
+      color: #374151;
+      font-size: 1.1rem;
+      font-weight: 600;
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+
+      .material-icons {
+        color: #667eea;
+        font-size: 1.25rem;
+      }
+    }
+  }
+
+  .info-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+    gap: 1rem;
+
+    .info-item {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 0.75rem;
+      background: #f9fafb;
+      border-radius: 6px;
+      border-left: 3px solid #e5e7eb;
+
+      .label {
+        font-weight: 600;
+        color: #374151;
+      }
+
+      .value {
+        color: #6b7280;
+        text-align: right;
+
+        &.error-text {
+          color: #dc2626;
+        }
+      }
+    }
+  }
+
+  .stats-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    gap: 1rem;
+
+    .stat-item {
+      text-align: center;
+      padding: 1rem;
+      background: #f8fafc;
+      border-radius: 8px;
+      border: 1px solid #e2e8f0;
+
+      .stat-label {
+        display: block;
+        font-size: 0.875rem;
+        color: #64748b;
+        margin-bottom: 0.5rem;
+      }
+
+      .stat-value {
+        display: block;
+        font-size: 1.25rem;
+        font-weight: 600;
+        color: #1e293b;
+
+        &.success {
+          color: #059669;
+        }
+
+        &.warning {
+          color: #d97706;
+        }
+      }
+    }
+  }
+
+  .categories-list {
+    display: grid;
+    gap: 1rem;
+
+    .category-item {
+      padding: 1rem;
+      background: #f9fafb;
+      border-radius: 8px;
+      border-left: 4px solid #e5e7eb;
+
+      .category-header {
+        display: flex;
+        align-items: center;
+        gap: 0.75rem;
+        margin-bottom: 0.5rem;
+
+        .category-color {
+          width: 16px;
+          height: 16px;
+          border-radius: 50%;
+          flex-shrink: 0;
+        }
+
+        .category-name {
+          font-weight: 600;
+          color: #374151;
+          flex: 1;
+        }
+
+        .system-badge {
+          color: #10b981;
+
+          .material-icons {
+            font-size: 1rem;
+          }
+        }
+      }
+
+      .category-meta {
+        display: flex;
+        align-items: center;
+        gap: 1rem;
+        font-size: 0.875rem;
+        color: #6b7280;
+
+        .confidence {
+          font-weight: 600;
+        }
+
+        .assigned-by {
+          background: #e5e7eb;
+          padding: 0.125rem 0.5rem;
+          border-radius: 1rem;
+          font-size: 0.75rem;
+        }
+
+        .assigned-date {
+          font-size: 0.75rem;
+        }
+      }
+
+      .category-description {
+        margin: 0.5rem 0 0 0;
+        color: #6b7280;
+        font-size: 0.875rem;
+        line-height: 1.4;
+      }
+    }
+  }
+
+  .tags-list {
+    display: grid;
+    gap: 0.75rem;
+
+    .tag-item {
+      padding: 0.75rem 1rem;
+      background: #f3f4f6;
+      border-radius: 6px;
+      border-left: 3px solid #9ca3af;
+
+      .tag-header {
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+        margin-bottom: 0.5rem;
+
+        .tag-icon {
+          font-size: 1rem;
+        }
+
+        .tag-name {
+          font-weight: 600;
+          color: #374151;
+          flex: 1;
+        }
+
+        .tag-type {
+          background: #e5e7eb;
+          padding: 0.125rem 0.5rem;
+          border-radius: 1rem;
+          font-size: 0.75rem;
+          color: #6b7280;
+          text-transform: uppercase;
+        }
+      }
+
+      .tag-meta {
+        display: flex;
+        align-items: center;
+        gap: 1rem;
+        font-size: 0.75rem;
+        color: #6b7280;
+
+        .confidence {
+          font-weight: 600;
+        }
+
+        .usage-count {
+          background: #ddd6fe;
+          color: #6d28d9;
+          padding: 0.125rem 0.375rem;
+          border-radius: 0.75rem;
+        }
+
+        .assigned-by {
+          background: #e5e7eb;
+          padding: 0.125rem 0.375rem;
+          border-radius: 0.75rem;
+        }
+      }
+    }
+  }
+
+  .summary-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+    gap: 1rem;
+
+    .summary-item {
+      text-align: center;
+      padding: 1rem;
+      background: #f0f9ff;
+      border: 1px solid #bae6fd;
+      border-radius: 8px;
+
+      .summary-label {
+        display: block;
+        font-size: 0.875rem;
+        color: #0369a1;
+        margin-bottom: 0.5rem;
+      }
+
+      .summary-value {
+        display: block;
+        font-size: 1.5rem;
+        font-weight: 700;
+        color: #0c4a6e;
+      }
+    }
+  }
+
+  .no-categorization {
+    text-align: center;
+    padding: 3rem 2rem;
+    color: #6b7280;
+
+    .no-data-icon {
+      margin-bottom: 1rem;
+
+      .material-icons {
+        font-size: 3rem;
+        color: #d1d5db;
+      }
+    }
+
+    h4 {
+      margin: 0 0 0.5rem 0;
+      color: #374151;
+    }
+
+    p {
+      margin: 0;
+      font-size: 1rem;
+    }
+  }
+}
+
+.modal-footer {
+  padding: 1.5rem 2rem;
+  border-top: 1px solid #e9ecef;
+  background: #f8f9fa;
+  display: flex;
+  justify-content: flex-end;
+  gap: 0.75rem;
+}
+
+// Update action buttons to include material icons properly
+.action-buttons {
+  .btn {
+    display: flex;
+    align-items: center;
+    gap: 0.25rem;
+    font-size: 0.875rem;
+
+    .material-icons {
+      font-size: 1rem;
+    }
+
+    &.btn-info {
+      background: #0ea5e9;
+      color: white;
+      border: 1px solid #0ea5e9;
+
+      &:hover {
+        background: #0284c7;
+        border-color: #0284c7;
+      }
+    }
+  }
+}
+
+@keyframes spin {
+  0% { transform: rotate(0deg); }
+  100% { transform: rotate(360deg); }
+}
+
+// Mobile responsive for metadata modal
+@media (max-width: 768px) {
+  .modal-container {
+    width: 95%;
+    max-height: 95vh;
+  }
+
+  .modal-header {
+    padding: 1rem 1.5rem;
+
+    h3 {
+      font-size: 1.25rem;
+    }
+  }
+
+  .modal-content {
+    .metadata-section {
+      padding: 1rem 1.5rem;
+
+      h4 {
+        font-size: 1rem;
+      }
+    }
+
+    .info-grid {
+      grid-template-columns: 1fr;
+      gap: 0.75rem;
+    }
+
+    .stats-grid {
+      grid-template-columns: 1fr;
+    }
+
+    .summary-grid {
+      grid-template-columns: repeat(2, 1fr);
+      gap: 0.75rem;
+    }
+  }
+
+  .modal-footer {
+    padding: 1rem 1.5rem;
+  }
+
+  .action-buttons {
+    flex-direction: column;
+    gap: 0.5rem;
+
+    .btn {
+      width: 100%;
+      justify-content: center;
+      font-size: 0.8125rem;
+    }
+  }
+}

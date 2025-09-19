@@ -2,8 +2,11 @@ import { Component, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { Router } from '@angular/router';
-import { DocumentsService, Document, DocumentsListResponse } from '../services/documents.service';
+import { DocumentService, Document, DocumentListResponse, DocumentFilters, DocumentMetadata } from '../services/document.service';
+import { CategorizationService, DocumentCategory, DocumentTag } from '../services/categorization.service';
 import { AuthService } from '../services/auth.service';
+import { CategorySelectorComponent } from '../shared/category-selector/category-selector.component';
+import { TagSelectorComponent } from '../shared/tag-selector/tag-selector.component';
 import { environment } from '../../environments/environment';
 
 @Component({
@@ -14,18 +17,46 @@ import { environment } from '../../environments/environment';
 })
 export class DocumentsComponent implements OnInit {
   documents: Document[] = [];
-  allDocuments: Document[] = []; // Keep track of all documents including failed ones
   selectedDocuments: Set<string> = new Set();
   isLoading = false;
   errorMessage = '';
   successMessage = '';
   currentUser: any = null;
-  failedDocumentsCount = 0;
   isProduction = environment.production;
+  failedDocumentsCount = 0;
 
+  // Filtering and search
+  searchTerm = '';
+  selectedCategories: string[] = [];
+  selectedTags: string[] = [];
+  selectedContentType = '';
+  showFilters = false;
+
+  // Pagination
+  currentPage = 1;
+  pageSize = 20;
+  totalCount = 0;
+
+  // Document view modal
+  selectedDocumentMetadata: DocumentMetadata | null = null;
+  isViewModalOpen = false;
+  isLoadingMetadata = false;
+
+  // Available options for filtering
+  categories: DocumentCategory[] = [];
+  tags: DocumentTag[] = [];
+  contentTypes = [
+    { value: '', label: 'All Types' },
+    { value: 'application/pdf', label: 'PDF Documents' },
+    { value: 'text/plain', label: 'Text Files' },
+    { value: 'application/vnd.openxmlformats-officedocument.wordprocessingml.document', label: 'Word Documents' },
+    { value: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet', label: 'Excel Files' },
+    { value: 'application/vnd.openxmlformats-officedocument.presentationml.presentation', label: 'PowerPoint Files' }
+  ];
 
   constructor(
-    private documentsService: DocumentsService,
+    private documentService: DocumentService,
+    private categorizationService: CategorizationService,
     private authService: AuthService,
     private router: Router
   ) {
@@ -34,40 +65,32 @@ export class DocumentsComponent implements OnInit {
 
   ngOnInit(): void {
     this.loadDocuments();
+    this.loadFilters();
+  }
+
+  private loadFilters(): void {
+    this.loadFilterOptions();
   }
 
   loadDocuments(): void {
     this.isLoading = true;
     this.errorMessage = '';
 
-    this.documentsService.getDocuments().subscribe({
-      next: (response: DocumentsListResponse) => {
-        // Store all documents for reference
-        this.allDocuments = response.documents;
+    const filters: DocumentFilters = {};
+    if (this.selectedCategories.length > 0) {
+      filters.categories = this.selectedCategories;
+    }
+    if (this.selectedTags.length > 0) {
+      filters.tags = this.selectedTags;
+    }
+    if (this.selectedContentType) {
+      filters.content_type = this.selectedContentType;
+    }
 
-        // Filter out failed documents - only show completed and processing documents
-        this.documents = response.documents.filter(doc =>
-          doc.status !== 'failed' && doc.status !== 'error'
-        );
-
-        // Count failed documents for informational purposes
-        this.failedDocumentsCount = response.documents.filter(doc =>
-          doc.status === 'failed' || doc.status === 'error'
-        ).length;
-
-        // Log failed documents information if any exist
-        if (this.failedDocumentsCount > 0) {
-          console.info(`${this.failedDocumentsCount} failed document(s) hidden from view`);
-          const failedDocs = response.documents.filter(doc =>
-            doc.status === 'failed' || doc.status === 'error'
-          );
-          console.info('Failed documents:', failedDocs.map(doc => ({
-            filename: doc.filename,
-            error: doc.error_message,
-            created_at: doc.created_at
-          })));
-        }
-
+    this.documentService.getDocuments(this.currentPage, this.pageSize, filters).subscribe({
+      next: (response: DocumentListResponse) => {
+        this.documents = response.documents;
+        this.totalCount = response.total_count;
         this.isLoading = false;
         this.selectedDocuments.clear();
       },
@@ -102,6 +125,27 @@ export class DocumentsComponent implements OnInit {
   }
 
 
+  // Load filter options
+  loadFilterOptions(): void {
+    this.categorizationService.getCategories(true).subscribe({
+      next: (response) => {
+        this.categories = response.categories;
+      },
+      error: (error) => {
+        console.error('Failed to load categories:', error);
+      }
+    });
+
+    this.categorizationService.getTags().subscribe({
+      next: (response) => {
+        this.tags = response.tags;
+      },
+      error: (error) => {
+        console.error('Failed to load tags:', error);
+      }
+    });
+  }
+
   // Additional functionality with backend routes
   deleteSelectedDocuments(): void {
     if (this.selectedDocuments.size === 0) {
@@ -114,17 +158,19 @@ export class DocumentsComponent implements OnInit {
     }
 
     const documentIds = Array.from(this.selectedDocuments);
+    let deletedCount = 0;
 
-    this.documentsService.deleteMultipleDocuments(documentIds).subscribe({
-      next: (response) => {
-        this.successMessage = `Documents deleted successfully: ${response.deleted_count}/${response.total_requested}`;
-        this.loadDocuments();
-        setTimeout(() => this.successMessage = '', 5000);
-      },
-      error: (error) => {
-        this.errorMessage = error.error?.detail || 'Failed to delete documents';
-        console.error('Delete documents error:', error);
-      }
+    // Delete documents one by one since we don't have bulk delete in the new service
+    const deletePromises = documentIds.map(id =>
+      this.documentService.deleteDocument(id).toPromise()
+        .then(() => deletedCount++)
+        .catch(error => console.error('Failed to delete document:', error))
+    );
+
+    Promise.all(deletePromises).then(() => {
+      this.successMessage = `${deletedCount} document(s) deleted successfully`;
+      this.loadDocuments();
+      setTimeout(() => this.successMessage = '', 5000);
     });
   }
 
@@ -133,9 +179,9 @@ export class DocumentsComponent implements OnInit {
       return;
     }
 
-    this.documentsService.deleteDocument(documentId).subscribe({
+    this.documentService.deleteDocument(documentId).subscribe({
       next: (response) => {
-        this.successMessage = `Document deleted successfully: ${response.filename}`;
+        this.successMessage = `Document deleted successfully`;
         this.loadDocuments();
         setTimeout(() => this.successMessage = '', 5000);
       },
@@ -146,27 +192,56 @@ export class DocumentsComponent implements OnInit {
     });
   }
 
-  downloadDocument(documentId: string): void {
-    this.documentsService.downloadDocument(documentId).subscribe({
-      next: (blob) => {
-        const document = this.documents.find(d => d.id === documentId);
-        const filename = document?.filename || 'document';
+  // Filtering methods
+  onCategoriesChange(categories: string[]): void {
+    this.selectedCategories = categories;
+    this.currentPage = 1; // Reset to first page when filtering
+    this.loadDocuments();
+  }
 
-        const url = window.URL.createObjectURL(blob);
-        const a = window.document.createElement('a');
-        a.href = url;
-        a.download = filename;
-        a.click();
-        window.URL.revokeObjectURL(url);
+  onTagsChange(tags: string[]): void {
+    this.selectedTags = tags;
+    this.currentPage = 1; // Reset to first page when filtering
+    this.loadDocuments();
+  }
 
-        this.successMessage = `Document downloaded: ${filename}`;
-        setTimeout(() => this.successMessage = '', 3000);
-      },
-      error: (error) => {
-        this.errorMessage = error.error?.detail || 'Failed to download document';
-        console.error('Download document error:', error);
-      }
-    });
+  onContentTypeChange(): void {
+    this.currentPage = 1; // Reset to first page when filtering
+    this.loadDocuments();
+  }
+
+  toggleFilters(): void {
+    this.showFilters = !this.showFilters;
+  }
+
+  clearFilters(): void {
+    this.selectedCategories = [];
+    this.selectedTags = [];
+    this.selectedContentType = '';
+    this.searchTerm = '';
+    this.currentPage = 1;
+    this.loadDocuments();
+  }
+
+  // Pagination methods
+  onPageChange(page: number): void {
+    if (page >= 1 && page <= this.getTotalPages()) {
+      this.currentPage = page;
+      this.loadDocuments();
+    }
+  }
+
+  getTotalPages(): number {
+    return Math.ceil(this.totalCount / this.pageSize);
+  }
+
+  getPaginationArray(): number[] {
+    const totalPages = this.getTotalPages();
+    const pages = [];
+    for (let i = 1; i <= totalPages; i++) {
+      pages.push(i);
+    }
+    return pages;
   }
 
 
@@ -189,6 +264,73 @@ export class DocumentsComponent implements OnInit {
     });
   }
 
+  getConfidenceColor(confidence: number): string {
+    if (confidence >= 0.8) return '#10b981'; // Green
+    if (confidence >= 0.6) return '#f59e0b'; // Yellow
+    return '#ef4444'; // Red
+  }
+
+  formatConfidence(confidence: number): string {
+    return `${Math.round(confidence * 100)}%`;
+  }
+
+  // Helper methods for UI
+  getCategoryById(categoryId: string): DocumentCategory | undefined {
+    return this.categories.find(cat => cat.id === categoryId);
+  }
+
+  getTagById(tagId: string): DocumentTag | undefined {
+    return this.tags.find(tag => tag.id === tagId);
+  }
+
+  getFileIcon(contentType: string): string {
+    if (contentType === 'application/pdf') return 'picture_as_pdf';
+    if (contentType.includes('word')) return 'article';
+    if (contentType.includes('text')) return 'description';
+    if (contentType.includes('spreadsheet')) return 'table_chart';
+    if (contentType.includes('presentation')) return 'slideshow';
+    return 'insert_drive_file';
+  }
+
+  formatFileSize(bytes: number): string {
+    if (bytes === 0) return '0 Bytes';
+    const k = 1024;
+    const sizes = ['Bytes', 'KB', 'MB', 'GB'];
+    const i = Math.floor(Math.log(bytes) / Math.log(k));
+    return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i];
+  }
+
+  getContentTypeName(contentType: string): string {
+    return this.documentService.getContentTypeName(contentType);
+  }
+
+  hasActiveFilters(): boolean {
+    return this.selectedCategories.length > 0 ||
+           this.selectedTags.length > 0 ||
+           this.selectedContentType !== '' ||
+           this.searchTerm !== '';
+  }
+
+  getActiveFiltersCount(): number {
+    let count = 0;
+    if (this.selectedCategories.length > 0) count++;
+    if (this.selectedTags.length > 0) count++;
+    if (this.selectedContentType) count++;
+    if (this.searchTerm) count++;
+    return count;
+  }
+
+  // Update document categorization
+  updateDocumentCategorization(documentId: string): void {
+    const document = this.documents.find(d => d.id === documentId);
+    if (!document) return;
+
+    // This would open a modal or navigate to an edit page
+    // For now, we'll just log the action
+    console.log('Update categorization for document:', document.filename);
+  }
+
+  // Status helper method
   getStatusClass(status: string): string {
     switch (status.toLowerCase()) {
       case 'completed':
@@ -205,15 +347,46 @@ export class DocumentsComponent implements OnInit {
     }
   }
 
-  // For debugging/admin purposes - method to view all documents including failed ones
-  showAllDocuments(): void {
-    if (this.allDocuments.length > 0) {
-      console.table(this.allDocuments.map(doc => ({
-        filename: doc.filename,
-        status: doc.status,
-        error_message: doc.error_message,
-        created_at: doc.created_at
-      })));
-    }
+  // View document metadata
+  viewDocument(documentId: string): void {
+    this.isLoadingMetadata = true;
+    this.isViewModalOpen = true;
+    this.selectedDocumentMetadata = null;
+    this.errorMessage = '';
+
+    this.documentService.getDocumentMetadata(documentId).subscribe({
+      next: (metadata: DocumentMetadata) => {
+        this.selectedDocumentMetadata = metadata;
+        this.isLoadingMetadata = false;
+      },
+      error: (error) => {
+        this.isLoadingMetadata = false;
+        this.isViewModalOpen = false;
+        if (error.status === 401) {
+          this.authService.logout();
+          this.router.navigate(['/login']);
+        } else {
+          this.errorMessage = error.error?.detail || 'Failed to load document metadata';
+        }
+        console.error('Load metadata error:', error);
+      }
+    });
+  }
+
+  // Close document view modal
+  closeViewModal(): void {
+    this.isViewModalOpen = false;
+    this.selectedDocumentMetadata = null;
+    this.isLoadingMetadata = false;
+  }
+
+  // Download document (placeholder for now)
+  downloadDocument(documentId: string): void {
+    const document = this.documents.find(d => d.id === documentId);
+    if (!document) return;
+
+    // Placeholder - would integrate with document download API
+    this.successMessage = `Download functionality not yet implemented for: ${document.filename}`;
+    setTimeout(() => this.successMessage = '', 3000);
   }
 }

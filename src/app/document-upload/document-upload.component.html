@@ -2,33 +2,101 @@
   <!-- Page Header -->
   <div class="page-header">
     <h2>Document Upload</h2>
-    <p class="description">Upload documents to the ChatCraft onboarding service</p>
+    <p class="description">Upload documents with AI-powered categorization and tagging</p>
   </div>
 
   <form (ngSubmit)="onUpload()" #uploadForm="ngForm" class="upload-form">
     <!-- File Upload -->
     <div class="form-group">
       <label for="fileInput">Document *</label>
-      <input
-        type="file"
-        id="fileInput"
-        name="fileInput"
-        (change)="onFileSelected($event)"
-        accept=".pdf,.txt,.docx"
-        required
-        class="form-control"
-        [disabled]="isUploading"
-      />
-      <small class="file-info">Supported formats: PDF, TXT, DOCX</small>
+      <div class="file-upload-area" [class.has-file]="hasSelectedFile">
+        <input
+          type="file"
+          id="fileInput"
+          name="fileInput"
+          (change)="onFileSelected($event)"
+          accept=".pdf,.txt,.docx,.xlsx,.pptx"
+          required
+          class="file-input"
+          [disabled]="isUploading"
+        />
+        <div class="upload-prompt" *ngIf="!hasSelectedFile">
+          <span class="material-icons upload-icon">cloud_upload</span>
+          <p>Click to select a file or drag and drop</p>
+          <small>Supported formats: PDF, TXT, DOCX, XLSX, PPTX</small>
+        </div>
+
+        <!-- Selected File Display -->
+        <div *ngIf="selectedFile" class="selected-file">
+          <div class="file-icon">
+            <span class="material-icons">{{ getFileIcon(selectedFile) }}</span>
+          </div>
+          <div class="file-details">
+            <h4>{{ selectedFile.name }}</h4>
+            <p class="file-meta">{{ formatFileSize(selectedFile.size) }} • {{ selectedFile.type }}</p>
+            <div *ngIf="!isValidFileType(selectedFile)" class="file-warning">
+              <span class="material-icons">warning</span>
+              This file type may not be fully supported
+            </div>
+          </div>
+          <button type="button" (click)="onFileSelected({target: {files: []}})" class="remove-file-btn">
+            <span class="material-icons">close</span>
+          </button>
+        </div>
+      </div>
     </div>
 
-    <!-- Selected File Info -->
-    <div *ngIf="selectedFile" class="selected-file">
-      <p><strong>Selected file:</strong> {{selectedFile.name}}</p>
-      <p><strong>Size:</strong> {{(selectedFile.size / 1024 / 1024).toFixed(2)}} MB</p>
-      <p><strong>Type:</strong> {{selectedFile.type}}</p>
-      <div *ngIf="!isValidFileType(selectedFile)" class="warning">
-        ⚠️ This file type may not be supported by the API
+    <!-- Advanced Options Toggle -->
+    <div class="advanced-toggle" *ngIf="hasSelectedFile">
+      <button type="button" (click)="toggleAdvancedOptions()" class="toggle-btn">
+        <span class="material-icons">{{ showAdvancedOptions ? 'expand_less' : 'expand_more' }}</span>
+        Advanced Options
+      </button>
+    </div>
+
+    <!-- Advanced Options Panel -->
+    <div class="advanced-options" *ngIf="showAdvancedOptions && hasSelectedFile">
+      <!-- Auto Categorization Toggle -->
+      <div class="form-group">
+        <div class="checkbox-group">
+          <input
+            type="checkbox"
+            id="autoCategorize"
+            [(ngModel)]="autoCategorize"
+            name="autoCategorize"
+          >
+          <label for="autoCategorize">
+            <span class="material-icons">smart_toy</span>
+            Enable AI auto-categorization
+          </label>
+        </div>
+        <small class="help-text">Let AI automatically categorize and tag your document</small>
+      </div>
+
+      <!-- Category Selection -->
+      <div class="form-group">
+        <label>Categories (Optional)</label>
+        <app-category-selector
+          [selectedCategories]="selectedCategories"
+          [showCreateOption]="true"
+          placeholder="Select categories..."
+          (categoriesChange)="onCategoriesChange($event)"
+          (categoryCreate)="onCategoryCreate($event)"
+        ></app-category-selector>
+        <small class="help-text">Pre-assign categories to this document</small>
+      </div>
+
+      <!-- Tag Selection -->
+      <div class="form-group">
+        <label>Tags (Optional)</label>
+        <app-tag-selector
+          [selectedTags]="selectedTags"
+          [showCreateOption]="true"
+          placeholder="Add tags..."
+          (tagsChange)="onTagsChange($event)"
+          (tagCreate)="onTagCreate($event)"
+        ></app-tag-selector>
+        <small class="help-text">Add custom tags for easier searching</small>
       </div>
     </div>
 
@@ -39,33 +107,183 @@
       [disabled]="!selectedFile || isUploading || uploadForm.invalid"
     >
       <span *ngIf="isUploading" class="loading-spinner"></span>
-      {{isUploading ? 'Uploading...' : 'Upload Document'}}
+      <span class="material-icons" *ngIf="!isUploading">upload</span>
+      {{isUploading ? 'Processing Document...' : 'Upload Document'}}
     </button>
   </form>
 
   <!-- Error Message -->
   <div *ngIf="errorMessage" class="error-message">
-    <p>❌ {{errorMessage}}</p>
-    <button (click)="clearResults()" class="clear-btn">Clear</button>
+    <div class="message-content">
+      <span class="material-icons">error</span>
+      <div class="message-text">
+        <h4>Upload Failed</h4>
+        <p>{{errorMessage}}</p>
+      </div>
+    </div>
+    <button (click)="clearResults()" class="clear-btn">
+      <span class="material-icons">close</span>
+    </button>
   </div>
 
-  <!-- Success Message -->
+  <!-- Success Results -->
   <div *ngIf="uploadResult" class="success-message">
-    <h3>✅ Upload Successful!</h3>
-    <div class="result-details">
-      <p><strong>Message:</strong> {{uploadResult.message}}</p>
-      <p><strong>Filename:</strong> {{uploadResult.filename}}</p>
-      <p><strong>Chunks Created:</strong> {{uploadResult.chunks_created}}</p>
-      <p><strong>Tenant:</strong> {{uploadResult.tenant_name}} ({{uploadResult.tenant_id}})</p>
+    <div class="message-header">
+      <span class="material-icons success-icon">check_circle</span>
+      <h3>Upload Successful!</h3>
     </div>
-    <button (click)="clearResults()" class="clear-btn">Upload Another Document</button>
+
+    <!-- Basic Upload Info -->
+    <div class="result-section">
+      <h4>Document Information</h4>
+      <div class="info-grid">
+        <div class="info-item">
+          <span class="label">Filename:</span>
+          <span class="value">{{ uploadResult.filename }}</span>
+        </div>
+        <div class="info-item">
+          <span class="label">Document ID:</span>
+          <span class="value">{{ uploadResult.document_id }}</span>
+        </div>
+        <div class="info-item">
+          <span class="label">Chunks Created:</span>
+          <span class="value">{{ uploadResult.chunks_created }}</span>
+        </div>
+        <div class="info-item">
+          <span class="label">Tenant:</span>
+          <span class="value">{{ uploadResult.tenant_name }}</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- AI Classification Results -->
+    <div class="result-section" *ngIf="hasClassificationResults">
+      <h4>
+        <span class="material-icons">psychology</span>
+        AI Classification Results
+      </h4>
+
+      <div class="classification-grid">
+        <!-- Content Analysis -->
+        <div class="classification-item">
+          <h5>Content Analysis</h5>
+          <div class="analysis-details">
+            <div class="detail-row">
+              <span class="label">Content Type:</span>
+              <span class="value">{{ uploadResult.classification.content_type }}</span>
+            </div>
+            <div class="detail-row">
+              <span class="label">Language:</span>
+              <span class="value">{{ uploadResult.classification.language }}</span>
+            </div>
+            <div class="detail-row">
+              <span class="label">Overall Confidence:</span>
+              <span
+                class="confidence-score"
+                [style.color]="getConfidenceColor(uploadResult.classification.confidence)"
+              >
+                {{ formatConfidence(uploadResult.classification.confidence) }}
+              </span>
+            </div>
+          </div>
+        </div>
+
+        <!-- AI Categories -->
+        <div class="classification-item" *ngIf="uploadResult.classification.categories.length > 0">
+          <h5>Detected Categories</h5>
+          <div class="ai-results">
+            <span
+              *ngFor="let category of uploadResult.classification.categories"
+              class="ai-tag"
+              [style.border-color]="getConfidenceColor(category.confidence)"
+            >
+              {{ category.name }}
+              <span class="confidence">{{ formatConfidence(category.confidence) }}</span>
+            </span>
+          </div>
+        </div>
+
+        <!-- AI Tags -->
+        <div class="classification-item" *ngIf="uploadResult.classification.tags.length > 0">
+          <h5>Detected Tags</h5>
+          <div class="ai-results">
+            <span
+              *ngFor="let tag of uploadResult.classification.tags"
+              class="ai-tag"
+              [style.border-color]="getConfidenceColor(tag.confidence)"
+            >
+              {{ tag.name }}
+              <span class="confidence">{{ formatConfidence(tag.confidence) }}</span>
+            </span>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- User Specified Data -->
+    <div class="result-section" *ngIf="hasUserSpecifiedData">
+      <h4>
+        <span class="material-icons">person</span>
+        User Specified
+      </h4>
+      <div class="user-specified">
+        <div *ngIf="uploadResult.user_specified.categories.length > 0">
+          <h5>Categories:</h5>
+          <div class="user-tags">
+            <span *ngFor="let category of uploadResult.user_specified.categories" class="user-tag">
+              {{ category }}
+            </span>
+          </div>
+        </div>
+        <div *ngIf="uploadResult.user_specified.tags.length > 0">
+          <h5>Tags:</h5>
+          <div class="user-tags">
+            <span *ngFor="let tag of uploadResult.user_specified.tags" class="user-tag">
+              {{ tag }}
+            </span>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Actions -->
+    <div class="result-actions">
+      <button (click)="navigateToDocuments()" class="btn btn-primary">
+        <span class="material-icons">folder_open</span>
+        View Documents
+      </button>
+      <button (click)="clearResults()" class="btn btn-secondary">
+        <span class="material-icons">add</span>
+        Upload Another
+      </button>
+    </div>
   </div>
 
   <!-- API Information -->
   <div class="api-info">
-    <h3>API Information</h3>
-    <p><strong>Endpoint:</strong> POST {{ apiUrl }}/documents/upload</p>
-    <p><strong>Service:</strong> ChatCraft Onboarding Service</p>
-    <p><strong>Authentication:</strong> Bearer Token (JWT)</p>
+    <h3>Enhanced Document Processing</h3>
+    <div class="feature-list">
+      <div class="feature">
+        <span class="material-icons">psychology</span>
+        <div>
+          <strong>AI Classification</strong>
+          <p>Automatic categorization and tagging using advanced ML models</p>
+        </div>
+      </div>
+      <div class="feature">
+        <span class="material-icons">search</span>
+        <div>
+          <strong>Vector Search</strong>
+          <p>Semantic search capabilities for intelligent document retrieval</p>
+        </div>
+      </div>
+      <div class="feature">
+        <span class="material-icons">analytics</span>
+        <div>
+          <strong>Content Analysis</strong>
+          <p>Deep content understanding including language and type detection</p>
+        </div>
+      </div>
+    </div>
   </div>
 </div>
