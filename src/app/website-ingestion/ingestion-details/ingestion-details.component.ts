@@ -70,7 +70,6 @@ export class IngestionDetailsComponent implements OnInit, OnDestroy {
         this.isLoading = false;
         if (error.status === 401) {
           this.authService.logout();
-          this.router.navigate(['/login']);
         } else if (error.status === 404) {
           this.errorMessage = 'Ingestion not found or access denied';
         } else {
@@ -92,7 +91,6 @@ export class IngestionDetailsComponent implements OnInit, OnDestroy {
       error: (error) => {
         if (error.status === 401) {
           this.authService.logout();
-          this.router.navigate(['/login']);
         } else {
           this.errorMessage = 'Failed to load pages';
         }

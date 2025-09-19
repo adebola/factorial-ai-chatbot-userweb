@@ -56,6 +56,7 @@ export class AuthService {
   private readonly TOKEN_KEY = 'access_token';
   private readonly USER_KEY = 'user_info';
   private readonly REFRESH_TOKEN_KEY = 'refresh_token';
+  private readonly RETURN_URL_KEY = 'auth_return_url';
 
   private currentUserSubject = new BehaviorSubject<User | null>(this.getUserFromStorage());
   public currentUser$ = this.currentUserSubject.asObservable();
@@ -146,11 +147,15 @@ export class AuthService {
       // Set a flag to indicate intentional logout
       sessionStorage.setItem('intentional_logout', 'true');
 
+      // Clear any stored return URL since user is explicitly logging out
+      this.clearReturnUrl();
+
       // Simply redirect to login page with logout success indicator
       // The login page will not auto-login when intentional_logout flag is set
       this.router.navigate(['/login'], { queryParams: { logout: 'success' } }).then(r => {});
     } else {
       // Auto-logout (401, token expiry) - redirect to login with auto-retry
+      // Keep the return URL so user can return to their intended destination
       this.router.navigate(['/login'], { queryParams: { fromAutoLogout: 'true' } }).then(r => {});
     }
   }
@@ -338,6 +343,36 @@ export class AuthService {
     const payload = parts[1];
     const decoded = atob(payload.replace(/-/g, '+').replace(/_/g, '/'));
     return JSON.parse(decoded);
+  }
+
+  /**
+   * Set the return URL to redirect to after successful authentication
+   */
+  setReturnUrl(url: string): void {
+    sessionStorage.setItem(this.RETURN_URL_KEY, url);
+  }
+
+  /**
+   * Get and clear the stored return URL
+   */
+  getAndClearReturnUrl(): string {
+    const returnUrl = sessionStorage.getItem(this.RETURN_URL_KEY) || '/dashboard';
+    sessionStorage.removeItem(this.RETURN_URL_KEY);
+    return returnUrl;
+  }
+
+  /**
+   * Get the stored return URL without clearing it
+   */
+  getReturnUrl(): string {
+    return sessionStorage.getItem(this.RETURN_URL_KEY) || '/dashboard';
+  }
+
+  /**
+   * Clear the stored return URL
+   */
+  clearReturnUrl(): void {
+    sessionStorage.removeItem(this.RETURN_URL_KEY);
   }
 
   /**

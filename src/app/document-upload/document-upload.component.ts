@@ -78,7 +78,6 @@ export class DocumentUploadComponent {
           this.errorMessage = 'Session expired. Please log in again.';
           setTimeout(() => {
             this.authService.logout();
-            this.router.navigate(['/login']);
           }, 2000);
         } else if (error.error?.detail) {
           this.errorMessage = error.error.detail;

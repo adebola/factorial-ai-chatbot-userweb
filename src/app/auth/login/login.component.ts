@@ -22,12 +22,19 @@ export class LoginComponent implements OnInit {
     private router: Router,
     private route: ActivatedRoute
   ) {
-    // Get return URL from route parameters or default to '/dashboard'
-    this.returnUrl = this.route.snapshot.queryParams['returnUrl'] || '/dashboard';
+    // Get return URL from route parameters or stored URL or default to '/dashboard'
+    this.returnUrl = this.route.snapshot.queryParams['returnUrl'] || this.authService.getReturnUrl();
+
+    // Store the return URL if it's provided in query params
+    if (this.route.snapshot.queryParams['returnUrl']) {
+      this.authService.setReturnUrl(this.returnUrl);
+    }
 
     // Redirect if already authenticated
     if (this.authService.isAuthenticated()) {
-      this.router.navigate([this.returnUrl]);
+      // Use the stored return URL and clear it
+      const redirectUrl = this.authService.getAndClearReturnUrl();
+      this.router.navigate([redirectUrl]);
     }
   }
 

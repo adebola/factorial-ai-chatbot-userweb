@@ -77,7 +77,6 @@ export class MessagesComponent implements OnInit {
         this.isLoading = false;
         if (error.status === 401) {
           this.authService.logout();
-          this.router.navigate(['/login']);
         } else {
           this.errorMessage = 'Failed to load chat sessions. Please try again.';
         }

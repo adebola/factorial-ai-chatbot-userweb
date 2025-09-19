@@ -76,7 +76,6 @@ export class WebsiteIngestionComponent implements OnInit, OnDestroy {
         this.isLoading = false;
         if (error.status === 401) {
           this.authService.logout();
-          this.router.navigate(['/login']);
         } else {
           this.errorMessage = 'Failed to load website ingestions. Please try again.';
         }
