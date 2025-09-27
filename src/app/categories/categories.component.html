@@ -1,0 +1,292 @@
+<div class="categories-container">
+  <!-- Page Header -->
+  <div class="page-header">
+    <h2>Categories Management</h2>
+    <p>Organize your documents with custom and system categories</p>
+  </div>
+
+  <!-- Action Bar -->
+  <div class="action-bar">
+    <div class="action-buttons">
+      <button (click)="openCreateModal()" class="btn btn-primary">
+        <span class="material-icons">add</span>
+        Add Category
+      </button>
+      <button (click)="initializeSystemCategories()" class="btn btn-secondary">
+        <span class="material-icons">settings</span>
+        Initialize System Categories
+      </button>
+      <button (click)="toggleStats()" class="btn btn-outline">
+        <span class="material-icons">{{showStats ? 'visibility_off' : 'visibility'}}</span>
+        {{showStats ? 'Hide' : 'Show'}} Statistics
+      </button>
+    </div>
+    <div class="category-stats" *ngIf="showStats">
+      <div class="stat-item">
+        <span class="stat-value">{{totalCategories}}</span>
+        <span class="stat-label">Total</span>
+      </div>
+      <div class="stat-item">
+        <span class="stat-value">{{systemCategories}}</span>
+        <span class="stat-label">System</span>
+      </div>
+      <div class="stat-item">
+        <span class="stat-value">{{customCategories}}</span>
+        <span class="stat-label">Custom</span>
+      </div>
+    </div>
+  </div>
+
+  <!-- Messages -->
+  <div *ngIf="errorMessage" class="error-message">
+    <span class="material-icons">error</span>
+    <p>{{errorMessage}}</p>
+    <button (click)="clearMessages()" class="clear-btn">
+      <span class="material-icons">close</span>
+    </button>
+  </div>
+
+  <div *ngIf="successMessage" class="success-message">
+    <span class="material-icons">check_circle</span>
+    <p>{{successMessage}}</p>
+    <button (click)="clearMessages()" class="clear-btn">
+      <span class="material-icons">close</span>
+    </button>
+  </div>
+
+  <!-- Loading State -->
+  <div *ngIf="isLoading" class="loading-container">
+    <div class="loading-spinner"></div>
+    <p>Loading categories...</p>
+  </div>
+
+  <!-- Categories Hierarchy -->
+  <div *ngIf="!isLoading" class="categories-content">
+    <div class="categories-tree">
+      <ng-container *ngFor="let rootCategory of getRootCategories()">
+        <div class="category-item root-category">
+          <!-- Root Category -->
+          <div class="category-header" [class.has-children]="hasSubcategories(rootCategory.id)">
+            <div class="category-info">
+              <button
+                *ngIf="hasSubcategories(rootCategory.id)"
+                (click)="toggleExpanded(rootCategory.id)"
+                class="expand-btn"
+              >
+                <span class="material-icons">
+                  {{isExpanded(rootCategory.id) ? 'expand_less' : 'expand_more'}}
+                </span>
+              </button>
+              <span class="category-icon" [style.color]="rootCategory.color">
+                <span class="material-icons">{{getCategoryIcon(rootCategory.icon || 'folder')}}</span>
+              </span>
+              <div class="category-details">
+                <h3 class="category-name">{{rootCategory.name}}</h3>
+                <p *ngIf="rootCategory.description" class="category-description">{{rootCategory.description}}</p>
+                <div class="category-meta">
+                  <span class="category-type" [ngClass]="getCategoryTypeClass(rootCategory)">
+                    {{rootCategory.is_system_category ? 'System' : 'Custom'}}
+                  </span>
+                  <span *ngIf="showStats && rootCategory.document_count !== undefined" class="doc-count">
+                    {{rootCategory.document_count}} documents
+                  </span>
+                  <span class="created-date">{{formatDate(rootCategory.created_at)}}</span>
+                </div>
+              </div>
+            </div>
+            <div class="category-actions">
+              <button
+                (click)="openEditModal(rootCategory)"
+                [disabled]="rootCategory.is_system_category"
+                class="btn btn-sm btn-outline"
+                title="Edit Category"
+              >
+                <span class="material-icons">edit</span>
+              </button>
+              <button
+                (click)="deleteCategory(rootCategory)"
+                [disabled]="rootCategory.is_system_category || hasSubcategories(rootCategory.id)"
+                class="btn btn-sm btn-danger"
+                title="Delete Category"
+              >
+                <span class="material-icons">delete</span>
+              </button>
+            </div>
+          </div>
+
+          <!-- Subcategories -->
+          <div
+            *ngIf="hasSubcategories(rootCategory.id) && isExpanded(rootCategory.id)"
+            class="subcategories"
+          >
+            <div
+              *ngFor="let subCategory of getSubcategories(rootCategory.id)"
+              class="category-item sub-category"
+            >
+              <div class="category-header">
+                <div class="category-info">
+                  <span class="subcategory-connector"></span>
+                  <span class="category-icon" [style.color]="subCategory.color">
+                    <span class="material-icons">{{getCategoryIcon(subCategory.icon || 'folder')}}</span>
+                  </span>
+                  <div class="category-details">
+                    <h4 class="category-name">{{subCategory.name}}</h4>
+                    <p *ngIf="subCategory.description" class="category-description">{{subCategory.description}}</p>
+                    <div class="category-meta">
+                      <span class="category-type" [ngClass]="getCategoryTypeClass(subCategory)">
+                        {{subCategory.is_system_category ? 'System' : 'Custom'}}
+                      </span>
+                      <span *ngIf="showStats && subCategory.document_count !== undefined" class="doc-count">
+                        {{subCategory.document_count}} documents
+                      </span>
+                      <span class="created-date">{{formatDate(subCategory.created_at)}}</span>
+                    </div>
+                  </div>
+                </div>
+                <div class="category-actions">
+                  <button
+                    (click)="openEditModal(subCategory)"
+                    [disabled]="subCategory.is_system_category"
+                    class="btn btn-sm btn-outline"
+                    title="Edit Category"
+                  >
+                    <span class="material-icons">edit</span>
+                  </button>
+                  <button
+                    (click)="deleteCategory(subCategory)"
+                    [disabled]="subCategory.is_system_category"
+                    class="btn btn-sm btn-danger"
+                    title="Delete Category"
+                  >
+                    <span class="material-icons">delete</span>
+                  </button>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </ng-container>
+
+      <!-- Empty State -->
+      <div *ngIf="categories.length === 0" class="empty-state">
+        <div class="empty-icon">
+          <span class="material-icons">category</span>
+        </div>
+        <h3>No Categories Found</h3>
+        <p>Create your first category to organize documents</p>
+        <button (click)="openCreateModal()" class="btn btn-primary">Create Category</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Create/Edit Modal -->
+  <div *ngIf="isCreateModalOpen" class="modal-overlay" (click)="closeModal()">
+    <div class="modal-container" (click)="$event.stopPropagation()">
+      <div class="modal-header">
+        <h3>{{isEditMode ? 'Edit Category' : 'Create New Category'}}</h3>
+        <button (click)="closeModal()" class="close-btn">
+          <span class="material-icons">close</span>
+        </button>
+      </div>
+
+      <form (ngSubmit)="onSubmit()" #categoryFormRef="ngForm" class="modal-content">
+        <!-- Category Name -->
+        <div class="form-group">
+          <label for="categoryName">Category Name *</label>
+          <input
+            type="text"
+            id="categoryName"
+            [(ngModel)]="categoryForm.name"
+            name="categoryName"
+            required
+            maxlength="255"
+            placeholder="Enter category name"
+            class="form-control"
+          />
+        </div>
+
+        <!-- Description -->
+        <div class="form-group">
+          <label for="categoryDescription">Description</label>
+          <textarea
+            id="categoryDescription"
+            [(ngModel)]="categoryForm.description"
+            name="categoryDescription"
+            rows="3"
+            placeholder="Optional description"
+            class="form-control"
+          ></textarea>
+        </div>
+
+        <!-- Parent Category -->
+        <div class="form-group">
+          <label for="parentCategory">Parent Category</label>
+          <select
+            id="parentCategory"
+            [(ngModel)]="categoryForm.parent_category_id"
+            name="parentCategory"
+            class="form-control"
+          >
+            <option value="">None (Root Category)</option>
+            <option
+              *ngFor="let category of getRootCategories()"
+              [value]="category.id"
+              [disabled]="isEditMode && selectedCategory?.id === category.id"
+            >
+              {{category.name}}
+            </option>
+          </select>
+          <small class="help-text">Select a parent category to create a subcategory</small>
+        </div>
+
+        <!-- Color and Icon Row -->
+        <div class="form-row">
+          <!-- Color -->
+          <div class="form-group">
+            <label for="categoryColor">Color</label>
+            <div class="color-picker">
+              <input
+                type="color"
+                id="categoryColor"
+                [(ngModel)]="categoryForm.color"
+                name="categoryColor"
+                class="color-input"
+              />
+              <div class="color-preview" [style.background-color]="categoryForm.color"></div>
+            </div>
+          </div>
+
+          <!-- Icon -->
+          <div class="form-group">
+            <label for="categoryIcon">Icon</label>
+            <select
+              id="categoryIcon"
+              [(ngModel)]="categoryForm.icon"
+              name="categoryIcon"
+              class="form-control icon-select"
+            >
+              <option *ngFor="let iconOption of availableIcons" [value]="iconOption.icon">
+                {{iconOption.name}}
+              </option>
+            </select>
+            <div class="icon-preview">
+              <span class="material-icons" [style.color]="categoryForm.color">
+                {{getCategoryIcon(categoryForm.icon || 'folder')}}
+              </span>
+            </div>
+          </div>
+        </div>
+
+        <!-- Form Actions -->
+        <div class="modal-footer">
+          <button type="button" (click)="closeModal()" class="btn btn-secondary">
+            Cancel
+          </button>
+          <button type="submit" [disabled]="!categoryFormRef.form.valid" class="btn btn-primary">
+            {{isEditMode ? 'Update' : 'Create'}} Category
+          </button>
+        </div>
+      </form>
+    </div>
+  </div>
+</div>
