@@ -55,6 +55,12 @@ export class SideMenuComponent implements OnInit {
       active: false
     },
     {
+      label: 'Communications',
+      icon: 'mail',
+      route: '/communications',
+      active: false
+    },
+    {
       label: 'Settings',
       icon: 'settings',
       route: '/settings',

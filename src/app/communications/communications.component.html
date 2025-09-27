@@ -1,0 +1,346 @@
+<!-- Communications Header -->
+<div class="communications-header">
+  <h1 class="page-title">
+    <span class="material-icons page-icon">mail</span>
+    Communications
+  </h1>
+  <p class="page-subtitle">View and manage SMS and email communications</p>
+</div>
+
+<!-- Message/Error Alerts -->
+<div class="alert alert-success" *ngIf="successMessage">
+  {{ successMessage }}
+  <button class="alert-close" (click)="clearMessages()">×</button>
+</div>
+
+<div class="alert alert-error" *ngIf="errorMessage">
+  {{ errorMessage }}
+  <button class="alert-close" (click)="clearMessages()">×</button>
+</div>
+
+<!-- View Tabs -->
+<div class="view-tabs">
+  <button
+    class="tab-button"
+    [class.active]="currentView === 'emails'"
+    (click)="switchView('emails')"
+  >
+    <span class="material-icons">email</span>
+    Emails
+  </button>
+  <button
+    class="tab-button"
+    [class.active]="currentView === 'sms'"
+    (click)="switchView('sms')"
+  >
+    <span class="material-icons">sms</span>
+    SMS Messages
+  </button>
+</div>
+
+<!-- Search and Filters -->
+<div class="search-controls">
+  <div class="search-input-group">
+    <input
+      type="text"
+      [(ngModel)]="searchTerm"
+      placeholder="Search {{ currentView === 'emails' ? 'emails' : 'SMS messages' }}..."
+      class="search-input"
+      (keyup.enter)="onSearch()"
+    >
+    <button class="search-button" (click)="onSearch()" [disabled]="isLoading">
+      <span class="material-icons">search</span>
+    </button>
+  </div>
+
+  <button class="filter-toggle" (click)="toggleFilters()">
+    <span class="material-icons">filter_list</span>
+    Filters
+  </button>
+
+  <button class="clear-button" (click)="clearSearch()">
+    <span class="material-icons">clear</span>
+    Clear
+  </button>
+</div>
+
+<!-- Advanced Filters Panel -->
+<div class="filters-panel" *ngIf="showFilters">
+  <div class="filter-group">
+    <label for="status-filter">Status:</label>
+    <select
+      id="status-filter"
+      [(ngModel)]="selectedStatus"
+      class="filter-select"
+      (change)="onSearch()"
+    >
+      <option *ngFor="let option of statusOptions" [value]="option.value">
+        {{ option.label }}
+      </option>
+    </select>
+  </div>
+</div>
+
+<!-- Loading Indicator -->
+<div class="loading-indicator" *ngIf="isLoading">
+  <div class="spinner"></div>
+  <span>Loading {{ currentView }}...</span>
+</div>
+
+<!-- Messages List -->
+<div class="messages-container" *ngIf="!isLoading">
+
+  <!-- Email List -->
+  <div *ngIf="currentView === 'emails'" class="messages-list">
+    <div class="list-header">
+      <h3>Email Messages ({{ totalCount }})</h3>
+    </div>
+
+    <div *ngIf="emails.length === 0" class="empty-state">
+      <span class="material-icons empty-icon">email</span>
+      <h3>No emails found</h3>
+      <p>No email messages match your current search criteria.</p>
+    </div>
+
+    <div *ngIf="emails.length > 0" class="messages-table">
+      <table>
+        <thead>
+          <tr>
+            <th>Recipient</th>
+            <th>Subject</th>
+            <th>Status</th>
+            <th>Created</th>
+            <th>Sent</th>
+            <th>Actions</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr *ngFor="let email of emails" class="message-row">
+            <td>
+              <div class="recipient-info">
+                <span class="email">{{ email.to_email }}</span>
+                <span class="name" *ngIf="email.to_name">{{ email.to_name }}</span>
+              </div>
+            </td>
+            <td class="subject">{{ email.subject }}</td>
+            <td>
+              <span class="status-badge" [ngClass]="getStatusClass(email.status)">
+                {{ email.status }}
+              </span>
+            </td>
+            <td>{{ formatDate(email.created_at) }}</td>
+            <td>{{ email.sent_at ? formatDate(email.sent_at) : '-' }}</td>
+            <td>
+              <button class="action-button" (click)="viewMessage(email)">
+                <span class="material-icons">visibility</span>
+              </button>
+            </td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+  <!-- SMS List -->
+  <div *ngIf="currentView === 'sms'" class="messages-list">
+    <div class="list-header">
+      <h3>SMS Messages ({{ totalCount }})</h3>
+    </div>
+
+    <div *ngIf="smsMessages.length === 0" class="empty-state">
+      <span class="material-icons empty-icon">sms</span>
+      <h3>No SMS messages found</h3>
+      <p>No SMS messages match your current search criteria.</p>
+    </div>
+
+    <div *ngIf="smsMessages.length > 0" class="messages-table">
+      <table>
+        <thead>
+          <tr>
+            <th>Recipient</th>
+            <th>Message</th>
+            <th>Status</th>
+            <th>Created</th>
+            <th>Sent</th>
+            <th>Actions</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr *ngFor="let sms of smsMessages" class="message-row">
+            <td>{{ sms.to_phone }}</td>
+            <td class="message-preview">{{ sms.message | slice:0:50 }}{{ sms.message.length > 50 ? '...' : '' }}</td>
+            <td>
+              <span class="status-badge" [ngClass]="getStatusClass(sms.status)">
+                {{ sms.status }}
+              </span>
+            </td>
+            <td>{{ formatDate(sms.created_at) }}</td>
+            <td>{{ sms.sent_at ? formatDate(sms.sent_at) : '-' }}</td>
+            <td>
+              <button class="action-button" (click)="viewMessage(sms)">
+                <span class="material-icons">visibility</span>
+              </button>
+            </td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+  <!-- Pagination -->
+  <div class="pagination" *ngIf="totalPages > 1">
+    <button
+      class="pagination-button"
+      (click)="previousPage()"
+      [disabled]="currentPage === 1"
+    >
+      <span class="material-icons">chevron_left</span>
+    </button>
+
+    <button
+      *ngFor="let page of getPaginationArray()"
+      class="pagination-button"
+      [class.active]="page === currentPage"
+      (click)="goToPage(page)"
+    >
+      {{ page }}
+    </button>
+
+    <button
+      class="pagination-button"
+      (click)="nextPage()"
+      [disabled]="currentPage === totalPages"
+    >
+      <span class="material-icons">chevron_right</span>
+    </button>
+
+    <span class="pagination-info">
+      Page {{ currentPage }} of {{ totalPages }} ({{ totalCount }} total)
+    </span>
+  </div>
+</div>
+
+<!-- Message Details Modal -->
+<div class="modal-overlay" *ngIf="selectedMessage" (click)="closeMessageDetails()">
+  <div class="modal-content" (click)="$event.stopPropagation()">
+    <div class="modal-header">
+      <h3>{{ isEmailMessage(selectedMessage) ? 'Email' : 'SMS' }} Details</h3>
+      <button class="modal-close" (click)="closeMessageDetails()">
+        <span class="material-icons">close</span>
+      </button>
+    </div>
+
+    <div class="modal-body">
+      <!-- Email Details -->
+      <div *ngIf="isEmailMessage(selectedMessage)" class="message-details">
+        <div class="detail-row">
+          <label>To:</label>
+          <span>{{ selectedMessage.to_email }}</span>
+          <span *ngIf="selectedMessage.to_name" class="name-info">({{ selectedMessage.to_name }})</span>
+        </div>
+
+        <div class="detail-row">
+          <label>From:</label>
+          <span>{{ selectedMessage.from_email }}</span>
+          <span *ngIf="selectedMessage.from_name" class="name-info">({{ selectedMessage.from_name }})</span>
+        </div>
+
+        <div class="detail-row">
+          <label>Subject:</label>
+          <span>{{ selectedMessage.subject }}</span>
+        </div>
+
+        <div class="detail-row">
+          <label>Status:</label>
+          <span class="status-badge" [ngClass]="getStatusClass(selectedMessage.status)">
+            {{ selectedMessage.status }}
+          </span>
+        </div>
+
+        <div class="detail-row">
+          <label>Created:</label>
+          <span>{{ formatDate(selectedMessage.created_at) }}</span>
+        </div>
+
+        <div class="detail-row" *ngIf="selectedMessage.sent_at">
+          <label>Sent:</label>
+          <span>{{ formatDate(selectedMessage.sent_at) }}</span>
+        </div>
+
+        <div class="detail-row" *ngIf="selectedMessage.delivered_at">
+          <label>Delivered:</label>
+          <span>{{ formatDate(selectedMessage.delivered_at) }}</span>
+        </div>
+
+        <div class="detail-row" *ngIf="selectedMessage.opened_at">
+          <label>Opened:</label>
+          <span>{{ formatDate(selectedMessage.opened_at) }}</span>
+        </div>
+
+        <div class="detail-row" *ngIf="selectedMessage.clicked_at">
+          <label>Clicked:</label>
+          <span>{{ formatDate(selectedMessage.clicked_at) }}</span>
+        </div>
+
+        <div class="detail-row" *ngIf="selectedMessage.attachments && selectedMessage.attachments.length > 0">
+          <label>Attachments:</label>
+          <div class="attachments-list">
+            <span *ngFor="let attachment of selectedMessage.attachments" class="attachment-item">
+              {{ attachment.filename }} ({{ (attachment.size / 1024).toFixed(1) }}KB)
+            </span>
+          </div>
+        </div>
+
+        <div class="detail-row error-row" *ngIf="selectedMessage.error_message">
+          <label>Error:</label>
+          <span class="error-message">{{ selectedMessage.error_message }}</span>
+        </div>
+      </div>
+
+      <!-- SMS Details -->
+      <div *ngIf="!isEmailMessage(selectedMessage)" class="message-details">
+        <div class="detail-row">
+          <label>To:</label>
+          <span>{{ selectedMessage.to_phone }}</span>
+        </div>
+
+        <div class="detail-row">
+          <label>From:</label>
+          <span>{{ selectedMessage.from_phone }}</span>
+        </div>
+
+        <div class="detail-row">
+          <label>Message:</label>
+          <span class="message-content">{{ selectedMessage.message }}</span>
+        </div>
+
+        <div class="detail-row">
+          <label>Status:</label>
+          <span class="status-badge" [ngClass]="getStatusClass(selectedMessage.status)">
+            {{ selectedMessage.status }}
+          </span>
+        </div>
+
+        <div class="detail-row">
+          <label>Created:</label>
+          <span>{{ formatDate(selectedMessage.created_at) }}</span>
+        </div>
+
+        <div class="detail-row" *ngIf="selectedMessage.sent_at">
+          <label>Sent:</label>
+          <span>{{ formatDate(selectedMessage.sent_at) }}</span>
+        </div>
+
+        <div class="detail-row" *ngIf="selectedMessage.delivered_at">
+          <label>Delivered:</label>
+          <span>{{ formatDate(selectedMessage.delivered_at) }}</span>
+        </div>
+
+        <div class="detail-row error-row" *ngIf="selectedMessage.error_message">
+          <label>Error:</label>
+          <span class="error-message">{{ selectedMessage.error_message }}</span>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>

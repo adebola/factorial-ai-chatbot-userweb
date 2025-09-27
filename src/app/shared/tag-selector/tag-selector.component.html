@@ -1,0 +1,100 @@
+<div class="tag-selector" (click)="onDocumentClick($event)">
+  <!-- Tag container -->
+  <div class="tag-container">
+    <!-- Selected tags -->
+    <span
+      *ngFor="let tagId of selectedTags"
+      class="tag-chip"
+      [style.background-color]="getTagTypeColor(getTagById(tagId)?.tag_type || 'custom')"
+    >
+      <span class="material-icons tag-type-icon">
+        {{ getTagTypeIcon(getTagById(tagId)?.tag_type || 'custom') }}
+      </span>
+      {{ getTagById(tagId)?.name }}
+      <button type="button" (click)="removeTag(tagId)" class="remove-btn">
+        <span class="material-icons">close</span>
+      </button>
+    </span>
+
+    <!-- Input field -->
+    <input
+      type="text"
+      [(ngModel)]="inputValue"
+      (input)="onInputChange()"
+      (keydown)="onInputKeydown($event)"
+      (focus)="onInputFocus()"
+      (blur)="onInputBlur()"
+      [placeholder]="selectedTags.length === 0 ? placeholder : ''"
+      class="tag-input"
+    >
+  </div>
+
+  <!-- Dropdown suggestions -->
+  <div class="tag-dropdown" *ngIf="isDropdownOpen">
+    <!-- Loading state -->
+    <div *ngIf="isLoading" class="loading-state">
+      <div class="spinner"></div>
+      <span>Loading tags...</span>
+    </div>
+
+    <!-- Tag suggestions -->
+    <div class="tags-list" *ngIf="!isLoading">
+      <!-- No results -->
+      <div *ngIf="filteredTags.length === 0 && inputValue.trim()" class="no-results">
+        <span class="material-icons">search_off</span>
+        <p>No matching tags found</p>
+        <button
+          *ngIf="showCreateOption && !hasExactMatch(inputValue)"
+          type="button"
+          (click)="createTag(inputValue)"
+          class="btn btn-outline"
+        >
+          <span class="material-icons">add</span>
+          Create "{{ inputValue }}"
+        </button>
+      </div>
+
+      <!-- Existing tag suggestions -->
+      <div
+        *ngFor="let tag of filteredTags"
+        class="tag-option"
+        (click)="selectTag(tag.id)"
+      >
+        <div class="tag-info">
+          <div class="tag-header">
+            <span
+              class="material-icons tag-type-icon"
+              [style.color]="getTagTypeColor(tag.tag_type)"
+              [title]="tag.tag_type + ' tag'"
+            >
+              {{ getTagTypeIcon(tag.tag_type) }}
+            </span>
+            <span class="tag-name">{{ tag.name }}</span>
+          </div>
+          <div class="tag-stats">
+            <span class="usage-count">{{ tag.usage_count }} uses</span>
+            <span class="tag-type-label" [style.color]="getTagTypeColor(tag.tag_type)">
+              {{ tag.tag_type }}
+            </span>
+          </div>
+        </div>
+      </div>
+
+      <!-- Create new tag option -->
+      <div
+        *ngIf="showCreateOption && inputValue.trim() && !hasExactMatch(inputValue) && filteredTags.length > 0"
+        class="create-tag-option"
+        (click)="createTag(inputValue)"
+      >
+        <span class="material-icons">add_circle</span>
+        <span>Create "{{ inputValue }}"</span>
+      </div>
+    </div>
+  </div>
+
+  <!-- Hint text -->
+  <div class="hint-text" *ngIf="selectedTags.length === 0 && !inputValue">
+    <span class="material-icons">info</span>
+    Type to search or create tags. Press Enter to add.
+  </div>
+</div>

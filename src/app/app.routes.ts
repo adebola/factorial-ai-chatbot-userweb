@@ -7,6 +7,7 @@ import { WebsiteIngestionComponent } from './website-ingestion/website-ingestion
 import { IngestionDetailsComponent } from './website-ingestion/ingestion-details/ingestion-details.component';
 import { PlansComponent } from './plans/plans.component';
 import { MessagesComponent } from './messages/messages.component';
+import { CommunicationsComponent } from './communications/communications.component';
 import { SettingsComponent } from './settings/settings.component';
 import { LoginComponent } from './auth/login/login.component';
 import { SignupComponent } from './auth/signup/signup.component';
@@ -32,6 +33,7 @@ export const routes: Routes = [
       { path: 'websites', component: WebsiteIngestionComponent },
       { path: 'websites/:id/details', component: IngestionDetailsComponent },
       { path: 'messages', component: MessagesComponent },
+      { path: 'communications', component: CommunicationsComponent },
       { path: 'plans', component: PlansComponent },
       { path: 'settings', component: SettingsComponent }
     ]

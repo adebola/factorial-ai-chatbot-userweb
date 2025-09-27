@@ -1,0 +1,135 @@
+<div class="category-selector" (click)="onDocumentClick($event)">
+  <!-- Selected categories display -->
+  <div class="selected-categories" *ngIf="selectedCategories.length > 0 && multiple">
+    <span
+      *ngFor="let categoryId of selectedCategories"
+      class="category-chip"
+      [style.background-color]="getCategoryById(categoryId)?.color || '#6B7280'"
+    >
+      {{ getCategoryById(categoryId)?.name }}
+      <button type="button" (click)="removeCategory(categoryId)" class="remove-btn">
+        <span class="material-icons">close</span>
+      </button>
+    </span>
+  </div>
+
+  <!-- Dropdown trigger -->
+  <div class="dropdown-trigger" (click)="toggleDropdown()">
+    <span class="selected-text">{{ getSelectedCategoryNames() }}</span>
+    <span class="material-icons dropdown-arrow" [class.rotated]="isDropdownOpen">
+      keyboard_arrow_down
+    </span>
+  </div>
+
+  <!-- Dropdown menu -->
+  <div class="category-dropdown" *ngIf="isDropdownOpen">
+    <!-- Search input -->
+    <div class="search-container">
+      <span class="material-icons search-icon">search</span>
+      <input
+        type="text"
+        [(ngModel)]="searchTerm"
+        (input)="onSearchChange()"
+        placeholder="Search categories..."
+        class="search-input"
+      >
+    </div>
+
+    <!-- Loading state -->
+    <div *ngIf="isLoading" class="loading-state">
+      <div class="spinner"></div>
+      <span>Loading categories...</span>
+    </div>
+
+    <!-- Create new category form -->
+    <div *ngIf="showCreateForm" class="create-form">
+      <div class="form-group">
+        <input
+          type="text"
+          [(ngModel)]="newCategoryName"
+          placeholder="Category name"
+          class="form-control"
+        >
+      </div>
+      <div class="form-group">
+        <input
+          type="text"
+          [(ngModel)]="newCategoryDescription"
+          placeholder="Description (optional)"
+          class="form-control"
+        >
+      </div>
+      <div class="form-actions">
+        <button type="button" (click)="createCategory()" class="btn btn-primary">
+          <span class="material-icons">add</span>
+          Create
+        </button>
+        <button type="button" (click)="cancelCreate()" class="btn btn-secondary">
+          Cancel
+        </button>
+      </div>
+    </div>
+
+    <!-- Categories list -->
+    <div class="categories-list" *ngIf="!isLoading && !showCreateForm">
+      <!-- No results -->
+      <div *ngIf="filteredCategories.length === 0" class="no-results">
+        <span class="material-icons">search_off</span>
+        <p>No categories found</p>
+        <button
+          *ngIf="showCreateOption && searchTerm"
+          type="button"
+          (click)="showCreateCategoryForm()"
+          class="btn btn-outline"
+        >
+          <span class="material-icons">add</span>
+          Create "{{ searchTerm }}"
+        </button>
+      </div>
+
+      <!-- Category options -->
+      <div
+        *ngFor="let category of filteredCategories"
+        class="category-option"
+        [class.selected]="isCategorySelected(category.id)"
+        (click)="selectCategory(category.id)"
+      >
+        <div class="category-info">
+          <div class="category-header">
+            <span
+              class="category-color"
+              [style.background-color]="category.color || '#6B7280'"
+            ></span>
+            <span class="category-name">{{ category.name }}</span>
+            <span
+              *ngIf="category.is_system_category"
+              class="system-badge"
+              title="System Category"
+            >
+              <span class="material-icons">verified</span>
+            </span>
+          </div>
+          <p *ngIf="category.description" class="category-description">
+            {{ category.description }}
+          </p>
+          <div class="category-stats" *ngIf="category.document_count !== undefined">
+            <span class="document-count">{{ category.document_count }} documents</span>
+          </div>
+        </div>
+        <span *ngIf="isCategorySelected(category.id)" class="material-icons check-icon">
+          check_circle
+        </span>
+      </div>
+
+      <!-- Create option at bottom -->
+      <div
+        *ngIf="showCreateOption && !showCreateForm && searchTerm && filteredCategories.length > 0"
+        class="create-option"
+        (click)="showCreateCategoryForm()"
+      >
+        <span class="material-icons">add_circle</span>
+        <span>Create "{{ searchTerm }}"</span>
+      </div>
+    </div>
+  </div>
+</div>
