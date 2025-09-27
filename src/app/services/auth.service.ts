@@ -349,7 +349,11 @@ export class AuthService {
    * Set the return URL to redirect to after successful authentication
    */
   setReturnUrl(url: string): void {
-    sessionStorage.setItem(this.RETURN_URL_KEY, url);
+    // Don't store login, signup, or callback URLs as return URLs
+    if (url && !url.includes('/login') && !url.includes('/signup') && !url.includes('/callback')) {
+      sessionStorage.setItem(this.RETURN_URL_KEY, url);
+      console.log(`🔗 Storing return URL: ${url}`);
+    }
   }
 
   /**

@@ -113,6 +113,8 @@ export class CommunicationsComponent implements OnInit {
   private handleError(error: any, defaultMessage: string): void {
     this.isLoading = false;
     if (error.status === 401) {
+      // Store current URL before logout so user can return after re-authentication
+      this.authService.setReturnUrl(this.router.url);
       this.authService.logout();
     } else if (error.status === 0 && error.error instanceof ProgressEvent) {
       // CORS error or network error

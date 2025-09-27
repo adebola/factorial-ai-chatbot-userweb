@@ -36,6 +36,13 @@ export const authInterceptor: HttpInterceptorFn = (req, next) => {
   // Helper function to handle 401 errors
   const handle401Error = (request: any) => {
     console.log('🔍 Checking refresh token validity...');
+
+    // Store current URL before attempting refresh (in case refresh fails)
+    const currentUrl = router.url;
+    if (currentUrl && currentUrl !== '/login' && currentUrl !== '/callback') {
+      authService.setReturnUrl(currentUrl);
+    }
+
     // Check if we can refresh the token
     if (!authService.isRefreshTokenValid()) {
       authService.logout();

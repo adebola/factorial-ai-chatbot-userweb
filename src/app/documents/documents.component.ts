@@ -97,6 +97,8 @@ export class DocumentsComponent implements OnInit {
       error: (error) => {
         this.isLoading = false;
         if (error.status === 401) {
+          // Store current URL before logout so user can return after re-authentication
+          this.authService.setReturnUrl(this.router.url);
           this.authService.logout();
         } else {
           this.errorMessage = 'Failed to load documents. Please try again.';
@@ -362,6 +364,8 @@ export class DocumentsComponent implements OnInit {
         this.isLoadingMetadata = false;
         this.isViewModalOpen = false;
         if (error.status === 401) {
+          // Store current URL before logout so user can return after re-authentication
+          this.authService.setReturnUrl(this.router.url);
           this.authService.logout();
         } else {
           this.errorMessage = error.error?.detail || 'Failed to load document metadata';
