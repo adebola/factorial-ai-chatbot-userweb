@@ -11,10 +11,11 @@ import {
 } from '../services/communications.service';
 import { AuthService } from '../services/auth.service';
 import { environment } from '../../environments/environment';
+import { SanitizeHtmlPipe } from '../pipes/sanitize-html.pipe';
 
 @Component({
   selector: 'app-communications',
-  imports: [CommonModule, FormsModule],
+  imports: [CommonModule, FormsModule, SanitizeHtmlPipe],
   templateUrl: './communications.component.html',
   styleUrl: './communications.component.scss'
 })
@@ -178,7 +179,25 @@ export class CommunicationsComponent implements OnInit {
 
   // View message details
   viewMessage(message: EmailMessage | SmsMessage): void {
-    this.selectedMessage = message;
+    // For emails, fetch full details including body and attachments from backend
+    if (this.isEmailMessage(message)) {
+      this.isLoading = true;
+      this.communicationsService.getEmailDetails(message.id).subscribe({
+        next: (fullDetails: EmailMessage) => {
+          this.selectedMessage = fullDetails;
+          this.isLoading = false;
+        },
+        error: (error) => {
+          // Fallback to showing basic info if API call fails
+          this.selectedMessage = message;
+          this.isLoading = false;
+          console.error('Failed to load full email details:', error);
+        }
+      });
+    } else {
+      // For SMS, just show the message (SMS already has full content in list)
+      this.selectedMessage = message;
+    }
   }
 
   closeMessageDetails(): void {

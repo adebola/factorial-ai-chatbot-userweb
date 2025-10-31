@@ -1,7 +1,7 @@
-// Variables - Triadic Color Scheme
-$primary-color: #5D3EC1;   // Purple
-$secondary-color: #C15D3E; // Red-Orange  
-$tertiary-color: #3EC15D;  // Green
+// Variables - New Brand Colors
+$primary-color: #2B55FF;   // Blue
+$secondary-color: #CDF547; // Lime Green
+$tertiary-color: #CDF547;  // Lime Green
 $background-color: #ffffff;
 $text-color: #333333;
 $border-color: #e0e0e0;
@@ -166,6 +166,14 @@ $warning-color: #ff9800;
         font-weight: 600;
       }
 
+      .call-pricing {
+        font-size: 1.25rem;
+        font-weight: 600;
+        background-color: rgba(255, 255, 255, 0.2);
+        padding: 0.5rem 1rem;
+        border-radius: 6px;
+      }
+
       .plan-limits {
         font-size: 0.9rem;
         opacity: 0.9;
@@ -228,9 +236,11 @@ $warning-color: #ff9800;
 
 .plans-grid {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(350px, 1fr));
   gap: 2rem;
   margin-top: 2rem;
+
+  // Default: 2 cards per row for all desktop/tablet sizes
+  grid-template-columns: repeat(2, 1fr);
 }
 
 .plan-card {

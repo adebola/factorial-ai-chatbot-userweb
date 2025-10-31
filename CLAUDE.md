@@ -147,7 +147,7 @@ export const environment = {
 ## Backend Integration
 
 ### Backend Server Location
-**Backend Server Path**: `~/Documents/Dropbox/ProjectsMacBook/FactorialSystems/Projects/factorialbot/dev/backend`
+**Backend Server Path**: `~/Documents/Dropbox/ProjectsMacBook/FactorialSystems/Projects/ChatCraft/dev/backend`
 
 ### API Gateway Architecture
 All API requests go through the Spring Cloud Gateway which routes to appropriate microservices:

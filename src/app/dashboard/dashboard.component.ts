@@ -6,17 +6,6 @@ import { takeUntil } from 'rxjs/operators';
 import {DashboardService, DashboardData, PlanDetails} from '../services/dashboard.service';
 import { AuthService } from '../services/auth.service';
 
-interface StatCard {
-  title: string;
-  value: string | number;
-  icon: string;
-  color: string;
-  trend?: {
-    value: number;
-    isPositive: boolean;
-  };
-}
-
 @Component({
   selector: 'app-dashboard',
   imports: [CommonModule, RouterModule],
@@ -30,8 +19,6 @@ export class DashboardComponent implements OnInit, OnDestroy {
   loading = true;
   error: string | null = null;
   currentUser: any = null;
-
-  statCards: StatCard[] = [];
 
   constructor(
     private dashboardService: DashboardService,
@@ -59,7 +46,6 @@ export class DashboardComponent implements OnInit, OnDestroy {
       .subscribe({
         next: (data) => {
           this.dashboardData = data;
-          this.updateStatCards();
           this.loading = false;
         },
         error: (error) => {
@@ -67,39 +53,6 @@ export class DashboardComponent implements OnInit, OnDestroy {
           this.loading = false;
         }
       });
-  }
-
-  private updateStatCards(): void {
-    if (!this.dashboardData) return;
-
-    const usage = this.dashboardData.currentUsage;
-
-    this.statCards = [
-      {
-        title: 'Documents',
-        value: usage ? `${usage.documents.used}/${usage.documents.limit}` : `${this.dashboardData.documentsCount || 0}`,
-        icon: 'description',
-        color: 'primary'
-      },
-      {
-        title: 'Websites',
-        value: usage ? `${usage.websites.used}/${usage.websites.limit}` : `${this.dashboardData.websitesCount || 0}`,
-        icon: 'web',
-        color: 'secondary'
-      },
-      {
-        title: 'Daily Chats',
-        value: usage ? `${usage.daily_chats.used}/${usage.daily_chats.limit}` : '0',
-        icon: 'chat',
-        color: 'success'
-      },
-      {
-        title: 'Monthly Chats',
-        value: usage ? `${usage.monthly_chats.used}/${usage.monthly_chats.limit}` : '0',
-        icon: 'smart_toy',
-        color: 'info'
-      }
-    ];
   }
 
   getSubscriptionTierDisplay(tier: string): string {
@@ -255,13 +208,26 @@ export class DashboardComponent implements OnInit, OnDestroy {
     return plan?.name || 'No Plan Selected';
   }
 
+  formatNumber(value: number | string): string {
+    const numValue = typeof value === 'string' ? parseFloat(value) : value;
+    return numValue.toLocaleString('en-US', {
+      minimumFractionDigits: 0,
+      maximumFractionDigits: 0
+    });
+  }
+
+  formatLimit(value: number): string {
+    // -1 means unlimited
+    return value === -1 ? 'Unlimited' : this.formatNumber(value);
+  }
+
   getPlanLimitsText(plan: any): string {
     if (!plan) return 'No plan limits available';
 
     const limits = [];
-    if (plan.document_limit) limits.push(`${plan.document_limit} documents`);
-    if (plan.website_limit) limits.push(`${plan.website_limit} websites`);
-    if (plan.daily_chat_limit) limits.push(`${plan.daily_chat_limit} chats/day`);
+    if (plan.document_limit) limits.push(`${this.formatLimit(plan.document_limit)} documents`);
+    if (plan.website_limit) limits.push(`${this.formatLimit(plan.website_limit)} websites`);
+    if (plan.daily_chat_limit) limits.push(`${this.formatLimit(plan.daily_chat_limit)} chats/day`);
 
     return limits.join(', ') || 'No limits specified';
   }

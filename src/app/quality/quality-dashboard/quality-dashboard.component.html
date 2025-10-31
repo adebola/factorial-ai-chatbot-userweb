@@ -1,0 +1,213 @@
+<!-- Dashboard Header -->
+<div class="dashboard-header">
+  <div class="header-content">
+    <div class="header-info">
+      <div class="title-section">
+        <h1><span class="material-icons">bar_chart</span> Answer Quality Dashboard</h1>
+        <p class="subtitle">Monitor and analyze your AI chatbot's answer quality</p>
+      </div>
+    </div>
+    <div class="header-actions">
+      <div class="period-selector">
+        <button
+          class="period-btn"
+          [class.active]="selectedPeriod === 7"
+          (click)="changePeriod(7)"
+          [disabled]="loading">
+          7 Days
+        </button>
+        <button
+          class="period-btn"
+          [class.active]="selectedPeriod === 30"
+          (click)="changePeriod(30)"
+          [disabled]="loading">
+          30 Days
+        </button>
+      </div>
+      <button class="action-btn export-btn" (click)="exportReport()" [disabled]="loading">
+        <span class="material-icons">download</span>
+        Export CSV
+      </button>
+      <button class="refresh-btn" (click)="refresh()" [disabled]="loading" title="Refresh Dashboard">
+        <span class="material-icons refresh-icon" [class.spinning]="loading">refresh</span>
+      </button>
+    </div>
+  </div>
+</div>
+
+<!-- Loading State -->
+<div *ngIf="loading" class="loading-container">
+  <div class="loading-spinner"></div>
+  <p>Loading dashboard data...</p>
+</div>
+
+<!-- Error State -->
+<div *ngIf="error && !loading" class="error-container">
+  <div class="error-icon">⚠️</div>
+  <h3>Unable to load dashboard</h3>
+  <p>{{ error }}</p>
+  <button class="retry-btn" (click)="refresh()">Try Again</button>
+</div>
+
+<!-- Dashboard Content -->
+<div *ngIf="!loading && !error" class="dashboard-content">
+
+  <!-- Statistics Cards -->
+  <div class="stats-grid">
+    <div *ngFor="let card of statCards" class="stat-card" [ngClass]="'stat-card-' + card.color">
+      <div class="stat-icon">
+        <span class="material-icons">{{ card.icon }}</span>
+      </div>
+      <div class="stat-content">
+        <div class="stat-value">{{ card.value }}</div>
+        <div class="stat-title">{{ card.title }}</div>
+        <div *ngIf="card.subtitle" class="stat-subtitle">{{ card.subtitle }}</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Quality Trends Chart -->
+  <div class="info-card chart-card">
+    <div class="card-header">
+      <h2><span class="material-icons">trending_up</span> Quality Trends</h2>
+    </div>
+    <div class="card-body">
+      <div class="chart-container" *ngIf="qualityTrends && qualityTrends.trends.length > 0">
+        <canvas
+          baseChart
+          [data]="lineChartData"
+          [options]="lineChartOptions"
+          [type]="'line'">
+        </canvas>
+      </div>
+      <div class="no-data" *ngIf="!qualityTrends || qualityTrends.trends.length === 0">
+        <span class="material-icons">show_chart</span>
+        <p>No trend data available for the selected period</p>
+      </div>
+    </div>
+  </div>
+
+  <!-- Feedback Overview -->
+  <div class="info-card feedback-card" *ngIf="dashboardOverview && getFeedback()">
+    <div class="card-header">
+      <h2><span class="material-icons">feedback</span> Feedback Summary</h2>
+    </div>
+    <div class="card-body">
+      <div class="feedback-stats">
+        <div class="feedback-item">
+          <div class="feedback-label">
+            <span class="material-icons helpful-icon">thumb_up</span>
+            Helpful
+          </div>
+          <div class="feedback-value">{{ getFeedback().helpful || 0 }}</div>
+          <div class="feedback-percentage">
+            {{ (getFeedback().helpful_percentage || 0).toFixed(1) }}%
+          </div>
+        </div>
+        <div class="feedback-item">
+          <div class="feedback-label">
+            <span class="material-icons not-helpful-icon">thumb_down</span>
+            Not Helpful
+          </div>
+          <div class="feedback-value">{{ getFeedback().not_helpful || 0 }}</div>
+          <div class="feedback-percentage">
+            {{ (100 - (getFeedback().helpful_percentage || 0)).toFixed(1) }}%
+          </div>
+        </div>
+        <div class="feedback-item">
+          <div class="feedback-label">
+            <span class="material-icons">analytics</span>
+            Total Responses
+          </div>
+          <div class="feedback-value">{{ getFeedback().total || 0 }}</div>
+        </div>
+      </div>
+      <div class="feedback-progress">
+        <div class="progress-bar-container">
+          <div class="progress-bar-fill helpful"
+               [style.width.%]="getFeedback().helpful_percentage || 0">
+          </div>
+        </div>
+        <div class="progress-labels">
+          <span class="label-helpful">{{ (getFeedback().helpful_percentage || 0).toFixed(1) }}% Helpful</span>
+          <span class="label-not-helpful">{{ (100 - (getFeedback().helpful_percentage || 0)).toFixed(1) }}% Not Helpful</span>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Low Quality Messages -->
+  <div class="info-card messages-card">
+    <div class="card-header">
+      <h2><span class="material-icons">warning</span> Low Quality Messages</h2>
+      <span class="message-count">{{ lowQualityMessages.length }} messages</span>
+    </div>
+    <div class="card-body">
+      <div class="messages-table-container" *ngIf="lowQualityMessages.length > 0">
+        <table class="messages-table">
+          <thead>
+            <tr>
+              <th>Message ID</th>
+              <th>Session ID</th>
+              <th>Confidence</th>
+              <th>Retrieval Score</th>
+              <th>Response Time</th>
+              <th>Created At</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr *ngFor="let message of lowQualityMessages">
+              <td class="message-id">{{ message.message_id.substring(0, 8) }}...</td>
+              <td class="session-id">{{ message.session_id.substring(0, 8) }}...</td>
+              <td>
+                <span class="score-badge" [ngClass]="getScoreClass(message.answer_confidence)">
+                  {{ formatScore(message.answer_confidence) }}
+                </span>
+              </td>
+              <td>
+                <span class="score-badge" [ngClass]="getScoreClass(message.retrieval_score)">
+                  {{ formatScore(message.retrieval_score) }}
+                </span>
+              </td>
+              <td>{{ message.response_time_ms ? message.response_time_ms + 'ms' : 'N/A' }}</td>
+              <td>{{ formatDateTime(message.created_at) }}</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+      <div class="no-data" *ngIf="lowQualityMessages.length === 0">
+        <span class="material-icons">check_circle</span>
+        <p>No low quality messages detected - great job!</p>
+      </div>
+    </div>
+  </div>
+
+  <!-- Quick Navigation -->
+  <div class="info-card navigation-card">
+    <div class="card-header">
+      <h2><span class="material-icons">apps</span> Quick Navigation</h2>
+    </div>
+    <div class="card-body">
+      <div class="quick-nav-grid">
+        <a routerLink="/quality/knowledge-gaps" class="nav-item">
+          <span class="material-icons">report_problem</span>
+          <span class="nav-label">Knowledge Gaps</span>
+          <span class="nav-count" *ngIf="getKnowledgeGaps()">{{ getKnowledgeGaps().active_gaps }}</span>
+        </a>
+        <a routerLink="/quality/alerts" class="nav-item">
+          <span class="material-icons">notifications</span>
+          <span class="nav-label">Alert Rules</span>
+        </a>
+        <a routerLink="/quality/alert-history" class="nav-item">
+          <span class="material-icons">history</span>
+          <span class="nav-label">Alert History</span>
+        </a>
+        <a routerLink="/quality/scheduler" class="nav-item">
+          <span class="material-icons">schedule</span>
+          <span class="nav-label">Scheduler</span>
+        </a>
+      </div>
+    </div>
+  </div>
+
+</div>

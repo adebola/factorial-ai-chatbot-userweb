@@ -3,6 +3,7 @@ export const environment = {
   apiUrl: 'http://localhost:8080/api/v1',
   chatServiceUrl: 'ws://localhost:8080/api/v1/chat',
   gatewayUrl: 'http://localhost:8080',
+  qualityServiceUrl: 'http://localhost:8080/api/v1/quality',
   useGateway: true,
   clientId: 'webclient',
   clientSecret: 'webclient-secret',
@@ -23,6 +24,7 @@ export const environment = {
     enableErrorReporting: false,
     enableChat: true,
     enableFileUpload: true,
-    enableWebsiteIngestion: true
+    enableWebsiteIngestion: true,
+    enableQualityMonitoring: true
   }
 };

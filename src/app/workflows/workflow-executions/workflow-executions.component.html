@@ -1,0 +1,223 @@
+<div class="workflow-executions-container">
+  <!-- Header -->
+  <div class="executions-header">
+    <div class="header-content">
+      <h1>Workflow Executions</h1>
+      <p class="subtitle">Monitor and manage workflow execution history</p>
+    </div>
+    <div class="header-actions">
+      <button (click)="navigateBack()" class="btn-back">
+        <span class="material-icons">arrow_back</span>
+        Back to Workflows
+      </button>
+      <button
+        (click)="toggleAutoRefresh()"
+        [class.active]="autoRefresh"
+        class="refresh-toggle">
+        <span class="material-icons">{{ autoRefresh ? 'sync' : 'sync_disabled' }}</span>
+        Auto-refresh {{ autoRefresh ? 'ON' : 'OFF' }}
+      </button>
+      <button (click)="loadExecutions()" class="btn-refresh">
+        <span class="material-icons">refresh</span>
+        Refresh
+      </button>
+    </div>
+  </div>
+
+  <!-- Filters -->
+  <div class="filters-section">
+    <button (click)="toggleFilters()" class="filter-toggle">
+      <span class="material-icons">filter_list</span>
+      Filters
+      <span *ngIf="hasActiveFilters()" class="filter-badge">{{ hasActiveFilters() ? '•' : '' }}</span>
+    </button>
+
+    <div *ngIf="showFilters" class="filters-panel">
+      <div class="filter-row">
+        <div class="filter-group">
+          <label>Workflow</label>
+          <select
+            [(ngModel)]="selectedWorkflowId"
+            (ngModelChange)="onFilterChange()"
+            class="filter-select">
+            <option value="">All Workflows</option>
+            <option *ngFor="let workflow of workflows" [value]="workflow.id">
+              {{ workflow.name }}
+            </option>
+          </select>
+        </div>
+
+        <div class="filter-group">
+          <label>Status</label>
+          <select
+            [(ngModel)]="selectedStatus"
+            (ngModelChange)="onFilterChange()"
+            class="filter-select">
+            <option *ngFor="let status of statusOptions" [value]="status.value">
+              {{ status.label }}
+            </option>
+          </select>
+        </div>
+
+        <div class="filter-group">
+          <label>User ID</label>
+          <input
+            type="text"
+            [(ngModel)]="selectedUserIdentifier"
+            (ngModelChange)="onFilterChange()"
+            placeholder="Enter user ID..."
+            class="filter-input">
+        </div>
+
+        <div class="filter-group">
+          <label>From Date</label>
+          <input
+            type="datetime-local"
+            [(ngModel)]="dateFrom"
+            (ngModelChange)="onFilterChange()"
+            class="filter-input">
+        </div>
+
+        <div class="filter-group">
+          <label>To Date</label>
+          <input
+            type="datetime-local"
+            [(ngModel)]="dateTo"
+            (ngModelChange)="onFilterChange()"
+            class="filter-input">
+        </div>
+
+        <button (click)="clearFilters()" class="btn-clear">
+          <span class="material-icons">clear</span>
+          Clear
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Messages -->
+  <div *ngIf="errorMessage" class="message error-message">
+    <span class="material-icons">error</span>
+    {{ errorMessage }}
+    <button (click)="clearMessages()" class="close-btn">
+      <span class="material-icons">close</span>
+    </button>
+  </div>
+
+  <div *ngIf="successMessage" class="message success-message">
+    <span class="material-icons">check_circle</span>
+    {{ successMessage }}
+    <button (click)="clearMessages()" class="close-btn">
+      <span class="material-icons">close</span>
+    </button>
+  </div>
+
+  <!-- Loading State -->
+  <div *ngIf="isLoading" class="loading-container">
+    <div class="spinner"></div>
+    <p>Loading executions...</p>
+  </div>
+
+  <!-- Executions Table -->
+  <div *ngIf="!isLoading && executions.length > 0" class="executions-table-container">
+    <table class="executions-table">
+      <thead>
+        <tr>
+          <th>Status</th>
+          <th>Workflow</th>
+          <th>Session ID</th>
+          <th>User</th>
+          <th>Progress</th>
+          <th>Started</th>
+          <th>Duration</th>
+          <th>Actions</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr *ngFor="let execution of executions">
+          <td>
+            <span [class]="'status-badge ' + getStatusClass(execution.status)">
+              <span class="material-icons">{{ getStatusIcon(execution.status) }}</span>
+              {{ execution.status }}
+            </span>
+          </td>
+          <td class="workflow-name">{{ getWorkflowName(execution.workflow_id) }}</td>
+          <td class="session-id">{{ execution.session_id.substring(0, 8) }}...</td>
+          <td>{{ execution.user_identifier || 'N/A' }}</td>
+          <td>
+            <div class="progress-container">
+              <div class="progress-bar">
+                <div
+                  class="progress-fill"
+                  [style.width.%]="getProgress(execution.steps_completed, execution.total_steps)">
+                </div>
+              </div>
+              <span class="progress-text">
+                {{ execution.steps_completed }}/{{ execution.total_steps || '?' }}
+              </span>
+            </div>
+          </td>
+          <td>{{ formatDate(execution.started_at) }}</td>
+          <td>{{ calculateDuration(execution.started_at, execution.completed_at) }}</td>
+          <td class="actions">
+            <button
+              (click)="viewExecutionDetails(execution.id)"
+              class="btn-icon"
+              title="View Details">
+              <span class="material-icons">visibility</span>
+            </button>
+            <button
+              *ngIf="execution.status === 'running' || execution.status === 'paused'"
+              (click)="cancelExecution(execution)"
+              class="btn-icon btn-danger"
+              title="Cancel Execution">
+              <span class="material-icons">cancel</span>
+            </button>
+            <button
+              *ngIf="execution.status === 'failed' || execution.status === 'cancelled'"
+              (click)="retryExecution(execution)"
+              class="btn-icon btn-success"
+              title="Retry Execution">
+              <span class="material-icons">replay</span>
+            </button>
+          </td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+
+  <!-- Empty State -->
+  <div *ngIf="!isLoading && executions.length === 0" class="empty-state">
+    <span class="material-icons empty-icon">history</span>
+    <h3>No executions found</h3>
+    <p>{{ hasActiveFilters() ? 'Try adjusting your filters' : 'No workflow executions have been recorded yet' }}</p>
+  </div>
+
+  <!-- Pagination -->
+  <div *ngIf="!isLoading && getTotalPages() > 1" class="pagination">
+    <button
+      (click)="onPageChange(currentPage - 1)"
+      [disabled]="currentPage === 1"
+      class="page-btn">
+      <span class="material-icons">chevron_left</span>
+    </button>
+
+    <ng-container *ngFor="let page of getPaginationArray()">
+      <button
+        *ngIf="page !== -1"
+        (click)="onPageChange(page)"
+        [class.active]="page === currentPage"
+        class="page-btn page-number">
+        {{ page }}
+      </button>
+      <span *ngIf="page === -1" class="ellipsis">...</span>
+    </ng-container>
+
+    <button
+      (click)="onPageChange(currentPage + 1)"
+      [disabled]="currentPage === getTotalPages()"
+      class="page-btn">
+      <span class="material-icons">chevron_right</span>
+    </button>
+  </div>
+</div>

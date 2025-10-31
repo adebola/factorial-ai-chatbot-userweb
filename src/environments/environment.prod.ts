@@ -1,10 +1,11 @@
 export const environment = {
   production: true,
-  apiUrl: 'https://ai.factorialsystems.io/api/v1',
-  chatServiceUrl: 'wss://ai.factorialsystems.io/api/v1/chat',
-  gatewayUrl: 'https://ai.factorialsystems.io',
+  apiUrl: 'https://api.chatcraft.cc/api/v1',
+  chatServiceUrl: 'wss://api.chatcraft.cc/api/v1/chat',
+  gatewayUrl: 'https://api.chatcraft.cc',
+  qualityServiceUrl: 'https://api.chatcraft.cc/api/v1/quality',
   useGateway: true,
-  authServiceUrl: 'https://ai.factorialsystems.io/auth',
+  authServiceUrl: 'https://api.chatcraft.cc/auth',
   clientId: 'webclient',
   clientSecret: 'webclient-secret',
   redirectUri: 'https://app.chatcraft.cc/callback',
@@ -22,6 +23,7 @@ export const environment = {
     enableErrorReporting: true,
     enableChat: true,
     enableFileUpload: true,
-    enableWebsiteIngestion: true
+    enableWebsiteIngestion: true,
+    enableQualityMonitoring: true
   }
 };

@@ -1,0 +1,226 @@
+<div class="step-editor-container" [formGroup]="formGroup">
+  <!-- Step Type Display (Read-only in this context as it's set in parent) -->
+  <div class="step-type-indicator">
+    <span class="material-icons">{{ getStepTypeIcon() }}</span>
+    <span class="step-type-name">{{ getStepTypeLabel() }}</span>
+  </div>
+
+  <!-- Common Fields for All Step Types -->
+  <div class="step-fields">
+    <!-- Step Content (for Message, Choice, Input steps) -->
+    <div *ngIf="stepType === StepType.MESSAGE || stepType === StepType.CHOICE || stepType === StepType.INPUT"
+         class="form-group">
+      <label for="content">Content/Message *</label>
+      <textarea
+        id="content"
+        formControlName="content"
+        placeholder="Enter the message or prompt..."
+        class="form-textarea"
+        rows="3"
+        [class.error]="hasValidation('content')">
+      </textarea>
+      <div *ngIf="hasValidation('content')" class="error-text">
+        {{ getValidationMessage('content') }}
+      </div>
+    </div>
+
+    <!-- Choice Options (for Choice steps) -->
+    <div *ngIf="stepType === StepType.CHOICE" class="form-group">
+      <label for="choice-variable">Store Selection In Variable *</label>
+      <input
+        id="choice-variable"
+        type="text"
+        formControlName="variable"
+        placeholder="e.g., company_size"
+        class="form-input"
+        [class.error]="hasValidation('variable')">
+      <small class="help-text">The selected option's value will be stored in this variable</small>
+      <div *ngIf="hasValidation('variable')" class="error-text">
+        {{ getValidationMessage('variable') }}
+      </div>
+    </div>
+
+    <div *ngIf="stepType === StepType.CHOICE" class="form-group">
+      <label>Choice Options *</label>
+      <div formArrayName="options" class="options-container">
+        <div *ngFor="let option of optionsArray.controls; let i = index"
+             class="option-item"
+             [formGroupName]="i">
+          <div class="option-fields">
+            <div class="option-field-group">
+              <label class="field-label">Display Text</label>
+              <input
+                type="text"
+                formControlName="text"
+                placeholder="e.g., 1-10 employees"
+                class="form-input option-text">
+            </div>
+            <div class="option-field-group">
+              <label class="field-label">Stored Value</label>
+              <input
+                type="text"
+                formControlName="value"
+                placeholder="e.g., small"
+                class="form-input option-value">
+            </div>
+            <div class="option-field-group">
+              <label class="field-label">Next Step</label>
+              <select formControlName="next_step" class="form-select option-next">
+                <option value="">Select next step...</option>
+                <option *ngFor="let step of getAvailableStepOptions()" [value]="step.value">
+                  {{ step.label }}
+                </option>
+              </select>
+            </div>
+            <button type="button" (click)="removeOption(i)" class="btn-remove" title="Remove option">
+              <span class="material-icons">remove</span>
+            </button>
+          </div>
+        </div>
+      </div>
+      <button type="button" (click)="addOption()" class="btn-add">
+        <span class="material-icons">add</span>
+        Add Option
+      </button>
+    </div>
+
+    <!-- Input Variable (for Input steps) -->
+    <div *ngIf="stepType === StepType.INPUT" class="form-group">
+      <label for="variable">Store Response In Variable *</label>
+      <input
+        id="variable"
+        type="text"
+        formControlName="variable"
+        placeholder="e.g., user_email"
+        class="form-input"
+        [class.error]="hasValidation('variable')">
+      <div *ngIf="hasValidation('variable')" class="error-text">
+        {{ getValidationMessage('variable') }}
+      </div>
+    </div>
+
+    <!-- Condition Configuration (for Condition steps) -->
+    <div *ngIf="stepType === StepType.CONDITION" class="form-group">
+      <label for="condition">Condition Expression *</label>
+      <textarea
+        id="condition"
+        formControlName="condition"
+        placeholder="e.g., company_size != 'small' or email == 'admin@example.com'"
+        class="form-textarea"
+        rows="3"
+        [class.error]="hasValidation('condition')">
+      </textarea>
+      <small class="help-text">
+        Supported operators: == (equals), != (not equals), > (greater), < (less), >= (greater or equal), <= (less or equal)
+        <br>Example: variable_name != 'value' or count > 10
+      </small>
+      <div *ngIf="hasValidation('condition')" class="error-text">
+        {{ getValidationMessage('condition') }}
+      </div>
+    </div>
+
+    <!-- Action Configuration (for Action steps) -->
+    <div *ngIf="stepType === StepType.ACTION" formGroupName="action" class="form-group">
+      <label>Action Type *</label>
+      <select
+        formControlName="type"
+        (ngModelChange)="onActionTypeChange()"
+        class="form-select">
+        <option *ngFor="let action of actionTypes" [value]="action.value">
+          {{ action.label }} - {{ action.description }}
+        </option>
+      </select>
+
+      <!-- Action Parameters -->
+      <div formGroupName="params" class="action-params">
+        <h4>Action Parameters</h4>
+        <div *ngFor="let paramKey of getActionParamKeys()" class="param-item">
+          <label [for]="paramKey">{{ paramKey | titlecase }}</label>
+          <input
+            [id]="paramKey"
+            type="text"
+            [formControlName]="paramKey"
+            [placeholder]="'Enter ' + paramKey"
+            class="form-input">
+        </div>
+      </div>
+    </div>
+
+    <!-- Sub-workflow Configuration (for Sub-workflow steps) -->
+    <div *ngIf="stepType === StepType.SUB_WORKFLOW" class="form-group">
+      <label for="sub_workflow_id">Sub-workflow ID *</label>
+      <input
+        id="sub_workflow_id"
+        type="text"
+        formControlName="sub_workflow_id"
+        placeholder="Enter workflow ID"
+        class="form-input">
+
+      <label for="params">Parameters (JSON)</label>
+      <textarea
+        id="params"
+        formControlName="params"
+        placeholder='{"key": "value"}'
+        class="form-textarea"
+        rows="3">
+      </textarea>
+    </div>
+
+    <!-- Delay Configuration (for Delay steps) -->
+    <div *ngIf="stepType === StepType.DELAY" formGroupName="delay" class="form-group">
+      <label>Delay Duration *</label>
+      <div class="delay-fields">
+        <input
+          type="number"
+          formControlName="duration"
+          placeholder="30"
+          class="form-input delay-duration"
+          min="1">
+        <select formControlName="unit" class="form-select delay-unit">
+          <option value="seconds">Seconds</option>
+          <option value="minutes">Minutes</option>
+          <option value="hours">Hours</option>
+          <option value="days">Days</option>
+        </select>
+      </div>
+    </div>
+
+    <!-- Next Step (for steps that don't have specific branching logic) -->
+    <div *ngIf="stepType !== StepType.CHOICE" class="form-group">
+      <label for="next_step">
+        <span *ngIf="stepType === StepType.CONDITION">Next Step (if condition is TRUE) *</span>
+        <span *ngIf="stepType !== StepType.CONDITION">Next Step</span>
+      </label>
+      <select id="next_step" formControlName="next_step" class="form-select" [class.error]="hasValidation('next_step')">
+        <option value="">
+          <span *ngIf="stepType === StepType.CONDITION">Select step...</span>
+          <span *ngIf="stepType !== StepType.CONDITION">End workflow</span>
+        </option>
+        <option *ngFor="let step of getAvailableStepOptions()" [value]="step.value">
+          {{ step.label }}
+        </option>
+      </select>
+      <small *ngIf="stepType === StepType.CONDITION" class="help-text">
+        If condition is FALSE, the workflow will end
+      </small>
+      <div *ngIf="hasValidation('next_step')" class="error-text">
+        {{ getValidationMessage('next_step') }}
+      </div>
+    </div>
+
+    <!-- Metadata (Advanced) -->
+    <details class="metadata-section">
+      <summary>Advanced Settings</summary>
+      <div class="form-group">
+        <label for="metadata">Metadata (JSON)</label>
+        <textarea
+          id="metadata"
+          formControlName="metadata"
+          placeholder='{"timeout": 300, "retry": true}'
+          class="form-textarea"
+          rows="2">
+        </textarea>
+      </div>
+    </details>
+  </div>
+</div>

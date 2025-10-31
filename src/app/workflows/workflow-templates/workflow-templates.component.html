@@ -1,0 +1,143 @@
+<div class="workflow-templates-container">
+  <!-- Header -->
+  <div class="templates-header">
+    <div class="header-content">
+      <h1>Workflow Templates</h1>
+      <p class="subtitle">Start quickly with pre-built workflow templates</p>
+    </div>
+    <div class="header-actions">
+      <button (click)="navigateBack()" class="btn-back">
+        <span class="material-icons">arrow_back</span>
+        Back to Workflows
+      </button>
+    </div>
+  </div>
+
+  <!-- Filters and Controls -->
+  <div class="templates-controls">
+    <div class="search-box">
+      <span class="material-icons">search</span>
+      <input
+        type="text"
+        [(ngModel)]="searchTerm"
+        (ngModelChange)="onSearchChange()"
+        placeholder="Search templates..."
+        class="search-input">
+    </div>
+
+    <div class="filter-controls">
+      <select
+        [(ngModel)]="selectedCategory"
+        (ngModelChange)="onCategoryChange()"
+        class="category-filter">
+        <option value="">All Categories</option>
+        <option *ngFor="let category of categories" [value]="category">{{ category }}</option>
+      </select>
+
+      <button (click)="toggleViewMode()" class="view-toggle">
+        <span class="material-icons">
+          {{ viewMode === 'grid' ? 'view_list' : 'grid_view' }}
+        </span>
+      </button>
+    </div>
+  </div>
+
+  <!-- Messages -->
+  <div *ngIf="errorMessage" class="message error-message">
+    <span class="material-icons">error</span>
+    {{ errorMessage }}
+    <button (click)="clearMessages()" class="close-btn">
+      <span class="material-icons">close</span>
+    </button>
+  </div>
+
+  <div *ngIf="successMessage" class="message success-message">
+    <span class="material-icons">check_circle</span>
+    {{ successMessage }}
+    <button (click)="clearMessages()" class="close-btn">
+      <span class="material-icons">close</span>
+    </button>
+  </div>
+
+  <!-- Loading State -->
+  <div *ngIf="isLoading" class="loading-container">
+    <div class="spinner"></div>
+    <p>Loading templates...</p>
+  </div>
+
+  <!-- Templates Grid/List -->
+  <div *ngIf="!isLoading" [ngClass]="viewMode === 'grid' ? 'templates-grid' : 'templates-list'">
+    <div *ngFor="let template of filteredTemplates" class="template-card">
+      <div class="template-header">
+        <span class="material-icons template-icon">
+          {{ getCategoryIcon(template.category || '') }}
+        </span>
+        <span class="template-category">{{ template.category || 'General' }}</span>
+      </div>
+
+      <h3 class="template-name">{{ template.name }}</h3>
+      <p class="template-description">{{ template.description || 'No description available' }}</p>
+
+      <div class="template-tags" *ngIf="template.tags && template.tags.length > 0">
+        <span *ngFor="let tag of template.tags" class="tag">{{ tag }}</span>
+      </div>
+
+      <div class="template-stats">
+        <div class="stat">
+          <span class="material-icons">content_copy</span>
+          <span>{{ template.usage_count }} uses</span>
+        </div>
+        <div class="stat">
+          <div class="rating">
+            <span *ngFor="let star of getRatingStars(template.rating)"
+                  class="material-icons star">{{ star }}</span>
+            <span class="rating-value">({{ template.rating.toFixed(1) }})</span>
+          </div>
+        </div>
+      </div>
+
+      <div class="template-actions">
+        <button (click)="viewTemplateDetails(template.id)" class="btn-secondary">
+          <span class="material-icons">visibility</span>
+          Preview
+        </button>
+        <button (click)="createFromTemplate(template.id)" class="btn-primary">
+          <span class="material-icons">add</span>
+          Use Template
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Empty State -->
+  <div *ngIf="!isLoading && filteredTemplates.length === 0" class="empty-state">
+    <span class="material-icons empty-icon">inbox</span>
+    <h3>No templates found</h3>
+    <p>Try adjusting your search or category filter</p>
+  </div>
+
+  <!-- Pagination -->
+  <div *ngIf="!isLoading && getTotalPages() > 1" class="pagination">
+    <button
+      (click)="onPageChange(currentPage - 1)"
+      [disabled]="currentPage === 1"
+      class="page-btn">
+      <span class="material-icons">chevron_left</span>
+    </button>
+
+    <button
+      *ngFor="let page of getPaginationArray()"
+      (click)="onPageChange(page)"
+      [class.active]="page === currentPage"
+      class="page-btn page-number">
+      {{ page }}
+    </button>
+
+    <button
+      (click)="onPageChange(currentPage + 1)"
+      [disabled]="currentPage === getTotalPages()"
+      class="page-btn">
+      <span class="material-icons">chevron_right</span>
+    </button>
+  </div>
+</div>

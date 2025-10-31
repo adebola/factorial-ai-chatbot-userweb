@@ -1,6 +1,6 @@
 # Environment Configuration
 
-This directory contains environment-specific configuration files for the FactorialBot Angular application.
+This directory contains environment-specific configuration files for the ChatCraft Angular application.
 
 ## Files
 
@@ -12,9 +12,9 @@ This directory contains environment-specific configuration files for the Factori
 | Property | Description | Dev Value | Prod Value |
 |----------|-------------|-----------|------------|
 | `production` | Environment flag | `false` | `true` |
-| `apiUrl` | Backend API base URL | `http://localhost:8001/api/v1` | `https://api.factorialbot.com/api/v1` |
-| `chatServiceUrl` | WebSocket chat service URL | `ws://localhost:8002` | `wss://chat.factorialbot.com` |
-| `appName` | Application name | `FactorialBot` | `FactorialBot` |
+| `apiUrl` | Backend API base URL | `http://localhost:8001/api/v1` | `https://api.chatcraft.com/api/v1` |
+| `chatServiceUrl` | WebSocket chat service URL | `ws://localhost:8002` | `wss://chat.chatcraft.com` |
+| `appName` | Application name | `ChatCraft` | `ChatCraft` |
 | `version` | Application version | `1.0.0` | `1.0.0` |
 | `enableLogging` | Enable console logging | `true` | `false` |
 | `maxFileSize` | Maximum file upload size (bytes) | `10485760` | `10485760` |

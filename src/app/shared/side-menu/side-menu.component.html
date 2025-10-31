@@ -10,8 +10,10 @@
   <!-- Header with Logo and Toggle -->
   <div class="menu-header">
     <div class="logo-container" [class.hidden]="isCollapsed">
-      <img src="/chatcraft-logo2.png" alt="ChatCraft" class="menu-logo">
-      <span class="app-title">ChatCraft</span>
+      <img src="/logo.png" alt="ChatCraft" class="menu-logo">
+    </div>
+    <div class="logo-container-collapsed" [class.visible]="isCollapsed">
+      <img src="/logo2.png" alt="ChatCraft" class="menu-logo-collapsed">
     </div>
     <button class="menu-toggle" (click)="toggleMenu()" [title]="isCollapsed ? 'Expand menu' : 'Collapse menu'">
       <span class="material-icons hamburger" [class.collapsed]="isCollapsed">menu</span>

@@ -188,14 +188,24 @@ export class AuthService {
    * Get current access token
    */
   getToken(): string | null {
-    return localStorage.getItem(this.TOKEN_KEY);
+    const token = localStorage.getItem(this.TOKEN_KEY);
+    // Prevent returning the string 'null' or 'undefined'
+    if (!token || token === 'null' || token === 'undefined') {
+      return null;
+    }
+    return token;
   }
 
   /**
    * Get current refresh token
    */
   getRefreshToken(): string | null {
-    return localStorage.getItem(this.REFRESH_TOKEN_KEY);
+    const token = localStorage.getItem(this.REFRESH_TOKEN_KEY);
+    // Prevent returning the string 'null' or 'undefined'
+    if (!token || token === 'null' || token === 'undefined') {
+      return null;
+    }
+    return token;
   }
 
   /**

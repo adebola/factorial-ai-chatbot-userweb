@@ -36,11 +36,12 @@
         <h3>{{ currentPlan.name }}</h3>
         <p>{{ currentPlan.description }}</p>
         <div class="current-plan-details">
-          <span>₦{{ formatNumber(getPlanCost(currentPlan)) }}/{{ billingCycle }}</span>
+          <span *ngIf="!isPricingCall(currentPlan)">₦{{ formatNumber(getPlanCost(currentPlan)) }}/{{ billingCycle }}</span>
+          <span *ngIf="isPricingCall(currentPlan)" class="call-pricing">Call for Pricing</span>
           <span class="plan-limits">
-            {{ formatNumber(currentPlan.document_limit) }} docs • 
-            {{ formatNumber(currentPlan.website_limit) }} sites • 
-            {{ formatNumber(currentPlan.daily_chat_limit) }} daily chats
+            {{ formatLimit(currentPlan.document_limit) }} docs •
+            {{ formatLimit(currentPlan.website_limit) }} sites •
+            {{ formatLimit(currentPlan.daily_chat_limit) }} daily chats
           </span>
         </div>
       </div>
@@ -83,8 +84,8 @@
 
         <div class="plan-price">
           <span class="currency">₦</span>
-          <span class="amount">{{ formatNumber(getPlanCost(plan)) }}</span>
-          <span class="period">/{{ billingCycle }}</span>
+          <span class="amount">{{ getPlanCostDisplay(plan) }}</span>
+          <span class="period" *ngIf="!isPricingCall(plan)">/{{ billingCycle }}</span>
         </div>
 
         <p class="plan-description">{{ plan.description }}</p>
@@ -92,19 +93,19 @@
         <div class="plan-limits">
           <div class="limit-item">
             <span class="material-icons">description</span>
-            <span>{{ formatNumber(plan.document_limit) }} documents</span>
+            <span>{{ formatLimit(plan.document_limit) }} documents</span>
           </div>
           <div class="limit-item">
             <span class="material-icons">language</span>
-            <span>{{ formatNumber(plan.website_limit) }} websites</span>
+            <span>{{ formatLimit(plan.website_limit) }} websites</span>
           </div>
           <div class="limit-item">
             <span class="material-icons">chat</span>
-            <span>{{ formatNumber(plan.daily_chat_limit) }} daily chats</span>
+            <span>{{ formatLimit(plan.daily_chat_limit) }} daily chats</span>
           </div>
           <div class="limit-item">
             <span class="material-icons">chat_bubble_outline</span>
-            <span>{{ formatNumber(plan.monthly_chat_limit) }} monthly chats</span>
+            <span>{{ formatLimit(plan.monthly_chat_limit) }} monthly chats</span>
           </div>
         </div>
 

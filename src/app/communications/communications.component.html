@@ -250,6 +250,24 @@
           <span>{{ selectedMessage.subject }}</span>
         </div>
 
+        <!-- Message Body Section -->
+        <div class="detail-row message-body-section" *ngIf="selectedMessage.html_content || selectedMessage.text_content">
+          <label>Message:</label>
+          <div class="message-body-container">
+            <!-- Show HTML content if available (preferred) -->
+            <div *ngIf="selectedMessage.html_content"
+                 class="html-content"
+                 [innerHTML]="selectedMessage.html_content | sanitizeHtml">
+            </div>
+
+            <!-- Fallback to plain text -->
+            <div *ngIf="!selectedMessage.html_content && selectedMessage.text_content"
+                 class="text-content">
+              {{ selectedMessage.text_content }}
+            </div>
+          </div>
+        </div>
+
         <div class="detail-row">
           <label>Status:</label>
           <span class="status-badge" [ngClass]="getStatusClass(selectedMessage.status)">
@@ -282,12 +300,28 @@
           <span>{{ formatDate(selectedMessage.clicked_at) }}</span>
         </div>
 
-        <div class="detail-row" *ngIf="selectedMessage.attachments && selectedMessage.attachments.length > 0">
-          <label>Attachments:</label>
+        <div class="detail-row attachments-row" *ngIf="selectedMessage.attachments && selectedMessage.attachments.length > 0">
+          <label>Attachments ({{ selectedMessage.attachments.length }}):</label>
           <div class="attachments-list">
-            <span *ngFor="let attachment of selectedMessage.attachments" class="attachment-item">
-              {{ attachment.filename }} ({{ (attachment.size / 1024).toFixed(1) }}KB)
-            </span>
+            <div *ngFor="let attachment of selectedMessage.attachments" class="attachment-item">
+              <span class="material-icons attachment-icon">attachment</span>
+              <div class="attachment-info">
+                <span class="attachment-name">{{ attachment.filename }}</span>
+                <span class="attachment-meta">
+                  {{ attachment.content_type }} · {{ (attachment.size / 1024).toFixed(1) }}KB
+                </span>
+              </div>
+              <a *ngIf="attachment.url"
+                 [href]="attachment.url"
+                 class="attachment-download"
+                 download
+                 title="Download {{ attachment.filename }}">
+                <span class="material-icons">download</span>
+              </a>
+              <span *ngIf="!attachment.url" class="attachment-unavailable" title="Download not available">
+                <span class="material-icons">cloud_off</span>
+              </span>
+            </div>
           </div>
         </div>
 

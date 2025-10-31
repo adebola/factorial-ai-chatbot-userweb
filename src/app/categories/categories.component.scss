@@ -13,7 +13,7 @@
 
 // Page Header
 .page-header {
-  text-align: center;
+  text-align: left;
   margin-bottom: 2rem;
 
   h2 {
@@ -21,10 +21,21 @@
     font-size: 2.5rem;
     font-weight: 700;
     margin-bottom: 0.5rem;
-    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    background: linear-gradient(135deg, #2B55FF 0%, #CDF547 100%);
     -webkit-background-clip: text;
     -webkit-text-fill-color: transparent;
     background-clip: text;
+
+    .material-icons {
+      font-size: 2.5rem;
+      background: linear-gradient(135deg, #2B55FF 0%, #CDF547 100%);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+    }
   }
 
   p {
@@ -73,12 +84,12 @@
     }
 
     &.btn-primary {
-      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      background: linear-gradient(135deg, #2B55FF 0%, #CDF547 100%);
       color: white;
 
       &:hover {
         transform: translateY(-2px);
-        box-shadow: 0 4px 12px rgba(102, 126, 234, 0.4);
+        box-shadow: 0 4px 12px rgba(43, 85, 255, 0.4);
       }
     }
 
@@ -95,11 +106,11 @@
 
     &.btn-outline {
       background: transparent;
-      color: #6366f1;
+      color: #2B55FF;
       border: 1px solid #6366f1;
 
       &:hover {
-        background: #6366f1;
+        background: #2B55FF;
         color: white;
       }
     }
@@ -241,7 +252,7 @@
     width: 40px;
     height: 40px;
     border: 4px solid #e2e8f0;
-    border-top: 4px solid #6366f1;
+    border-top: 4px solid #2B55FF;
     border-radius: 50%;
     animation: spin 1s linear infinite;
     margin-bottom: 1rem;
@@ -497,7 +508,7 @@
     align-items: center;
     gap: 0.5rem;
     padding: 0.75rem 1.5rem;
-    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    background: linear-gradient(135deg, #2B55FF 0%, #CDF547 100%);
     color: white;
     border: none;
     border-radius: 8px;
@@ -592,8 +603,8 @@
 
       &:focus {
         outline: none;
-        border-color: #6366f1;
-        box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.1);
+        border-color: #2B55FF;
+        box-shadow: 0 0 0 3px rgba(43, 85, 255, 0.1);
       }
     }
 
@@ -681,12 +692,12 @@
     }
 
     &.btn-primary {
-      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      background: linear-gradient(135deg, #2B55FF 0%, #CDF547 100%);
       color: white;
 
       &:hover:not(:disabled) {
         transform: translateY(-1px);
-        box-shadow: 0 4px 12px rgba(102, 126, 234, 0.4);
+        box-shadow: 0 4px 12px rgba(43, 85, 255, 0.4);
       }
 
       &:disabled {

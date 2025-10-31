@@ -1,7 +1,7 @@
 import { Component } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
-import { Router } from '@angular/router';
+import { Router, RouterModule } from '@angular/router';
 import { DocumentService } from '../services/document.service';
 import { CategorizationService, EnhancedUploadResponse } from '../services/categorization.service';
 import { AuthService } from '../services/auth.service';
@@ -11,7 +11,7 @@ import { environment } from '../../environments/environment';
 
 @Component({
   selector: 'app-document-upload',
-  imports: [CommonModule, FormsModule, CategorySelectorComponent, TagSelectorComponent],
+  imports: [CommonModule, FormsModule, RouterModule, CategorySelectorComponent, TagSelectorComponent],
   templateUrl: './document-upload.component.html',
   styleUrl: './document-upload.component.scss'
 })

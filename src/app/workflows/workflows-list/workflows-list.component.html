@@ -1,0 +1,285 @@
+<div class="workflows-container">
+  <!-- Header -->
+  <div class="page-header">
+    <div class="header-content">
+      <div class="title-section">
+        <h2>
+          <span class="material-icons">account_tree</span>
+          Workflows
+        </h2>
+        <p class="subtitle">Create and manage conversational workflows</p>
+      </div>
+      <div class="action-buttons">
+        <button class="btn btn-secondary" (click)="navigateToTemplates()">
+          <span class="material-icons">library_books</span>
+          Templates
+        </button>
+        <button class="btn btn-secondary" (click)="navigateToExecutions()">
+          <span class="material-icons">history</span>
+          Executions
+        </button>
+        <button class="btn btn-secondary" (click)="navigateToAnalytics()">
+          <span class="material-icons">analytics</span>
+          Analytics
+        </button>
+        <button class="btn btn-primary" (click)="createWorkflow()">
+          <span class="material-icons">add</span>
+          Create Workflow
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Messages -->
+  <div class="messages" *ngIf="errorMessage || successMessage">
+    <div class="alert alert-error" *ngIf="errorMessage">
+      <span class="material-icons">error</span>
+      {{ errorMessage }}
+      <button class="close-btn" (click)="clearMessages()">
+        <span class="material-icons">close</span>
+      </button>
+    </div>
+    <div class="alert alert-success" *ngIf="successMessage">
+      <span class="material-icons">check_circle</span>
+      {{ successMessage }}
+      <button class="close-btn" (click)="clearMessages()">
+        <span class="material-icons">close</span>
+      </button>
+    </div>
+  </div>
+
+  <!-- Filters and Search -->
+  <div class="filter-section">
+    <div class="search-container">
+      <div class="search-input-container">
+        <span class="material-icons search-icon">search</span>
+        <input
+          type="text"
+          class="search-input"
+          placeholder="Search workflows..."
+          [(ngModel)]="searchTerm"
+          (input)="onSearchChange()"
+        />
+        <button
+          class="filter-toggle"
+          [class.active]="showFilters"
+          (click)="toggleFilters()"
+        >
+          <span class="material-icons">tune</span>
+          <span class="badge" *ngIf="hasActiveFilters()">{{ getActiveFiltersCount() }}</span>
+        </button>
+      </div>
+    </div>
+
+    <!-- Advanced Filters -->
+    <div class="advanced-filters" [class.show]="showFilters">
+      <div class="filter-row">
+        <div class="filter-group">
+          <label>Status</label>
+          <select [(ngModel)]="selectedStatus" (change)="onStatusChange()">
+            <option *ngFor="let option of statusOptions" [value]="option.value">
+              {{ option.label }}
+            </option>
+          </select>
+        </div>
+
+        <div class="filter-group">
+          <label>Trigger Type</label>
+          <select [(ngModel)]="selectedTriggerType" (change)="onTriggerTypeChange()">
+            <option *ngFor="let option of triggerTypeOptions" [value]="option.value">
+              {{ option.label }}
+            </option>
+          </select>
+        </div>
+
+        <div class="filter-group">
+          <label>Active Status</label>
+          <select [(ngModel)]="isActiveFilter" (change)="onActiveFilterChange()">
+            <option *ngFor="let option of activeFilterOptions" [ngValue]="option.value">
+              {{ option.label }}
+            </option>
+          </select>
+        </div>
+
+        <div class="filter-actions">
+          <button class="btn btn-secondary" (click)="clearFilters()">
+            Clear Filters
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Bulk Actions -->
+  <div class="bulk-actions" *ngIf="selectedWorkflows.size > 0">
+    <div class="selection-info">
+      <span>{{ selectedWorkflows.size }} workflow(s) selected</span>
+    </div>
+    <div class="bulk-buttons">
+      <button class="btn btn-danger" (click)="deleteSelectedWorkflows()">
+        <span class="material-icons">delete</span>
+        Delete Selected
+      </button>
+    </div>
+  </div>
+
+  <!-- Workflows Table -->
+  <div class="table-container" *ngIf="!isLoading">
+    <table class="workflows-table" *ngIf="workflows.length > 0">
+      <thead>
+        <tr>
+          <th class="checkbox-column">
+            <input
+              type="checkbox"
+              [checked]="selectedWorkflows.size === workflows.length && workflows.length > 0"
+              [indeterminate]="selectedWorkflows.size > 0 && selectedWorkflows.size < workflows.length"
+              (change)="toggleSelectAll()"
+            />
+          </th>
+          <th>Name</th>
+          <th>Status</th>
+          <th>Trigger Type</th>
+          <th>Usage Count</th>
+          <th>Last Used</th>
+          <th>Created</th>
+          <th>Active</th>
+          <th class="actions-column">Actions</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr
+          *ngFor="let workflow of workflows"
+          [class.selected]="selectedWorkflows.has(workflow.id)"
+          (click)="viewWorkflow(workflow.id)"
+        >
+          <td class="checkbox-column" (click)="$event.stopPropagation()">
+            <input
+              type="checkbox"
+              [checked]="selectedWorkflows.has(workflow.id)"
+              (change)="toggleWorkflowSelection(workflow.id)"
+            />
+          </td>
+          <td class="workflow-name">
+            <div class="name-content">
+              <span class="name">{{ workflow.name }}</span>
+              <span class="description" *ngIf="workflow.description">
+                {{ workflow.description }}
+              </span>
+            </div>
+          </td>
+          <td>
+            <span class="status-badge" [ngClass]="getStatusClass(workflow.status)">
+              {{ workflow.status | titlecase }}
+            </span>
+          </td>
+          <td>
+            <div class="trigger-type">
+              <span class="material-icons">{{ getTriggerTypeIcon(workflow.trigger_type) }}</span>
+              {{ workflow.trigger_type | titlecase }}
+            </div>
+          </td>
+          <td class="usage-count">
+            {{ workflow.usage_count }}
+          </td>
+          <td class="last-used">
+            <span *ngIf="workflow.last_used_at; else neverUsed">
+              {{ formatDate(workflow.last_used_at) }}
+            </span>
+            <ng-template #neverUsed>
+              <span class="never-used">Never</span>
+            </ng-template>
+          </td>
+          <td class="created-date">
+            {{ formatDate(workflow.created_at) }}
+          </td>
+          <td class="active-toggle" (click)="$event.stopPropagation()">
+            <label class="toggle-switch">
+              <input
+                type="checkbox"
+                [checked]="workflow.is_active"
+                (change)="toggleWorkflowActive(workflow, $event)"
+              />
+              <span class="slider"></span>
+            </label>
+          </td>
+          <td class="actions-column" (click)="$event.stopPropagation()">
+            <div class="action-buttons">
+              <button class="btn-icon" (click)="viewWorkflow(workflow.id)" title="View">
+                <span class="material-icons">visibility</span>
+              </button>
+              <button class="btn-icon" (click)="editWorkflow(workflow.id)" title="Edit">
+                <span class="material-icons">edit</span>
+              </button>
+              <button class="btn-icon" (click)="duplicateWorkflow(workflow)" title="Duplicate">
+                <span class="material-icons">content_copy</span>
+              </button>
+              <button class="btn-icon delete" (click)="deleteWorkflow(workflow)" title="Delete">
+                <span class="material-icons">delete</span>
+              </button>
+            </div>
+          </td>
+        </tr>
+      </tbody>
+    </table>
+
+    <!-- Empty State -->
+    <div class="empty-state" *ngIf="workflows.length === 0">
+      <div class="empty-content">
+        <span class="material-icons empty-icon">account_tree</span>
+        <h3>No workflows found</h3>
+        <p *ngIf="hasActiveFilters(); else noWorkflowsYet">
+          No workflows match your current filters. Try adjusting your search criteria.
+        </p>
+        <ng-template #noWorkflowsYet>
+          <p>Get started by creating your first conversational workflow.</p>
+        </ng-template>
+        <button class="btn btn-primary" (click)="createWorkflow()">
+          <span class="material-icons">add</span>
+          Create Your First Workflow
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Loading State -->
+  <div class="loading-container" *ngIf="isLoading">
+    <div class="spinner"></div>
+    <p>Loading workflows...</p>
+  </div>
+
+  <!-- Pagination -->
+  <div class="pagination-container" *ngIf="!isLoading && workflows.length > 0">
+    <div class="pagination-info">
+      <span>
+        Showing {{ ((currentPage - 1) * pageSize) + 1 }} to
+        {{ Math.min(currentPage * pageSize, totalCount) }} of {{ totalCount }} workflows
+      </span>
+    </div>
+    <div class="pagination-controls">
+      <button
+        class="btn btn-secondary"
+        [disabled]="currentPage === 1"
+        (click)="onPageChange(currentPage - 1)"
+      >
+        Previous
+      </button>
+      <div class="page-numbers">
+        <button
+          *ngFor="let page of getPaginationArray()"
+          class="page-btn"
+          [class.active]="page === currentPage"
+          (click)="onPageChange(page)"
+        >
+          {{ page }}
+        </button>
+      </div>
+      <button
+        class="btn btn-secondary"
+        [disabled]="currentPage === getTotalPages()"
+        (click)="onPageChange(currentPage + 1)"
+      >
+        Next
+      </button>
+    </div>
+  </div>
+</div>

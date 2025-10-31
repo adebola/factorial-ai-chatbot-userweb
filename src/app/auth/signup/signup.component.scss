@@ -20,7 +20,7 @@
 }
 
 .auth-header {
-  background: linear-gradient(135deg, #6245BA 0%, #9DBA45 100%);
+  background: linear-gradient(135deg, #2B55FF 0%, #CDF547 100%);
   color: white;
   padding: 2rem;
   text-align: center;
@@ -82,8 +82,8 @@ label {
   background: #f8f9fa;
 
   &:focus-within {
-    border-color: #6245BA;
-    box-shadow: 0 0 0 3px rgba(98, 69, 186, 0.1);
+    border-color: #2B55FF;
+    box-shadow: 0 0 0 3px rgba(43, 85, 255, 0.1);
     background: white;
   }
 
@@ -130,9 +130,9 @@ label {
 
   &:focus {
     outline: none;
-    border-color: #6245BA;
+    border-color: #2B55FF;
     background: white;
-    box-shadow: 0 0 0 3px rgba(98, 69, 186, 0.1);
+    box-shadow: 0 0 0 3px rgba(43, 85, 255, 0.1);
   }
 
   &:disabled {
@@ -180,7 +180,7 @@ label {
 .auth-btn {
   width: 100%;
   padding: 0.875rem 1.5rem;
-  background: linear-gradient(135deg, #6245BA 0%, #9DBA45 100%);
+  background: linear-gradient(135deg, #2B55FF 0%, #CDF547 100%);
   color: white;
   border: none;
   border-radius: 6px;
@@ -194,7 +194,7 @@ label {
   gap: 0.5rem;
 
   &:hover:not(:disabled) {
-    background: linear-gradient(135deg, #533ca1 0%, #8ba33d 100%);
+    background: linear-gradient(135deg, #1e3acc 0%, #b8e030 100%);
     transform: translateY(-1px);
     box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
   }
@@ -233,12 +233,12 @@ label {
   }
 
   .auth-link {
-    color: #6245BA;
+    color: #2B55FF;
     text-decoration: none;
     font-weight: 600;
-    
+
     &:hover {
-      color: #533ca1;
+      color: #1e3acc;
       text-decoration: underline;
     }
   }
@@ -251,8 +251,8 @@ label {
   .spinner {
     width: 40px;
     height: 40px;
-    border: 4px solid rgba(98, 69, 186, 0.3);
-    border-top: 4px solid #6245BA;
+    border: 4px solid rgba(43, 85, 255, 0.3);
+    border-top: 4px solid #2B55FF;
     border-radius: 50%;
     animation: spin 1s linear infinite;
     margin: 0 auto 1.5rem auto;
@@ -279,14 +279,14 @@ label {
   .link-btn {
     background: none;
     border: none;
-    color: #6245BA;
+    color: #2B55FF;
     text-decoration: underline;
     cursor: pointer;
     font-size: 0.9rem;
     padding: 0;
 
     &:hover {
-      color: #533ca1;
+      color: #1e3acc;
     }
   }
 }

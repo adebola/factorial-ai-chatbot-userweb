@@ -1,0 +1,316 @@
+<div class="workflow-create-container">
+  <!-- Header -->
+  <div class="workflow-header">
+    <div class="header-content">
+      <h1>{{ isEditing ? 'Edit Workflow' : 'Create New Workflow' }}</h1>
+      <p class="subtitle">{{ isEditing ? 'Modify your workflow configuration' : 'Build a conversational workflow step by step' }}</p>
+    </div>
+    <div class="header-actions">
+      <button (click)="toggleJsonEditor()" class="btn-toggle" [class.active]="showJsonEditor">
+        <span class="material-icons">{{ showJsonEditor ? 'edit' : 'code' }}</span>
+        {{ showJsonEditor ? 'Form View' : 'JSON View' }}
+      </button>
+    </div>
+  </div>
+
+  <!-- Messages -->
+  <div *ngIf="errorMessage" class="message error-message">
+    <span class="material-icons">error</span>
+    {{ errorMessage }}
+    <button (click)="clearMessages()" class="close-btn">
+      <span class="material-icons">close</span>
+    </button>
+  </div>
+
+  <div *ngIf="successMessage" class="message success-message">
+    <span class="material-icons">check_circle</span>
+    {{ successMessage }}
+  </div>
+
+  <!-- Loading State -->
+  <div *ngIf="isLoading" class="loading-container">
+    <div class="spinner"></div>
+    <p>Loading workflow...</p>
+  </div>
+
+  <!-- JSON Editor View -->
+  <div *ngIf="showJsonEditor && !isLoading" class="json-editor-container">
+    <div class="json-editor-header">
+      <h2>JSON Configuration</h2>
+      <p>Edit the workflow configuration directly in JSON format</p>
+    </div>
+    <textarea
+      [(ngModel)]="jsonText"
+      class="json-editor"
+      rows="30"
+      placeholder="Enter workflow JSON...">
+    </textarea>
+    <div class="json-actions">
+      <button (click)="toggleJsonEditor()" class="btn-secondary">
+        Apply Changes
+      </button>
+    </div>
+  </div>
+
+  <!-- Form View -->
+  <form *ngIf="!showJsonEditor && !isLoading" [formGroup]="workflowForm" class="workflow-form">
+
+    <!-- Basic Information Section -->
+    <div class="form-section">
+      <div class="section-header" (click)="toggleSection('basic')">
+        <span class="material-icons">{{ sectionsExpanded.basic ? 'expand_less' : 'expand_more' }}</span>
+        <h2>Basic Information</h2>
+        <span class="required">*</span>
+      </div>
+      <div *ngIf="sectionsExpanded.basic" class="section-content">
+        <div class="form-row">
+          <div class="form-group">
+            <label for="name">Workflow Name *</label>
+            <input
+              id="name"
+              type="text"
+              formControlName="name"
+              placeholder="e.g., Lead Qualification"
+              class="form-input"
+              [class.error]="workflowForm.get('name')?.invalid && workflowForm.get('name')?.touched">
+            <div *ngIf="workflowForm.get('name')?.invalid && workflowForm.get('name')?.touched" class="error-text">
+              Name is required (minimum 3 characters)
+            </div>
+          </div>
+          <div class="form-group">
+            <label for="status">Status</label>
+            <select id="status" formControlName="status" class="form-select">
+              <option *ngFor="let status of statusOptions" [value]="status.value">
+                {{ status.label }}
+              </option>
+            </select>
+          </div>
+        </div>
+        <div class="form-group">
+          <label for="description">Description</label>
+          <textarea
+            id="description"
+            formControlName="description"
+            placeholder="Describe what this workflow does..."
+            class="form-textarea"
+            rows="3">
+          </textarea>
+        </div>
+      </div>
+    </div>
+
+    <!-- Trigger Configuration Section -->
+    <div class="form-section">
+      <div class="section-header" (click)="toggleSection('trigger')">
+        <span class="material-icons">{{ sectionsExpanded.trigger ? 'expand_less' : 'expand_more' }}</span>
+        <h2>Trigger Configuration</h2>
+        <span class="required">*</span>
+      </div>
+      <div *ngIf="sectionsExpanded.trigger" class="section-content">
+        <div class="form-group">
+          <label>Trigger Type *</label>
+          <div class="trigger-types">
+            <div *ngFor="let trigger of triggerTypes" class="trigger-option">
+              <input
+                type="radio"
+                [id]="'trigger_' + trigger.value"
+                [value]="trigger.value"
+                formControlName="triggerType">
+              <label [for]="'trigger_' + trigger.value" class="trigger-label">
+                <div class="trigger-title">{{ trigger.label }}</div>
+                <div class="trigger-description">{{ trigger.description }}</div>
+              </label>
+            </div>
+          </div>
+        </div>
+
+        <!-- Trigger Keywords/Conditions -->
+        <div formGroupName="triggerConfig">
+          <div *ngIf="workflowForm.get('triggerType')?.value === 'message' || workflowForm.get('triggerType')?.value === 'keyword'">
+            <label>Keywords/Phrases</label>
+            <div formArrayName="keywords">
+              <div *ngFor="let keyword of triggerKeywords.controls; let i = index" class="input-array-item">
+                <input
+                  type="text"
+                  [formControlName]="i"
+                  placeholder="Enter keyword..."
+                  class="form-input">
+                <button type="button" (click)="removeTriggerKeyword(i)" class="btn-remove">
+                  <span class="material-icons">remove</span>
+                </button>
+              </div>
+            </div>
+            <button type="button" (click)="addTriggerKeyword()" class="btn-add">
+              <span class="material-icons">add</span>
+              Add Keyword
+            </button>
+          </div>
+
+          <div *ngIf="workflowForm.get('triggerType')?.value === 'intent'">
+            <label>Intent Conditions</label>
+            <div formArrayName="conditions">
+              <div *ngFor="let condition of triggerConditions.controls; let i = index" class="input-array-item">
+                <input
+                  type="text"
+                  [formControlName]="i"
+                  placeholder="Enter intent condition..."
+                  class="form-input">
+                <button type="button" (click)="removeTriggerCondition(i)" class="btn-remove">
+                  <span class="material-icons">remove</span>
+                </button>
+              </div>
+            </div>
+            <button type="button" (click)="addTriggerCondition()" class="btn-add">
+              <span class="material-icons">add</span>
+              Add Condition
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Steps Section -->
+    <div class="form-section">
+      <div class="section-header" (click)="toggleSection('steps')">
+        <span class="material-icons">{{ sectionsExpanded.steps ? 'expand_less' : 'expand_more' }}</span>
+        <h2>Workflow Steps</h2>
+        <div class="step-count">{{ stepsFormArray.length }} steps</div>
+      </div>
+      <div *ngIf="sectionsExpanded.steps" class="section-content">
+        <div formArrayName="steps" class="steps-container">
+          <div *ngFor="let step of stepsFormArray.controls; let i = index"
+               class="step-item"
+               [formGroupName]="i">
+
+            <div class="step-header">
+              <div class="step-info">
+                <span class="step-number">{{ i + 1 }}</span>
+                <div class="step-basic-info">
+                  <input
+                    type="text"
+                    formControlName="name"
+                    placeholder="Step name..."
+                    class="step-name-input">
+                  <select formControlName="type" class="step-type-select">
+                    <option *ngFor="let type of stepTypes" [value]="type.value">
+                      {{ type.label }}
+                    </option>
+                  </select>
+                </div>
+              </div>
+              <div class="step-actions">
+                <button type="button" (click)="moveStepUp(i)" [disabled]="i === 0" class="btn-icon">
+                  <span class="material-icons">keyboard_arrow_up</span>
+                </button>
+                <button type="button" (click)="moveStepDown(i)" [disabled]="i === stepsFormArray.length - 1" class="btn-icon">
+                  <span class="material-icons">keyboard_arrow_down</span>
+                </button>
+                <button type="button" (click)="removeStep(i)" class="btn-icon btn-danger">
+                  <span class="material-icons">delete</span>
+                </button>
+              </div>
+            </div>
+
+            <!-- Step Configuration using WorkflowStepEditor -->
+            <app-workflow-step-editor
+              [stepForm]="step"
+              [stepTypes]="stepTypes"
+              [availableSteps]="stepsFormArray.controls">
+            </app-workflow-step-editor>
+          </div>
+        </div>
+
+        <!-- Add Step Button -->
+        <div class="add-step-container">
+          <h3>Add New Step</h3>
+          <div class="step-types-grid">
+            <button
+              type="button"
+              *ngFor="let stepType of stepTypes"
+              (click)="addStep({ type: stepType.value })"
+              class="step-type-card">
+              <span class="material-icons">{{ stepType.icon }}</span>
+              <span class="step-type-name">{{ stepType.label }}</span>
+              <span class="step-type-desc">{{ stepType.description }}</span>
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Variables Section -->
+    <div class="form-section">
+      <div class="section-header" (click)="toggleSection('variables')">
+        <span class="material-icons">{{ sectionsExpanded.variables ? 'expand_less' : 'expand_more' }}</span>
+        <h2>Variables</h2>
+        <div class="variable-count">{{ variablesFormArray.length }} variables</div>
+      </div>
+      <div *ngIf="sectionsExpanded.variables" class="section-content">
+        <div formArrayName="variables" class="variables-container">
+          <div *ngFor="let variable of variablesFormArray.controls; let i = index"
+               class="variable-item"
+               [formGroupName]="i">
+            <div class="form-row">
+              <div class="form-group">
+                <label>Variable Name</label>
+                <input
+                  type="text"
+                  formControlName="key"
+                  placeholder="e.g., email"
+                  class="form-input">
+              </div>
+              <div class="form-group">
+                <label>Default Value</label>
+                <input
+                  type="text"
+                  formControlName="value"
+                  placeholder="Default value..."
+                  class="form-input">
+              </div>
+              <div class="form-group">
+                <label>Type</label>
+                <select formControlName="type" class="form-select">
+                  <option value="string">String</option>
+                  <option value="number">Number</option>
+                  <option value="boolean">Boolean</option>
+                  <option value="array">Array</option>
+                  <option value="object">Object</option>
+                </select>
+              </div>
+              <button type="button" (click)="removeVariable(i)" class="btn-remove">
+                <span class="material-icons">remove</span>
+              </button>
+            </div>
+          </div>
+        </div>
+        <button type="button" (click)="addVariable()" class="btn-add">
+          <span class="material-icons">add</span>
+          Add Variable
+        </button>
+      </div>
+    </div>
+
+    <!-- Action Buttons -->
+    <div class="form-actions">
+      <button type="button" (click)="cancel()" class="btn-secondary">
+        Cancel
+      </button>
+      <button
+        type="button"
+        (click)="saveWorkflow(false)"
+        [disabled]="isSaving"
+        class="btn-secondary">
+        <span *ngIf="isSaving" class="material-icons spinning">sync</span>
+        Save as Draft
+      </button>
+      <button
+        type="button"
+        (click)="saveWorkflow(true)"
+        [disabled]="isSaving || workflowForm.invalid"
+        class="btn-primary">
+        <span *ngIf="isSaving" class="material-icons spinning">sync</span>
+        {{ isEditing ? 'Update & Publish' : 'Create & Publish' }}
+      </button>
+    </div>
+  </form>
+</div>

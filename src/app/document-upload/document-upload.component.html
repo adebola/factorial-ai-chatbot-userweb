@@ -100,16 +100,27 @@
       </div>
     </div>
 
-    <!-- Upload Button -->
-    <button
-      type="submit"
-      class="upload-btn"
-      [disabled]="!selectedFile || isUploading || uploadForm.invalid"
-    >
-      <span *ngIf="isUploading" class="loading-spinner"></span>
-      <span class="material-icons" *ngIf="!isUploading">upload</span>
-      {{isUploading ? 'Processing Document...' : 'Upload Document'}}
-    </button>
+    <!-- Action Buttons -->
+    <div class="action-buttons">
+      <button
+        type="button"
+        class="cancel-btn"
+        routerLink="/documents"
+        [disabled]="isUploading"
+      >
+        <span class="material-icons">close</span>
+        Cancel
+      </button>
+      <button
+        type="submit"
+        class="upload-btn"
+        [disabled]="!selectedFile || isUploading || uploadForm.invalid"
+      >
+        <span *ngIf="isUploading" class="loading-spinner"></span>
+        <span class="material-icons" *ngIf="!isUploading">upload</span>
+        {{isUploading ? 'Processing Document...' : 'Upload Document'}}
+      </button>
+    </div>
   </form>
 
   <!-- Error Message -->

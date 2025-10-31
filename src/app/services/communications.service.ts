@@ -3,6 +3,14 @@ import { HttpClient } from '@angular/common/http';
 import { Observable } from 'rxjs';
 import { environment } from '../../environments/environment';
 
+export interface Attachment {
+  id: string;
+  filename: string;
+  content_type: string;
+  size: number;
+  url?: string;  // Download URL if available
+}
+
 export interface EmailMessage {
   id: string;
   tenant_id: string;
@@ -11,6 +19,8 @@ export interface EmailMessage {
   from_email: string;
   from_name?: string;
   subject: string;
+  text_content?: string;      // Plain text content
+  html_content?: string;      // HTML content (preferred)
   status: string;
   created_at: string;
   sent_at?: string;
@@ -18,7 +28,7 @@ export interface EmailMessage {
   opened_at?: string;
   clicked_at?: string;
   error_message?: string;
-  attachments?: any[];
+  attachments?: Attachment[];
 }
 
 export interface SmsMessage {

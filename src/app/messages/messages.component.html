@@ -1,7 +1,10 @@
 <div class="messages-container">
   <!-- Page Header -->
   <div class="page-header">
-    <h2>Chat Messages</h2>
+    <h2>
+      <span class="material-icons">chat</span>
+      Chat Messages
+    </h2>
     <p>View and manage chat conversations and messages</p>
   </div>
 
@@ -169,8 +172,8 @@
 
     <!-- Messages List -->
     <div *ngIf="!isLoadingMessages" class="messages-list">
-      <div 
-        *ngFor="let message of sessionMessages" 
+      <div
+        *ngFor="let message of sessionMessages"
         class="message-item"
         [ngClass]="getMessageTypeClass(message.message_type)"
       >
@@ -181,7 +184,7 @@
         <div class="message-content">
           {{message.content}}
         </div>
-        <div *ngIf="message.message_metadata && hasMetadata(message.message_metadata)" 
+        <div *ngIf="message.message_metadata && hasMetadata(message.message_metadata)"
              class="message-metadata">
           <details>
             <summary>Metadata</summary>

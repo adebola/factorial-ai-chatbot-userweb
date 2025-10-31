@@ -289,19 +289,20 @@ export class DashboardService {
   }
 
   switchTenantPlan(newPlanId: string, billingCycle: 'monthly' | 'yearly' = 'monthly'): Observable<any> {
-    const currentUser = this.authService.getCurrentUser();
-    const tenantId = currentUser?.tenant_id;
-
-    if (!tenantId) {
-      throw new Error('No tenant ID found for current user');
-    }
-
     return this.http.post(
-      `${this.baseUrl}/plans/tenants/${tenantId}/switch-plan`,
+      `${this.baseUrl}/plans/switch`,
       {
         new_plan_id: newPlanId,
         billing_cycle: billingCycle
       },
+      { headers: this.getHttpHeaders() }
+    );
+  }
+
+  // Get current plan for the authenticated user
+  getCurrentPlan(): Observable<any> {
+    return this.http.get(
+      `${this.baseUrl}/plans/current`,
       { headers: this.getHttpHeaders() }
     );
   }

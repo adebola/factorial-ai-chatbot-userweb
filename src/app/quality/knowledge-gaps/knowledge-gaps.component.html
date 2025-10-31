@@ -1,0 +1,102 @@
+<div class="page-container">
+  <div class="page-header">
+    <div class="header-left">
+      <button class="btn btn-back" routerLink="/quality" title="Back to Quality Dashboard">
+        <span class="material-icons">arrow_back</span>
+      </button>
+      <h1><span class="material-icons">report_problem</span> Knowledge Gaps</h1>
+    </div>
+    <div class="header-actions">
+      <button class="btn btn-primary" (click)="detectGaps()" [disabled]="detecting || loading">
+        <span class="material-icons">search</span>
+        {{ detecting ? 'Detecting...' : 'Detect Gaps' }}
+      </button>
+      <button class="btn btn-secondary" (click)="refresh()" [disabled]="loading">
+        <span class="material-icons">refresh</span>
+      </button>
+    </div>
+  </div>
+
+  <div class="filter-bar">
+    <button class="filter-btn" [class.active]="statusFilter === 'all'" (click)="filterByStatus('all')">
+      All ({{ totalGaps }})
+    </button>
+    <button class="filter-btn" [class.active]="statusFilter === 'detected'" (click)="filterByStatus('detected')">
+      Detected
+    </button>
+    <button class="filter-btn" [class.active]="statusFilter === 'acknowledged'" (click)="filterByStatus('acknowledged')">
+      Acknowledged
+    </button>
+    <button class="filter-btn" [class.active]="statusFilter === 'resolved'" (click)="filterByStatus('resolved')">
+      Resolved
+    </button>
+  </div>
+
+  <div *ngIf="loading" class="loading">Loading...</div>
+  <div *ngIf="error" class="error">{{ error }}</div>
+
+  <div *ngIf="!loading && !error" class="gaps-list">
+    <div *ngFor="let gap of knowledgeGaps" class="gap-card">
+      <div class="gap-header" (click)="toggleGapDetails(gap.id)">
+        <div class="gap-info">
+          <span class="status-badge" [ngClass]="getStatusBadgeClass(gap.status)">
+            <span class="material-icons">{{ getStatusIcon(gap.status) }}</span>
+            {{ gap.status }}
+          </span>
+          <h3>{{ gap.question_pattern }}</h3>
+          <div class="gap-meta">
+            <span><span class="material-icons">repeat</span> {{ gap.occurrence_count }} occurrences</span>
+            <span><span class="material-icons">trending_down</span> Avg confidence: {{ (gap.avg_confidence * 100).toFixed(1) }}%</span>
+          </div>
+        </div>
+        <span class="material-icons expand-icon">{{ expandedGapId === gap.id ? 'expand_less' : 'expand_more' }}</span>
+      </div>
+
+      <div class="gap-details" [class.expanded]="expandedGapId === gap.id">
+        <div class="examples">
+          <h4>Example Questions:</h4>
+          <ul>
+            <li *ngFor="let question of gap.example_questions">{{ question }}</li>
+          </ul>
+        </div>
+        <div class="gap-actions">
+          <button class="btn btn-secondary" (click)="openAcknowledgeDialog(gap)" *ngIf="gap.status === 'detected'">
+            Acknowledge
+          </button>
+          <button class="btn btn-primary" (click)="openResolveDialog(gap)" *ngIf="gap.status === 'acknowledged'">
+            Resolve
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <div *ngIf="knowledgeGaps.length === 0" class="no-data">
+      <span class="material-icons">check_circle</span>
+      <p>No knowledge gaps found</p>
+    </div>
+  </div>
+</div>
+
+<!-- Acknowledge Dialog -->
+<div class="dialog-overlay" *ngIf="showAcknowledgeDialog" (click)="closeAcknowledgeDialog()">
+  <div class="dialog" (click)="$event.stopPropagation()">
+    <h2>Acknowledge Knowledge Gap</h2>
+    <textarea [(ngModel)]="acknowledgeNotes" placeholder="Add notes (optional)..."></textarea>
+    <div class="dialog-actions">
+      <button class="btn btn-secondary" (click)="closeAcknowledgeDialog()">Cancel</button>
+      <button class="btn btn-primary" (click)="acknowledgeGap()">Acknowledge</button>
+    </div>
+  </div>
+</div>
+
+<!-- Resolve Dialog -->
+<div class="dialog-overlay" *ngIf="showResolveDialog" (click)="closeResolveDialog()">
+  <div class="dialog" (click)="$event.stopPropagation()">
+    <h2>Resolve Knowledge Gap</h2>
+    <textarea [(ngModel)]="resolutionNotes" placeholder="Resolution notes (required)..." required></textarea>
+    <div class="dialog-actions">
+      <button class="btn btn-secondary" (click)="closeResolveDialog()">Cancel</button>
+      <button class="btn btn-primary" (click)="resolveGap()" [disabled]="!resolutionNotes">Resolve</button>
+    </div>
+  </div>
+</div>

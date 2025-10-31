@@ -1,0 +1,312 @@
+<div class="workflow-details-container">
+  <!-- Header -->
+  <div class="page-header">
+    <div class="header-content">
+      <div class="breadcrumb">
+        <button class="back-button" (click)="goBack()">
+          <span class="material-icons">arrow_back</span>
+        </button>
+        <span class="breadcrumb-text">
+          <a (click)="goBack()">Workflows</a>
+          <span class="separator">/</span>
+          <span>{{ workflow?.name || 'Loading...' }}</span>
+        </span>
+      </div>
+
+      <div class="action-buttons" *ngIf="workflow">
+        <button class="btn btn-secondary" (click)="testWorkflow()">
+          <span class="material-icons">play_arrow</span>
+          Test
+        </button>
+        <button class="btn btn-secondary" (click)="viewExecutions()">
+          <span class="material-icons">history</span>
+          Executions
+        </button>
+        <button class="btn btn-secondary" (click)="viewAnalytics()">
+          <span class="material-icons">analytics</span>
+          Analytics
+        </button>
+        <button class="btn btn-secondary" (click)="exportWorkflow()">
+          <span class="material-icons">download</span>
+          Export
+        </button>
+        <button class="btn btn-secondary" (click)="duplicateWorkflow()">
+          <span class="material-icons">content_copy</span>
+          Duplicate
+        </button>
+        <button class="btn btn-primary" (click)="editWorkflow()">
+          <span class="material-icons">edit</span>
+          Edit
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Messages -->
+  <div class="messages" *ngIf="errorMessage || successMessage">
+    <div class="alert alert-error" *ngIf="errorMessage">
+      <span class="material-icons">error</span>
+      {{ errorMessage }}
+      <button class="close-btn" (click)="clearMessages()">
+        <span class="material-icons">close</span>
+      </button>
+    </div>
+    <div class="alert alert-success" *ngIf="successMessage">
+      <span class="material-icons">check_circle</span>
+      {{ successMessage }}
+      <button class="close-btn" (click)="clearMessages()">
+        <span class="material-icons">close</span>
+      </button>
+    </div>
+  </div>
+
+  <!-- Loading State -->
+  <div class="loading-container" *ngIf="isLoading">
+    <div class="spinner"></div>
+    <p>Loading workflow details...</p>
+  </div>
+
+  <!-- Workflow Content -->
+  <div class="workflow-content" *ngIf="!isLoading && workflow">
+
+    <!-- Workflow Overview -->
+    <div class="overview-section">
+      <div class="overview-header">
+        <div class="title-area">
+          <h1>{{ workflow.name }}</h1>
+          <p class="description" *ngIf="workflow.description">{{ workflow.description }}</p>
+        </div>
+        <div class="status-area">
+          <span class="status-badge" [ngClass]="getStatusClass(workflow.status)">
+            {{ workflow.status | titlecase }}
+          </span>
+          <label class="toggle-switch">
+            <input
+              type="checkbox"
+              [checked]="workflow.is_active"
+              (change)="toggleWorkflowActive()"
+            />
+            <span class="slider"></span>
+          </label>
+          <span class="active-label">{{ workflow.is_active ? 'Active' : 'Inactive' }}</span>
+        </div>
+      </div>
+
+      <!-- Workflow Metadata -->
+      <div class="metadata-grid">
+        <div class="metadata-item">
+          <span class="label">Trigger Type</span>
+          <div class="value">
+            <span class="material-icons">{{ getTriggerTypeIcon(workflow.trigger_type) }}</span>
+            {{ workflow.trigger_type | titlecase }}
+          </div>
+        </div>
+        <div class="metadata-item">
+          <span class="label">Version</span>
+          <span class="value">{{ workflow.version }}</span>
+        </div>
+        <div class="metadata-item">
+          <span class="label">Usage Count</span>
+          <span class="value">{{ workflow.usage_count }}</span>
+        </div>
+        <div class="metadata-item">
+          <span class="label">Last Used</span>
+          <span class="value">
+            {{ workflow.last_used_at ? formatDate(workflow.last_used_at) : 'Never' }}
+          </span>
+        </div>
+        <div class="metadata-item">
+          <span class="label">Created</span>
+          <span class="value">{{ formatDate(workflow.created_at) }}</span>
+        </div>
+        <div class="metadata-item">
+          <span class="label">Last Modified</span>
+          <span class="value">
+            {{ workflow.updated_at ? formatDate(workflow.updated_at) : 'Never' }}
+          </span>
+        </div>
+      </div>
+    </div>
+
+    <!-- Trigger Configuration -->
+    <div class="section-card">
+      <div class="section-header">
+        <h2>
+          <span class="material-icons">flash_on</span>
+          Trigger Configuration
+        </h2>
+      </div>
+      <div class="trigger-details">
+        <div class="trigger-info">
+          <div class="trigger-type">
+            <span class="label">Type:</span>
+            <span class="value">{{ workflow.definition.trigger.type | titlecase }}</span>
+          </div>
+
+          <div class="trigger-conditions" *ngIf="workflow.definition.trigger.conditions && workflow.definition.trigger.conditions.length > 0">
+            <span class="label">Conditions:</span>
+            <div class="conditions-list">
+              <span
+                *ngFor="let condition of workflow.definition.trigger.conditions"
+                class="condition-chip"
+              >
+                {{ condition }}
+              </span>
+            </div>
+          </div>
+
+          <div class="trigger-keywords" *ngIf="workflow.definition.trigger.keywords && workflow.definition.trigger.keywords.length > 0">
+            <span class="label">Keywords:</span>
+            <div class="keywords-list">
+              <span
+                *ngFor="let keyword of workflow.definition.trigger.keywords"
+                class="keyword-chip"
+              >
+                {{ keyword }}
+              </span>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Workflow Steps -->
+    <div class="section-card">
+      <div class="section-header">
+        <h2>
+          <span class="material-icons">account_tree</span>
+          Workflow Steps
+          <span class="step-count">({{ workflow.definition.steps.length }} steps)</span>
+        </h2>
+      </div>
+      <div class="steps-container">
+        <div
+          *ngFor="let step of workflow.definition.steps; let i = index; trackBy: trackByStepId"
+          class="step-item"
+        >
+          <div class="step-number">{{ i + 1 }}</div>
+          <div class="step-content">
+            <div class="step-header">
+              <div class="step-type">
+                <span class="material-icons">{{ getStepTypeIcon(step.type) }}</span>
+                <span class="type-name">{{ step.type | titlecase }}</span>
+              </div>
+              <div class="step-name" *ngIf="step.name">{{ step.name }}</div>
+            </div>
+
+            <div class="step-details">
+              <div class="step-content-text" *ngIf="step.content">
+                <strong>Content:</strong> {{ step.content }}
+              </div>
+
+              <div class="step-options" *ngIf="step.options && step.options.length > 0">
+                <strong>Options:</strong>
+                <div class="options-list">
+                  <span *ngFor="let option of step.options" class="option-chip">{{ option }}</span>
+                </div>
+              </div>
+
+              <div class="step-condition" *ngIf="step.condition">
+                <strong>Condition:</strong> <code>{{ step.condition }}</code>
+              </div>
+
+              <div class="step-variable" *ngIf="step.variable">
+                <strong>Variable:</strong> <code>{{ step.variable }}</code>
+              </div>
+
+              <div class="step-action" *ngIf="step.action">
+                <strong>Action:</strong> {{ step.action }}
+              </div>
+
+              <div class="step-next" *ngIf="step.next_step">
+                <strong>Next Step:</strong> {{ step.next_step }}
+              </div>
+            </div>
+          </div>
+
+          <!-- Connection Line to Next Step -->
+          <div class="step-connector" *ngIf="i < workflow.definition.steps.length - 1">
+            <div class="connector-line"></div>
+            <span class="material-icons connector-arrow">keyboard_arrow_down</span>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Workflow Variables -->
+    <div class="section-card" *ngIf="workflow.definition.variables && getVariablesArray(workflow.definition.variables).length > 0">
+      <div class="section-header">
+        <h2>
+          <span class="material-icons">code</span>
+          Variables
+        </h2>
+      </div>
+      <div class="variables-container">
+        <div class="variables-grid">
+          <div
+            *ngFor="let variable of getVariablesArray(workflow.definition.variables)"
+            class="variable-item"
+          >
+            <span class="variable-name">{{ variable.key }}</span>
+            <span class="variable-value">{{ variable.value }}</span>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Workflow Settings -->
+    <div class="section-card" *ngIf="workflow.definition.settings && getSettingsArray(workflow.definition.settings).length > 0">
+      <div class="section-header">
+        <h2>
+          <span class="material-icons">settings</span>
+          Settings
+        </h2>
+      </div>
+      <div class="settings-container">
+        <div class="settings-grid">
+          <div
+            *ngFor="let setting of getSettingsArray(workflow.definition.settings)"
+            class="setting-item"
+          >
+            <span class="setting-name">{{ setting.key }}</span>
+            <span class="setting-value">{{ setting.value }}</span>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Danger Zone -->
+    <div class="section-card danger-zone">
+      <div class="section-header">
+        <h2>
+          <span class="material-icons">warning</span>
+          Danger Zone
+        </h2>
+      </div>
+      <div class="danger-actions">
+        <div class="danger-item">
+          <div class="danger-info">
+            <h3>Delete Workflow</h3>
+            <p>Permanently delete this workflow. This action cannot be undone.</p>
+          </div>
+          <button class="btn btn-danger" (click)="deleteWorkflow()">
+            <span class="material-icons">delete</span>
+            Delete Workflow
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Error State -->
+  <div class="error-state" *ngIf="!isLoading && !workflow && errorMessage">
+    <div class="error-content">
+      <span class="material-icons error-icon">error</span>
+      <h3>{{ errorMessage }}</h3>
+      <button class="btn btn-primary" (click)="goBack()">
+        <span class="material-icons">arrow_back</span>
+        Back to Workflows
+      </button>
+    </div>
+  </div>
+</div>

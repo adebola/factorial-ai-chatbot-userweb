@@ -1,0 +1,265 @@
+<div class="page-container">
+  <div class="page-header">
+    <button class="btn-back" routerLink="/quality" title="Back to Quality Dashboard">
+      <span class="material-icons">arrow_back</span>
+    </button>
+    <h1><span class="material-icons">schedule</span> Scheduler Monitor</h1>
+    <div class="header-actions">
+      <button class="btn-refresh" (click)="refreshData()" [disabled]="loading">
+        <span class="material-icons">refresh</span>
+        Refresh
+      </button>
+      <label class="auto-refresh-toggle">
+        <input type="checkbox" [checked]="autoRefresh" (change)="toggleAutoRefresh()">
+        <span>Auto-refresh (30s)</span>
+      </label>
+    </div>
+  </div>
+
+  <div class="error-message" *ngIf="error">
+    <span class="material-icons">error</span>
+    {{ error }}
+    <button class="btn-close" (click)="error = null">
+      <span class="material-icons">close</span>
+    </button>
+  </div>
+
+  <!-- Scheduler Status Section -->
+  <div class="status-section">
+    <h2><span class="material-icons">info</span> Scheduler Status</h2>
+
+    <div class="status-card" *ngIf="schedulerStatus">
+      <div class="status-indicator" [class.running]="schedulerStatus.scheduler_running">
+        <span class="material-icons">{{ schedulerStatus.scheduler_running ? 'play_circle' : 'pause_circle' }}</span>
+        <div class="status-text">
+          <h3>{{ schedulerStatus.scheduler_running ? 'Running' : 'Stopped' }}</h3>
+          <p>{{ schedulerStatus.job_count }} scheduled job{{ schedulerStatus.job_count !== 1 ? 's' : '' }}</p>
+        </div>
+      </div>
+
+      <div class="scheduled-jobs" *ngIf="schedulerStatus.jobs && schedulerStatus.jobs.length > 0">
+        <h4>Scheduled Jobs</h4>
+        <div class="jobs-list">
+          <div class="job-item" *ngFor="let job of schedulerStatus.jobs">
+            <div class="job-info">
+              <span class="job-id">{{ job.id }}</span>
+              <span class="job-name">{{ job.name }}</span>
+            </div>
+            <div class="job-meta">
+              <span class="trigger-info">
+                <span class="material-icons">sync</span>
+                {{ job.trigger }}
+              </span>
+              <span class="next-run" *ngIf="job.next_run_time">
+                <span class="material-icons">schedule</span>
+                Next: {{ formatDate(job.next_run_time) }}
+              </span>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="no-jobs" *ngIf="!schedulerStatus.jobs || schedulerStatus.jobs.length === 0">
+        <span class="material-icons">event_busy</span>
+        <p>No scheduled jobs configured</p>
+      </div>
+    </div>
+
+    <div class="loading-spinner" *ngIf="!schedulerStatus">
+      <div class="spinner"></div>
+      <p>Loading scheduler status...</p>
+    </div>
+  </div>
+
+  <!-- Job Execution Logs Section -->
+  <div class="logs-section">
+    <div class="logs-header">
+      <h2><span class="material-icons">history</span> Job Execution History</h2>
+
+      <div class="filter-bar">
+        <div class="filter-group">
+          <label>Job Type:</label>
+          <div class="filter-buttons">
+            <button
+              class="filter-btn"
+              [class.active]="!selectedJobType"
+              (click)="clearFilters()">
+              All
+            </button>
+            <button
+              class="filter-btn"
+              [class.active]="selectedJobType === 'gap_detection'"
+              (click)="filterByJobType('gap_detection')">
+              <span class="material-icons">find_in_page</span>
+              Gap Detection
+            </button>
+            <button
+              class="filter-btn"
+              [class.active]="selectedJobType === 'quality_check'"
+              (click)="filterByJobType('quality_check')">
+              <span class="material-icons">verified</span>
+              Quality Check
+            </button>
+          </div>
+        </div>
+
+        <div class="filter-group">
+          <label>Status:</label>
+          <div class="filter-buttons">
+            <button
+              class="filter-btn status-success"
+              [class.active]="selectedStatus === 'success'"
+              (click)="filterByStatus('success')">
+              <span class="material-icons">check_circle</span>
+              Success
+            </button>
+            <button
+              class="filter-btn status-partial"
+              [class.active]="selectedStatus === 'partial'"
+              (click)="filterByStatus('partial')">
+              <span class="material-icons">warning</span>
+              Partial
+            </button>
+            <button
+              class="filter-btn status-failed"
+              [class.active]="selectedStatus === 'failed'"
+              (click)="filterByStatus('failed')">
+              <span class="material-icons">error</span>
+              Failed
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="loading-spinner" *ngIf="loading && jobLogs.length === 0">
+      <div class="spinner"></div>
+      <p>Loading job execution logs...</p>
+    </div>
+
+    <div class="empty-state" *ngIf="!loading && jobLogs.length === 0">
+      <span class="material-icons">work_off</span>
+      <h3>No Job Executions Found</h3>
+      <p *ngIf="selectedJobType || selectedStatus">Try adjusting your filters.</p>
+      <p *ngIf="!selectedJobType && !selectedStatus">No jobs have been executed yet.</p>
+    </div>
+
+    <div class="logs-table" *ngIf="!loading && jobLogs.length > 0">
+      <table>
+        <thead>
+          <tr>
+            <th>Status</th>
+            <th>Job Type</th>
+            <th>Job Name</th>
+            <th>Started At</th>
+            <th>Duration</th>
+            <th>Triggered By</th>
+            <th>Actions</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr *ngFor="let log of jobLogs" [class]="getStatusClass(log.status)">
+            <td>
+              <span class="status-badge" [ngClass]="getStatusClass(log.status)">
+                <span class="material-icons">{{ getStatusIcon(log.status) }}</span>
+                {{ log.status }}
+              </span>
+            </td>
+            <td>
+              <span class="job-type-badge">
+                <span class="material-icons">{{ getJobTypeIcon(log.job_type) }}</span>
+                {{ getJobTypeLabel(log.job_type) }}
+              </span>
+            </td>
+            <td>{{ log.job_name }}</td>
+            <td>{{ formatDate(log.started_at) }}</td>
+            <td>{{ formatDuration(log.duration_ms) }}</td>
+            <td>
+              <span class="triggered-by">{{ log.triggered_by }}</span>
+            </td>
+            <td>
+              <button class="btn-action" (click)="viewLogDetails(log)" title="View Details">
+                <span class="material-icons">visibility</span>
+              </button>
+            </td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+</div>
+
+<!-- Job Log Details Modal -->
+<div class="modal-overlay" *ngIf="selectedLog" (click)="closeDetails()">
+  <div class="modal-content" (click)="$event.stopPropagation()">
+    <div class="modal-header">
+      <h2>Job Execution Details</h2>
+      <button class="btn-close" (click)="closeDetails()">
+        <span class="material-icons">close</span>
+      </button>
+    </div>
+
+    <div class="modal-body">
+      <div class="detail-section">
+        <h3>
+          <span class="status-badge" [ngClass]="getStatusClass(selectedLog.status)">
+            <span class="material-icons">{{ getStatusIcon(selectedLog.status) }}</span>
+            {{ selectedLog.status }}
+          </span>
+          {{ selectedLog.job_name }}
+        </h3>
+      </div>
+
+      <div class="detail-section">
+        <h4><span class="material-icons">info</span> Job Information</h4>
+        <div class="detail-grid">
+          <div class="detail-item">
+            <span class="label">Job Type:</span>
+            <span class="value">
+              <span class="job-type-badge">
+                <span class="material-icons">{{ getJobTypeIcon(selectedLog.job_type) }}</span>
+                {{ getJobTypeLabel(selectedLog.job_type) }}
+              </span>
+            </span>
+          </div>
+          <div class="detail-item">
+            <span class="label">Triggered By:</span>
+            <span class="value">{{ selectedLog.triggered_by }}</span>
+          </div>
+          <div class="detail-item">
+            <span class="label">Started At:</span>
+            <span class="value">{{ formatDate(selectedLog.started_at) }}</span>
+          </div>
+          <div class="detail-item" *ngIf="selectedLog.completed_at">
+            <span class="label">Completed At:</span>
+            <span class="value">{{ formatDate(selectedLog.completed_at) }}</span>
+          </div>
+          <div class="detail-item" *ngIf="selectedLog.duration_ms">
+            <span class="label">Duration:</span>
+            <span class="value">{{ formatDuration(selectedLog.duration_ms) }}</span>
+          </div>
+          <div class="detail-item" *ngIf="selectedLog.tenant_id">
+            <span class="label">Tenant ID:</span>
+            <span class="value">{{ selectedLog.tenant_id }}</span>
+          </div>
+        </div>
+      </div>
+
+      <div class="detail-section" *ngIf="selectedLog.result_summary">
+        <h4><span class="material-icons">summarize</span> Result Summary</h4>
+        <pre class="json-data">{{ formatJSON(selectedLog.result_summary) }}</pre>
+      </div>
+
+      <div class="detail-section error-section" *ngIf="selectedLog.error_message">
+        <h4><span class="material-icons">error_outline</span> Error Message</h4>
+        <div class="error-box">
+          <pre>{{ selectedLog.error_message }}</pre>
+        </div>
+      </div>
+    </div>
+
+    <div class="modal-footer">
+      <button class="btn-secondary" (click)="closeDetails()">Close</button>
+    </div>
+  </div>
+</div>

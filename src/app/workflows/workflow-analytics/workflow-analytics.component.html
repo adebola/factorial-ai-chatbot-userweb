@@ -1,0 +1,169 @@
+<div class="workflow-analytics-container">
+  <!-- Header -->
+  <div class="analytics-header">
+    <div class="header-content">
+      <h1>Workflow Analytics</h1>
+      <p class="subtitle">Performance insights and metrics for your workflows</p>
+    </div>
+    <div class="header-actions">
+      <button (click)="navigateBack()" class="btn-back">
+        <span class="material-icons">arrow_back</span>
+        Back to Workflows
+      </button>
+      <button (click)="exportAnalytics()" class="btn-export">
+        <span class="material-icons">download</span>
+        Export Data
+      </button>
+    </div>
+  </div>
+
+  <!-- Filters -->
+  <div class="filters-section">
+    <div class="filter-row">
+      <div class="filter-group">
+        <label>Workflow</label>
+        <select
+          [(ngModel)]="selectedWorkflowId"
+          (ngModelChange)="onWorkflowChange()"
+          class="filter-select">
+          <option value="">All Workflows</option>
+          <option *ngFor="let workflow of workflows" [value]="workflow.id">
+            {{ workflow.name }}
+          </option>
+        </select>
+      </div>
+
+      <div class="filter-group">
+        <label>Date Range</label>
+        <select
+          [(ngModel)]="dateRange"
+          (ngModelChange)="onDateRangeChange()"
+          class="filter-select">
+          <option value="7">Last 7 days</option>
+          <option value="30">Last 30 days</option>
+          <option value="90">Last 90 days</option>
+          <option value="custom">Custom Range</option>
+        </select>
+      </div>
+
+      <div *ngIf="dateRange === 'custom'" class="filter-group">
+        <label>From Date</label>
+        <input
+          type="date"
+          [(ngModel)]="dateFrom"
+          (ngModelChange)="onCustomDateChange()"
+          class="filter-input">
+      </div>
+
+      <div *ngIf="dateRange === 'custom'" class="filter-group">
+        <label>To Date</label>
+        <input
+          type="date"
+          [(ngModel)]="dateTo"
+          (ngModelChange)="onCustomDateChange()"
+          class="filter-input">
+      </div>
+    </div>
+  </div>
+
+  <!-- Error Message -->
+  <div *ngIf="errorMessage" class="message error-message">
+    <span class="material-icons">error</span>
+    {{ errorMessage }}
+    <button (click)="clearMessages()" class="close-btn">
+      <span class="material-icons">close</span>
+    </button>
+  </div>
+
+  <!-- Metric Cards -->
+  <div *ngIf="!isLoading && metricCards.length > 0" class="metrics-grid">
+    <div *ngFor="let card of metricCards" class="metric-card">
+      <div class="metric-icon" [style.color]="card.color">
+        <span class="material-icons">{{ card.icon }}</span>
+      </div>
+      <div class="metric-content">
+        <h3 class="metric-value">{{ card.value }}</h3>
+        <p class="metric-title">{{ card.title }}</p>
+      </div>
+    </div>
+  </div>
+
+  <!-- Workflow-specific Analytics -->
+  <div *ngIf="!isLoading && selectedWorkflowId && chartData.length > 0" class="analytics-content">
+    <!-- Chart Section -->
+    <div class="chart-section">
+      <div class="chart-header">
+        <h2>Execution Trends</h2>
+        <div class="chart-legend">
+          <div class="legend-item">
+            <span class="legend-color executions"></span>
+            <span>Total Executions</span>
+          </div>
+          <div class="legend-item">
+            <span class="legend-color completions"></span>
+            <span>Completed</span>
+          </div>
+          <div class="legend-item">
+            <span class="legend-color failures"></span>
+            <span>Failed</span>
+          </div>
+        </div>
+      </div>
+
+      <div class="chart-container">
+        <div class="chart">
+          <div *ngFor="let item of chartData" class="chart-bar-group">
+            <div class="chart-bars">
+              <div
+                class="chart-bar executions"
+                [style.height.%]="getBarHeight(item.executions)">
+              </div>
+              <div
+                class="chart-bar completions"
+                [style.height.%]="getBarHeight(item.completions)">
+              </div>
+              <div
+                class="chart-bar failures"
+                [style.height.%]="getBarHeight(item.failures)">
+              </div>
+            </div>
+            <div class="chart-label">{{ item.date }}</div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Summary Stats -->
+    <div class="summary-stats">
+      <div class="stat-card">
+        <div class="stat-value">{{ getTotalExecutions() }}</div>
+        <div class="stat-label">Total Executions</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-value">{{ getTotalCompletions() }}</div>
+        <div class="stat-label">Successful</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-value">{{ getTotalFailures() }}</div>
+        <div class="stat-label">Failed</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-value">{{ getAverageCompletionRate().toFixed(1) }}%</div>
+        <div class="stat-label">Success Rate</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Empty State -->
+  <div *ngIf="!isLoading && selectedWorkflowId && chartData.length === 0" class="empty-state">
+    <span class="material-icons empty-icon">insert_chart</span>
+    <h3>No analytics data</h3>
+    <p>No execution data found for the selected workflow and date range</p>
+  </div>
+
+  <div *ngIf="!isLoading && !selectedWorkflowId && (!metrics || metricCards.length === 0)" class="empty-state">
+    <span class="material-icons empty-icon">analytics</span>
+    <h3>No analytics available</h3>
+    <p>Select a workflow to view detailed analytics or check back later</p>
+  </div>
+</div>

@@ -1,0 +1,193 @@
+<div class="page-container">
+  <div class="page-header">
+    <button class="btn-back" routerLink="/quality" title="Back to Quality Dashboard">
+      <span class="material-icons">arrow_back</span>
+    </button>
+    <h1><span class="material-icons">history</span> Alert History</h1>
+  </div>
+
+  <div class="filter-bar">
+    <div class="filter-section">
+      <label>Filter by Severity:</label>
+      <div class="severity-filters">
+        <button
+          class="filter-btn"
+          [class.active]="!selectedSeverity"
+          (click)="clearFilter()">
+          All
+        </button>
+        <button
+          class="filter-btn severity-info"
+          [class.active]="selectedSeverity === 'info'"
+          (click)="filterBySeverity('info')">
+          <span class="material-icons">info</span>
+          Info
+        </button>
+        <button
+          class="filter-btn severity-warning"
+          [class.active]="selectedSeverity === 'warning'"
+          (click)="filterBySeverity('warning')">
+          <span class="material-icons">warning</span>
+          Warning
+        </button>
+        <button
+          class="filter-btn severity-critical"
+          [class.active]="selectedSeverity === 'critical'"
+          (click)="filterBySeverity('critical')">
+          <span class="material-icons">error</span>
+          Critical
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <div class="error-message" *ngIf="error">
+    <span class="material-icons">error</span>
+    {{ error }}
+    <button class="btn-close" (click)="error = null">
+      <span class="material-icons">close</span>
+    </button>
+  </div>
+
+  <div class="loading-spinner" *ngIf="loading && alerts.length === 0">
+    <div class="spinner"></div>
+    <p>Loading alert history...</p>
+  </div>
+
+  <div class="empty-state" *ngIf="!loading && alerts.length === 0">
+    <span class="material-icons">notifications_none</span>
+    <h2>No Alerts Found</h2>
+    <p *ngIf="selectedSeverity">No {{ selectedSeverity }} alerts in the history.</p>
+    <p *ngIf="!selectedSeverity">No alerts have been triggered yet.</p>
+    <button class="btn-secondary" routerLink="/quality/alerts">
+      <span class="material-icons">settings</span>
+      Configure Alert Rules
+    </button>
+  </div>
+
+  <div class="alerts-timeline" *ngIf="!loading && alerts.length > 0">
+    <div class="alert-count">
+      <span class="material-icons">notifications</span>
+      {{ alerts.length }} alert{{ alerts.length !== 1 ? 's' : '' }} found
+    </div>
+
+    <div class="alert-item" *ngFor="let alert of alerts" (click)="viewAlertDetails(alert)">
+      <div class="alert-marker" [ngClass]="getSeverityClass(alert.severity)">
+        <span class="material-icons">{{ getSeverityIcon(alert.severity) }}</span>
+      </div>
+
+      <div class="alert-content">
+        <div class="alert-header">
+          <div class="alert-title">
+            <h3>{{ alert.rule_name }}</h3>
+            <span class="severity-badge" [ngClass]="getSeverityClass(alert.severity)">
+              {{ alert.severity }}
+            </span>
+          </div>
+          <div class="alert-time">
+            <span class="relative-time">{{ formatRelativeTime(alert.triggered_at) }}</span>
+            <span class="absolute-time">{{ formatDate(alert.triggered_at) }}</span>
+          </div>
+        </div>
+
+        <p class="alert-message">{{ alert.message }}</p>
+
+        <div class="alert-meta">
+          <span class="meta-item">
+            <span class="material-icons">category</span>
+            Type: {{ alert.rule_type }}
+          </span>
+          <span class="meta-item" [class.notification-sent]="alert.notification_sent">
+            <span class="material-icons">{{ alert.notification_sent ? 'check_circle' : 'cancel' }}</span>
+            {{ alert.notification_sent ? 'Notification sent' : 'Notification failed' }}
+          </span>
+          <span class="meta-item" *ngIf="alert.notification_channels_used && alert.notification_channels_used.length > 0">
+            <span class="material-icons">send</span>
+            Channels: {{ alert.notification_channels_used.join(', ') }}
+          </span>
+        </div>
+
+        <div class="alert-error" *ngIf="alert.notification_error">
+          <span class="material-icons">error_outline</span>
+          Error: {{ alert.notification_error }}
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Alert Details Modal -->
+<div class="modal-overlay" *ngIf="selectedAlert" (click)="closeDetails()">
+  <div class="modal-content" (click)="$event.stopPropagation()">
+    <div class="modal-header">
+      <h2>Alert Details</h2>
+      <button class="btn-close" (click)="closeDetails()">
+        <span class="material-icons">close</span>
+      </button>
+    </div>
+
+    <div class="modal-body">
+      <div class="detail-section">
+        <h3>
+          <span class="severity-badge" [ngClass]="getSeverityClass(selectedAlert.severity)">
+            {{ selectedAlert.severity }}
+          </span>
+          {{ selectedAlert.rule_name }}
+        </h3>
+        <p class="detail-message">{{ selectedAlert.message }}</p>
+      </div>
+
+      <div class="detail-section">
+        <h4><span class="material-icons">info</span> Alert Information</h4>
+        <div class="detail-grid">
+          <div class="detail-item">
+            <span class="label">Rule Type:</span>
+            <span class="value">{{ selectedAlert.rule_type }}</span>
+          </div>
+          <div class="detail-item">
+            <span class="label">Triggered At:</span>
+            <span class="value">{{ formatDate(selectedAlert.triggered_at) }}</span>
+          </div>
+          <div class="detail-item" *ngIf="selectedAlert.processed_at">
+            <span class="label">Processed At:</span>
+            <span class="value">{{ formatDate(selectedAlert.processed_at) }}</span>
+          </div>
+        </div>
+      </div>
+
+      <div class="detail-section">
+        <h4><span class="material-icons">notifications</span> Notification Status</h4>
+        <div class="notification-status" [class.success]="selectedAlert.notification_sent" [class.failed]="!selectedAlert.notification_sent">
+          <span class="material-icons">{{ selectedAlert.notification_sent ? 'check_circle' : 'error' }}</span>
+          <span>{{ selectedAlert.notification_sent ? 'Notification sent successfully' : 'Notification failed' }}</span>
+        </div>
+        <div class="detail-item" *ngIf="selectedAlert.notification_channels_used && selectedAlert.notification_channels_used.length > 0">
+          <span class="label">Channels Used:</span>
+          <div class="channels-list">
+            <span class="channel-badge" *ngFor="let channel of selectedAlert.notification_channels_used">
+              {{ channel }}
+            </span>
+          </div>
+        </div>
+        <div class="error-box" *ngIf="selectedAlert.notification_error">
+          <strong>Error Message:</strong>
+          <pre>{{ selectedAlert.notification_error }}</pre>
+        </div>
+      </div>
+
+      <div class="detail-section" *ngIf="selectedAlert.data">
+        <h4><span class="material-icons">data_object</span> Alert Data</h4>
+        <pre class="json-data">{{ formatJSON(selectedAlert.data) }}</pre>
+      </div>
+
+      <div class="detail-section" *ngIf="selectedAlert.notification_response">
+        <h4><span class="material-icons">receipt</span> Notification Response</h4>
+        <pre class="json-data">{{ formatJSON(selectedAlert.notification_response) }}</pre>
+      </div>
+    </div>
+
+    <div class="modal-footer">
+      <button class="btn-secondary" (click)="closeDetails()">Close</button>
+    </div>
+  </div>
+</div>

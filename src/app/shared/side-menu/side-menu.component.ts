@@ -49,6 +49,12 @@ export class SideMenuComponent implements OnInit {
       active: false
     },
     {
+      label: 'Workflows',
+      icon: 'account_tree',
+      route: '/workflows',
+      active: false
+    },
+    {
       label: 'Messages',
       icon: 'chat',
       route: '/messages',
@@ -58,6 +64,12 @@ export class SideMenuComponent implements OnInit {
       label: 'Communications',
       icon: 'mail',
       route: '/communications',
+      active: false
+    },
+    {
+      label: 'Quality',
+      icon: 'bar_chart',
+      route: '/quality',
       active: false
     },
     {
