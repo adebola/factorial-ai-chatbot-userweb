@@ -142,6 +142,82 @@
         </div>
       </div>
     </div>
+
+    <!-- Categorization Section -->
+    <div class="categorization-section" *ngIf="hasCategorizationData()">
+      <h3>
+        <span class="material-icons">category</span>
+        Categorization & Tags
+      </h3>
+
+      <!-- Use statusData.categorization if available, otherwise fallback to stats.categorization -->
+      <ng-container *ngIf="(statusData?.categorization || stats?.categorization) as categorization">
+        <!-- Categorization Summary -->
+        <div class="categorization-summary">
+          <div class="summary-cards">
+            <div class="summary-card">
+              <div class="summary-value">{{categorization.categories?.length || 0}}</div>
+              <div class="summary-label">Unique Categories</div>
+              <div class="summary-detail">
+                <span class="chunks-count">{{categorization.chunks_with_categories}}/{{categorization.total_chunks}} chunks</span>
+              </div>
+            </div>
+            <div class="summary-card">
+              <div class="summary-value">{{categorization.tags?.length || 0}}</div>
+              <div class="summary-label">Unique Tags</div>
+              <div class="summary-detail">
+                <span class="chunks-count">{{categorization.chunks_with_tags}}/{{categorization.total_chunks}} chunks</span>
+              </div>
+            </div>
+            <div class="summary-card" *ngIf="categorization.content_types">
+              <div class="summary-value">{{getObjectKeys(categorization.content_types).length}}</div>
+              <div class="summary-label">Content Types</div>
+              <div class="summary-detail">
+                <span *ngFor="let type of getObjectKeys(categorization.content_types)" class="type-count">
+                  {{type}}: {{categorization.content_types[type]}}
+                </span>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Categories -->
+        <ng-container *ngIf="categorization.categories as categories">
+          <div class="categories-section" *ngIf="categories.length > 0">
+            <h4>
+              <span class="material-icons">folder</span>
+              Categories ({{categories.length}})
+            </h4>
+            <div class="categories-simple-grid">
+              <div *ngFor="let category of categories" class="category-simple-item">
+                <div class="category-badge-simple">
+                  <span class="material-icons">folder</span>
+                  <span class="category-name">{{category.name}}</span>
+                </div>
+              </div>
+            </div>
+          </div>
+        </ng-container>
+
+        <!-- Tags -->
+        <ng-container *ngIf="categorization.tags as tags">
+          <div class="tags-section" *ngIf="tags.length > 0">
+            <h4>
+              <span class="material-icons">label</span>
+              Tags ({{tags.length}})
+            </h4>
+            <div class="tags-simple-grid">
+              <div *ngFor="let tag of tags" class="tag-simple-item">
+                <div class="tag-badge-simple">
+                  <span class="material-icons">label</span>
+                  <span class="tag-name">{{tag.name}}</span>
+                </div>
+              </div>
+            </div>
+          </div>
+        </ng-container>
+      </ng-container>
+    </div>
   </div>
 
   <!-- Pages List -->

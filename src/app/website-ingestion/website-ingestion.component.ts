@@ -65,6 +65,15 @@ export class WebsiteIngestionComponent implements OnInit, OnDestroy {
         console.log('📊 Received ingestions:', response.ingestions.length, 'entries');
         console.log('📋 Ingestions data:', response.ingestions);
 
+        // Debug categorization_summary
+        response.ingestions.forEach((ing, index) => {
+          console.log(`Ingestion ${index} (${ing.base_url}):`, {
+            id: ing.id,
+            has_summary: !!ing.categorization_summary,
+            summary: ing.categorization_summary
+          });
+        });
+
         // Check for potential duplicates
         this.checkForDuplicates(response.ingestions);
 
@@ -278,6 +287,19 @@ export class WebsiteIngestionComponent implements OnInit, OnDestroy {
 
   canRetry(status: string): boolean {
     return ['failed', 'error'].includes(status.toLowerCase());
+  }
+
+  getTagIcon(tagType: string): string {
+    switch (tagType) {
+      case 'auto':
+        return 'smart_toy';
+      case 'system':
+        return 'verified';
+      case 'custom':
+        return 'person';
+      default:
+        return 'label';
+    }
   }
 
   private showImmediateFeedback(message: string, type: 'success' | 'info' | 'warning' = 'info'): void {

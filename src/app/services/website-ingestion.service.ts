@@ -13,6 +13,30 @@ export interface WebsiteIngestion {
   started_at: string | null;
   completed_at: string | null;
   error_message: string | null;
+  // Categorization summary from backend (available in list view)
+  categorization_summary?: {
+    category_count: number;
+    tag_count: number;
+    primary_content_type: string | null;
+    has_categorization: boolean;
+    chunks_with_categories: number;
+    total_chunks: number;
+  };
+  // Full categorization data (available in details/stats view)
+  categorization?: {
+    total_chunks: number;
+    chunks_with_categories: number;
+    chunks_with_tags: number;
+    categories: Array<{
+      id: string;
+      name: string;
+    }>;
+    tags: Array<{
+      id: string;
+      name: string;
+    }>;
+    content_types: Record<string, number>;
+  };
 }
 
 export interface WebsiteIngestionsListResponse {
@@ -43,6 +67,21 @@ export interface IngestionStatusResponse {
   error_message: string | null;
   tenant_id: string;
   tenant_name: string;
+  // Categorization data from vector database
+  categorization?: {
+    total_chunks: number;
+    chunks_with_categories: number;
+    chunks_with_tags: number;
+    categories: Array<{
+      id: string;
+      name: string;
+    }>;
+    tags: Array<{
+      id: string;
+      name: string;
+    }>;
+    content_types: Record<string, number>;
+  };
 }
 
 export interface DeleteIngestionResponse {
@@ -108,6 +147,21 @@ export interface IngestionStatsResponse {
     unique_pages: number;
     estimated_total_characters: number;
     note: string;
+  };
+  // Categorization data (same structure as in list)
+  categorization?: {
+    total_chunks: number;
+    chunks_with_categories: number;
+    chunks_with_tags: number;
+    categories: Array<{
+      id: string;
+      name: string;
+    }>;
+    tags: Array<{
+      id: string;
+      name: string;
+    }>;
+    content_types: Record<string, number>;
   };
   tenant_id: string;
 }

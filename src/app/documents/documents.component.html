@@ -14,12 +14,17 @@
       <button (click)="navigateToUpload()" class="btn btn-primary">
         ➕ Add Document
       </button>
-      <button 
-        (click)="deleteSelectedDocuments()" 
+      <button
+        (click)="deleteSelectedDocuments()"
         class="btn btn-danger"
         [disabled]="selectedDocuments.size === 0"
       >
         🗑️ Delete Selected ({{selectedDocuments.size}})
+      </button>
+      <button (click)="toggleFilters()" class="btn btn-outline">
+        <span class="material-icons">filter_list</span>
+        Filters
+        <span class="material-icons">{{ showFilters ? 'expand_less' : 'expand_more' }}</span>
       </button>
     </div>
     <div class="table-info">
@@ -27,6 +32,56 @@
       <div *ngIf="failedDocumentsCount > 0" class="info-note">
         <span class="material-icons">info</span>
         {{failedDocumentsCount}} failed document(s) hidden
+      </div>
+    </div>
+  </div>
+
+  <!-- Filters Panel -->
+  <div class="filters-panel" *ngIf="showFilters">
+    <div class="filters-container">
+      <div class="filter-section">
+        <label class="filter-label">
+          <span class="material-icons">folder</span>
+          Categories
+        </label>
+        <app-category-selector
+          [selectedCategories]="selectedCategories"
+          (categoriesChange)="onCategoriesChange($event)"
+        ></app-category-selector>
+      </div>
+
+      <div class="filter-section">
+        <label class="filter-label">
+          <span class="material-icons">label</span>
+          Tags
+        </label>
+        <app-tag-selector
+          [selectedTags]="selectedTags"
+          (tagsChange)="onTagsChange($event)"
+        ></app-tag-selector>
+      </div>
+
+      <div class="filter-section">
+        <label class="filter-label">
+          <span class="material-icons">description</span>
+          Content Type
+        </label>
+        <select
+          class="content-type-select"
+          [(ngModel)]="selectedContentType"
+          (change)="onContentTypeChange()"
+        >
+          <option *ngFor="let type of contentTypes" [value]="type.value">
+            {{type.label}}
+          </option>
+        </select>
+      </div>
+
+      <div class="filter-actions">
+        <button (click)="clearFilters()" class="btn btn-outline btn-sm">
+          <span class="material-icons">clear</span>
+          Clear Filters
+        </button>
       </div>
     </div>
   </div>
@@ -198,6 +253,38 @@
             <div class="info-item" *ngIf="selectedDocumentMetadata.error_message">
               <span class="label">Error:</span>
               <span class="value error-text">{{ selectedDocumentMetadata.error_message }}</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- Content Type Information -->
+        <div class="metadata-section" *ngIf="selectedDocumentMetadata.content_type || selectedDocumentMetadata.content_types_distribution">
+          <h4>
+            <span class="material-icons">article</span>
+            Content Type Analysis
+          </h4>
+          <div class="info-grid">
+            <div class="info-item" *ngIf="selectedDocumentMetadata.content_type">
+              <span class="label">Primary Type:</span>
+              <span class="value content-type-badge">{{ selectedDocumentMetadata.content_type }}</span>
+            </div>
+          </div>
+
+          <div *ngIf="selectedDocumentMetadata.content_types_distribution && getObjectKeys(selectedDocumentMetadata.content_types_distribution).length > 0" class="content-types-breakdown">
+            <h5>Content Distribution</h5>
+            <div class="distribution-list">
+              <div *ngFor="let type of getObjectKeys(selectedDocumentMetadata.content_types_distribution)" class="distribution-item">
+                <div class="distribution-header">
+                  <span class="type-name">{{ type }}</span>
+                  <span class="type-count">{{ selectedDocumentMetadata.content_types_distribution[type] }} chunks</span>
+                </div>
+                <div class="distribution-bar">
+                  <div
+                    class="distribution-fill"
+                    [style.width.%]="getContentTypePercentage(selectedDocumentMetadata.content_types_distribution[type])">
+                  </div>
+                </div>
+              </div>
             </div>
           </div>
         </div>

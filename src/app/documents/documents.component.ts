@@ -11,7 +11,7 @@ import { environment } from '../../environments/environment';
 
 @Component({
   selector: 'app-documents',
-  imports: [CommonModule, FormsModule],
+  imports: [CommonModule, FormsModule, CategorySelectorComponent, TagSelectorComponent],
   templateUrl: './documents.component.html',
   styleUrl: './documents.component.scss'
 })
@@ -390,5 +390,16 @@ export class DocumentsComponent implements OnInit {
     // Placeholder - would integrate with document download API
     this.successMessage = `Download functionality not yet implemented for: ${document.filename}`;
     setTimeout(() => this.successMessage = '', 3000);
+  }
+
+  // Helper method to get object keys for template iteration
+  getObjectKeys(obj: any): string[] {
+    return obj ? Object.keys(obj) : [];
+  }
+
+  // Calculate content type percentage for progress bar
+  getContentTypePercentage(count: number): number {
+    if (!this.selectedDocumentMetadata?.processing_stats?.chunk_count) return 0;
+    return (count / this.selectedDocumentMetadata.processing_stats.chunk_count) * 100;
   }
 }

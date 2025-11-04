@@ -19,6 +19,7 @@ import { AuthService } from '../../services/auth.service';
 export class IngestionDetailsComponent implements OnInit, OnDestroy {
   ingestionId: string = '';
   stats: IngestionStatsResponse | null = null;
+  statusData: any = null; // Status data with categorization
   pages: WebsitePage[] = [];
   pagination: any = null;
   isLoading = false;
@@ -45,6 +46,7 @@ export class IngestionDetailsComponent implements OnInit, OnDestroy {
       this.ingestionId = params['id'];
       if (this.ingestionId) {
         this.loadIngestionDetails();
+        this.loadIngestionStatus(); // Third API call for categorization
         this.loadIngestionPages();
         this.startAutoRefreshIfNeeded();
       }
@@ -76,6 +78,19 @@ export class IngestionDetailsComponent implements OnInit, OnDestroy {
           this.errorMessage = 'Failed to load ingestion details';
         }
         console.error('Load ingestion details error:', error);
+      }
+    });
+  }
+
+  loadIngestionStatus(): void {
+    this.websiteIngestionService.getIngestionStatus(this.ingestionId).subscribe({
+      next: (response) => {
+        this.statusData = response;
+        console.log('📊 Status data with categorization:', response.categorization);
+      },
+      error: (error) => {
+        console.error('Load ingestion status error:', error);
+        // Don't show error to user, categorization is optional
       }
     });
   }
@@ -189,6 +204,7 @@ export class IngestionDetailsComponent implements OnInit, OnDestroy {
     this.autoRefreshEnabled = true;
     this.refreshInterval = setInterval(() => {
       this.loadIngestionDetails();
+      this.loadIngestionStatus(); // Also refresh categorization data
       this.loadIngestionPages(this.currentPage);
 
       if (this.stats?.status !== 'in_progress' && this.stats?.status !== 'processing') {
@@ -220,5 +236,49 @@ export class IngestionDetailsComponent implements OnInit, OnDestroy {
   // Helper method to get object keys for template
   getObjectKeys(obj: any): string[] {
     return Object.keys(obj);
+  }
+
+  // Categorization helper methods
+  getConfidenceColor(confidence: number): string {
+    if (confidence >= 0.8) return 'confidence-high';
+    if (confidence >= 0.6) return 'confidence-medium';
+    return 'confidence-low';
+  }
+
+  getConfidenceLabel(confidence: number): string {
+    return `${Math.round(confidence * 100)}%`;
+  }
+
+  getTagIcon(tagType: string): string {
+    switch (tagType) {
+      case 'auto':
+        return 'smart_toy';
+      case 'system':
+        return 'verified';
+      case 'custom':
+        return 'person';
+      default:
+        return 'label';
+    }
+  }
+
+  getAssignedByIcon(assignedBy: string): string {
+    switch (assignedBy) {
+      case 'ai':
+        return 'smart_toy';
+      case 'user':
+        return 'person';
+      case 'rule':
+        return 'rule';
+      default:
+        return 'help_outline';
+    }
+  }
+
+  hasCategorizationData(): boolean {
+    // Check statusData first (from /status endpoint), then fallback to stats
+    const categorizationData = this.statusData?.categorization || this.stats?.categorization;
+    return !!(categorizationData?.categories && categorizationData.categories.length > 0) ||
+           !!(categorizationData?.tags && categorizationData.tags.length > 0);
   }
 }

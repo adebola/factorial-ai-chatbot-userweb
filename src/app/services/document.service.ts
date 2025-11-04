@@ -59,6 +59,12 @@ export interface DocumentMetadata {
   error_message: string | null;
   tenant_id: string;
 
+  // Content Type Information (NEW)
+  content_type: string | null;  // Primary content type (most common in chunks)
+  content_types_distribution: {  // Distribution of content types across chunks
+    [key: string]: number;  // e.g., { "text": 45, "table": 8, "list": 12 }
+  };
+
   // Categories (AI and User-assigned)
   categories: Array<{
     id: string;
@@ -97,6 +103,8 @@ export interface DocumentMetadata {
     user_assigned_categories: number;
     auto_tags: number;
     custom_tags: number;
+    has_content_type: boolean;  // NEW: Indicates if content_type is set
+    content_type_chunks: number;  // NEW: Total chunks with content_type data
   };
 }
 
