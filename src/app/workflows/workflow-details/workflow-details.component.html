@@ -202,7 +202,9 @@
               <div class="step-options" *ngIf="step.options && step.options.length > 0">
                 <strong>Options:</strong>
                 <div class="options-list">
-                  <span *ngFor="let option of step.options" class="option-chip">{{ option }}</span>
+                  <span *ngFor="let option of step.options" class="option-chip">
+                    {{ option.text || option }}
+                  </span>
                 </div>
               </div>
 

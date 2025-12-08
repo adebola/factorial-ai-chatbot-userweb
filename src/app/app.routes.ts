@@ -24,6 +24,10 @@ import { KnowledgeGapsComponent } from './quality/knowledge-gaps/knowledge-gaps.
 import { AlertRulesComponent } from './quality/alerts/alert-rules/alert-rules.component';
 import { AlertHistoryComponent } from './quality/alerts/alert-history/alert-history.component';
 import { SchedulerMonitorComponent } from './quality/scheduler/scheduler-monitor.component';
+import { PaymentCallbackComponent } from './payment/payment-callback/payment-callback.component';
+import { PaymentHistoryComponent } from './payment/payment-history/payment-history.component';
+import { InvoiceListComponent } from './invoices/invoice-list/invoice-list.component';
+import { InvoiceDetailsComponent } from './invoices/invoice-details/invoice-details.component';
 import { authGuard } from './guards/auth.guard';
 
 export const routes: Routes = [
@@ -54,6 +58,12 @@ export const routes: Routes = [
       { path: 'communications', component: CommunicationsComponent },
       { path: 'plans', component: PlansComponent },
       { path: 'settings', component: SettingsComponent },
+      // Billing & Payment Routes
+      { path: 'payment/callback', component: PaymentCallbackComponent },
+      { path: 'payment/history', component: PaymentHistoryComponent },
+      // Invoice Routes
+      { path: 'invoices', component: InvoiceListComponent },
+      { path: 'invoices/:id', component: InvoiceDetailsComponent },
       { path: 'quality', redirectTo: 'quality/dashboard', pathMatch: 'full' },
       { path: 'quality/dashboard', component: QualityDashboardComponent },
       { path: 'quality/knowledge-gaps', component: KnowledgeGapsComponent },

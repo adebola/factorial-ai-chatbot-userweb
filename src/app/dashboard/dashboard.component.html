@@ -89,6 +89,29 @@
               or ₦{{ formatNumber(dashboardData!.currentPlan!.yearly_plan_cost!) }}/year
             </span>
           </div>
+
+          <!-- Subscription Expiry Information -->
+          <div class="subscription-expiry" *ngIf="currentSubscription && currentSubscription.current_period_end">
+            <div class="expiry-badge" [ngClass]="{
+              'expiry-warning': isExpiringSoon(),
+              'expiry-danger': hasExpired(),
+              'expiry-normal': !isExpiringSoon() && !hasExpired()
+            }">
+              <span class="material-icons">
+                {{ hasExpired() ? 'error' : isExpiringSoon() ? 'warning' : 'schedule' }}
+              </span>
+              <div class="expiry-text">
+                <span class="expiry-label">
+                  {{ hasExpired() ? 'Expired' : currentSubscription.cancel_at_period_end ? 'Cancels' : 'Renews' }}
+                </span>
+                <span class="expiry-date">{{ formatExpiryDate(currentSubscription.current_period_end) }}</span>
+                <span class="expiry-countdown" *ngIf="!hasExpired()">
+                  {{ getDaysUntilExpiry() }} {{ getDaysUntilExpiry() === 1 ? 'day' : 'days' }} remaining
+                </span>
+              </div>
+            </div>
+          </div>
+
           <div class="plan-actions">
             <button class="upgrade-btn" (click)="navigateToPlans()">
               <span class="material-icons">upgrade</span>

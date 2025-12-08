@@ -288,9 +288,28 @@ export class DashboardService {
     return this.http.get(`${this.baseUrl}/plans/public`);
   }
 
-  switchTenantPlan(newPlanId: string, billingCycle: 'monthly' | 'yearly' = 'monthly'): Observable<any> {
+  switchTenantPlan(newPlanId: string, billingCycle: 'monthly' | 'yearly' = 'monthly', paymentReference?: string): Observable<any> {
+    const body: any = {
+      new_plan_id: newPlanId,
+      billing_cycle: billingCycle
+    };
+
+    // Include payment reference for upgrades
+    if (paymentReference) {
+      body.payment_reference = paymentReference;
+    }
+
     return this.http.post(
       `${this.baseUrl}/plans/switch`,
+      body,
+      { headers: this.getHttpHeaders() }
+    );
+  }
+
+  // Preview plan switch to get proration details before committing
+  previewPlanSwitch(newPlanId: string, billingCycle: 'monthly' | 'yearly' = 'monthly'): Observable<any> {
+    return this.http.post(
+      `${this.baseUrl}/plans/preview-switch`,
       {
         new_plan_id: newPlanId,
         billing_cycle: billingCycle
@@ -337,12 +356,19 @@ export class DashboardService {
                 // Get usage statistics
                 this.getCurrentUsage().subscribe({
                   next: (usageResponse) => {
+                    console.log('Usage API Response:', usageResponse);
+                    // Check if the response is directly the usage statistics or nested
                     if (usageResponse.usage_statistics) {
                       dashboardData.currentUsage = usageResponse.usage_statistics;
+                    } else if (usageResponse.documents && usageResponse.websites) {
+                      // Response might be the usage statistics directly
+                      dashboardData.currentUsage = usageResponse;
                     }
+                    console.log('Current Usage after parsing:', dashboardData.currentUsage);
                     this.loadRemainingData(dashboardData, observer);
                   },
-                  error: () => {
+                  error: (error) => {
+                    console.error('Error fetching usage statistics:', error);
                     // Continue without usage info if it fails
                     this.loadRemainingData(dashboardData, observer);
                   }
@@ -353,12 +379,19 @@ export class DashboardService {
                 // Still try to get usage statistics
                 this.getCurrentUsage().subscribe({
                   next: (usageResponse) => {
+                    console.log('Usage API Response (no plan):', usageResponse);
+                    // Check if the response is directly the usage statistics or nested
                     if (usageResponse.usage_statistics) {
                       dashboardData.currentUsage = usageResponse.usage_statistics;
+                    } else if (usageResponse.documents && usageResponse.websites) {
+                      // Response might be the usage statistics directly
+                      dashboardData.currentUsage = usageResponse;
                     }
+                    console.log('Current Usage after parsing (no plan):', dashboardData.currentUsage);
                     this.loadRemainingData(dashboardData, observer);
                   },
-                  error: () => {
+                  error: (error) => {
+                    console.error('Error fetching usage statistics (no plan):', error);
                     // Continue without usage info if it fails
                     this.loadRemainingData(dashboardData, observer);
                   }
@@ -369,12 +402,19 @@ export class DashboardService {
             // No plan_id, still try to get usage statistics
             this.getCurrentUsage().subscribe({
               next: (usageResponse) => {
+                console.log('Usage API Response (no plan ID):', usageResponse);
+                // Check if the response is directly the usage statistics or nested
                 if (usageResponse.usage_statistics) {
                   dashboardData.currentUsage = usageResponse.usage_statistics;
+                } else if (usageResponse.documents && usageResponse.websites) {
+                  // Response might be the usage statistics directly
+                  dashboardData.currentUsage = usageResponse;
                 }
+                console.log('Current Usage after parsing (no plan ID):', dashboardData.currentUsage);
                 this.loadRemainingData(dashboardData, observer);
               },
-              error: () => {
+              error: (error) => {
+                console.error('Error fetching usage statistics (no plan ID):', error);
                 // Continue without usage info if it fails
                 this.loadRemainingData(dashboardData, observer);
               }

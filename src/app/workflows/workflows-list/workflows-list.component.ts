@@ -88,6 +88,8 @@ export class WorkflowsListComponent implements OnInit {
 
     this.workflowService.getWorkflows(this.currentPage, this.pageSize, filters).subscribe({
       next: (response: WorkflowListResponse) => {
+        console.log('Workflows API Response:', response);
+        console.log('First workflow is_active value:', response.workflows[0]?.is_active, 'Type:', typeof response.workflows[0]?.is_active);
         this.workflows = response.workflows;
         this.totalCount = response.total;
         this.isLoading = false;

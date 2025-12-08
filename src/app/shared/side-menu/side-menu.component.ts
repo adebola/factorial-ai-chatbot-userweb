@@ -73,6 +73,24 @@ export class SideMenuComponent implements OnInit {
       active: false
     },
     {
+      label: 'Plans',
+      icon: 'workspace_premium',
+      route: '/plans',
+      active: false
+    },
+    {
+      label: 'Payment History',
+      icon: 'receipt_long',
+      route: '/payment/history',
+      active: false
+    },
+    {
+      label: 'Invoices',
+      icon: 'description',
+      route: '/invoices',
+      active: false
+    },
+    {
       label: 'Settings',
       icon: 'settings',
       route: '/settings',

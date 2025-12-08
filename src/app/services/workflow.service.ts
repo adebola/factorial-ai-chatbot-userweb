@@ -58,7 +58,7 @@ export class WorkflowService {
   }
 
   getWorkflow(workflowId: string): Observable<WorkflowResponse> {
-    return this.http.get<WorkflowResponse>(`${this.apiUrl}/${workflowId}`);
+    return this.http.get<WorkflowResponse>(`${this.apiUrl}${workflowId}`);
   }
 
   createWorkflow(workflow: WorkflowCreateRequest): Observable<WorkflowResponse> {
@@ -66,19 +66,19 @@ export class WorkflowService {
   }
 
   updateWorkflow(workflowId: string, workflow: WorkflowUpdateRequest): Observable<WorkflowResponse> {
-    return this.http.put<WorkflowResponse>(`${this.apiUrl}/${workflowId}`, workflow);
+    return this.http.put<WorkflowResponse>(`${this.apiUrl}${workflowId}`, workflow);
   }
 
   deleteWorkflow(workflowId: string): Observable<void> {
-    return this.http.delete<void>(`${this.apiUrl}/${workflowId}`);
+    return this.http.delete<void>(`${this.apiUrl}${workflowId}`);
   }
 
   activateWorkflow(workflowId: string): Observable<void> {
-    return this.http.post<void>(`${this.apiUrl}/${workflowId}/activate`, {});
+    return this.http.post<void>(`${this.apiUrl}${workflowId}/activate`, {});
   }
 
   deactivateWorkflow(workflowId: string): Observable<void> {
-    return this.http.post<void>(`${this.apiUrl}/${workflowId}/deactivate`, {});
+    return this.http.post<void>(`${this.apiUrl}${workflowId}/deactivate`, {});
   }
 
   // Workflow Execution
@@ -144,7 +144,7 @@ export class WorkflowService {
 
     // Backend returns array directly, not paginated response
     return this.http.get<WorkflowTemplateResponse[]>(
-      `${this.apiUrl}/templates/list`, { params }
+      `${this.apiUrl}templates/list`, { params }
     ).pipe(
       map((templates: WorkflowTemplateResponse[]) => ({
         templates: templates,
@@ -156,15 +156,15 @@ export class WorkflowService {
   }
 
   createWorkflowTemplate(template: WorkflowTemplateCreateRequest): Observable<WorkflowTemplateResponse> {
-    return this.http.post<WorkflowTemplateResponse>(`${this.apiUrl}/templates`, template);
+    return this.http.post<WorkflowTemplateResponse>(`${this.apiUrl}templates`, template);
   }
 
   getWorkflowTemplate(templateId: string): Observable<WorkflowTemplateResponse> {
-    return this.http.get<WorkflowTemplateResponse>(`${this.apiUrl}/templates/${templateId}`);
+    return this.http.get<WorkflowTemplateResponse>(`${this.apiUrl}templates/${templateId}`);
   }
 
   createWorkflowFromTemplate(templateId: string, name: string): Observable<WorkflowResponse> {
-    return this.http.post<WorkflowResponse>(`${this.apiUrl}/from-template/${templateId}`, { workflow_name: name });
+    return this.http.post<WorkflowResponse>(`${this.apiUrl}from-template/${templateId}`, { workflow_name: name });
   }
 
   // Analytics
@@ -316,18 +316,18 @@ export class WorkflowService {
   // Utility Methods
   validateWorkflowDefinition(definition: any): Observable<{ valid: boolean, errors: string[] }> {
     return this.http.post<{ valid: boolean, errors: string[] }>(
-      `${this.apiUrl}/validate`, { definition }
+      `${this.apiUrl}validate`, { definition }
     );
   }
 
   duplicateWorkflow(workflowId: string, newName: string): Observable<WorkflowResponse> {
     return this.http.post<WorkflowResponse>(
-      `${this.apiUrl}/${workflowId}/duplicate`, { name: newName }
+      `${this.apiUrl}${workflowId}/duplicate`, { name: newName }
     );
   }
 
   exportWorkflow(workflowId: string): Observable<Blob> {
-    return this.http.get(`${this.apiUrl}/${workflowId}/export`, {
+    return this.http.get(`${this.apiUrl}${workflowId}/export`, {
       responseType: 'blob'
     });
   }
@@ -336,7 +336,7 @@ export class WorkflowService {
     const formData = new FormData();
     formData.append('file', file);
 
-    return this.http.post<WorkflowResponse>(`${this.apiUrl}/import`, formData);
+    return this.http.post<WorkflowResponse>(`${this.apiUrl}import`, formData);
   }
 
   // Helper methods for UI

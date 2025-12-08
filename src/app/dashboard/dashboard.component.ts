@@ -5,6 +5,8 @@ import {BehaviorSubject, Subject} from 'rxjs';
 import { takeUntil } from 'rxjs/operators';
 import {DashboardService, DashboardData, PlanDetails} from '../services/dashboard.service';
 import { AuthService } from '../services/auth.service';
+import { BillingService } from '../services/billing.service';
+import { Subscription } from '../models/billing.models';
 
 @Component({
   selector: 'app-dashboard',
@@ -19,10 +21,13 @@ export class DashboardComponent implements OnInit, OnDestroy {
   loading = true;
   error: string | null = null;
   currentUser: any = null;
+  currentSubscription: Subscription | null = null;
+  subscriptionLoading = false;
 
   constructor(
     private dashboardService: DashboardService,
     private authService: AuthService,
+    private billingService: BillingService,
     private router: Router
   ) {
     this.currentUser = this.authService.getCurrentUser();
@@ -30,6 +35,28 @@ export class DashboardComponent implements OnInit, OnDestroy {
 
   ngOnInit(): void {
     this.loadDashboardData();
+    this.loadSubscriptionInfo();
+  }
+
+  /**
+   * Load current subscription information
+   */
+  private loadSubscriptionInfo(): void {
+    this.subscriptionLoading = true;
+
+    this.billingService.getCurrentSubscription()
+      .pipe(takeUntil(this.destroy$))
+      .subscribe({
+        next: (subscription) => {
+          this.currentSubscription = subscription;
+          this.subscriptionLoading = false;
+        },
+        error: (error) => {
+          console.error('Error loading subscription:', error);
+          this.subscriptionLoading = false;
+          // Don't show error to user - subscription might not exist yet
+        }
+      });
   }
 
   ngOnDestroy(): void {
@@ -112,6 +139,48 @@ export class DashboardComponent implements OnInit, OnDestroy {
 
   refresh(): void {
     this.loadDashboardData();
+    this.loadSubscriptionInfo();
+  }
+
+  /**
+   * Format subscription expiry date
+   */
+  formatExpiryDate(dateString: string): string {
+    const date = new Date(dateString);
+    return date.toLocaleDateString('en-US', {
+      year: 'numeric',
+      month: 'long',
+      day: 'numeric'
+    });
+  }
+
+  /**
+   * Get days until subscription expiry
+   */
+  getDaysUntilExpiry(): number {
+    if (!this.currentSubscription?.current_period_end) return 0;
+
+    const expiryDate = new Date(this.currentSubscription.current_period_end);
+    const today = new Date();
+    const diffTime = expiryDate.getTime() - today.getTime();
+    const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+
+    return diffDays;
+  }
+
+  /**
+   * Check if subscription is expiring soon (within 7 days)
+   */
+  isExpiringSoon(): boolean {
+    const daysUntil = this.getDaysUntilExpiry();
+    return daysUntil > 0 && daysUntil <= 7;
+  }
+
+  /**
+   * Check if subscription has expired
+   */
+  hasExpired(): boolean {
+    return this.getDaysUntilExpiry() <= 0;
   }
 
   downloadWidgetFile(fileType: 'javascript' | 'css' | 'demo' | 'guide' | 'all_files'): void {

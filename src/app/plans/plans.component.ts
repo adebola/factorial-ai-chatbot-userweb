@@ -3,6 +3,10 @@ import { CommonModule } from '@angular/common';
 import { Router } from '@angular/router';
 import { DashboardService } from '../services/dashboard.service';
 import { AuthService } from '../services/auth.service';
+import { PaystackService } from '../services/paystack.service';
+import { BillingService } from '../services/billing.service';
+import { Subscription } from '../models/billing.models';
+import { environment } from '../../environments/environment';
 
 interface Plan {
   id: string;
@@ -26,6 +30,27 @@ interface CurrentPlanResponse {
   can_switch_plans: boolean;
 }
 
+interface PlanSwitchPreview {
+  preview: {
+    current_plan: { id: string; name: string; cost: number };
+    new_plan: { id: string; name: string; cost: number; description?: string };
+    billing_cycle: string;
+  };
+  billing_info: {
+    old_cost: number;
+    new_cost: number;
+    prorated_amount: number;
+    is_upgrade: boolean;
+    is_downgrade: boolean;
+    currency: string;
+  };
+  requires_payment: boolean;
+  effective_immediately: boolean;
+  scheduled_for_period_end: boolean;
+  message: string;
+  action_required?: string;
+}
+
 @Component({
   selector: 'app-plans',
   standalone: true,
@@ -43,14 +68,46 @@ export class PlansComponent implements OnInit {
   error: string | null = null;
   successMessage: string | null = null;
 
+  // Payment modal state
+  showPaymentModal = false;
+  selectedPlan: Plan | null = null;
+  switchPreview: PlanSwitchPreview | null = null;
+  processingPayment = false;
+
+  // Subscription information
+  currentSubscription: Subscription | null = null;
+  subscriptionLoading = false;
+
   constructor(
     private dashboardService: DashboardService,
     private authService: AuthService,
+    private paystackService: PaystackService,
+    private billingService: BillingService,
     private router: Router
   ) {}
 
   ngOnInit() {
     this.loadPlansData();
+    this.loadSubscriptionInfo();
+  }
+
+  /**
+   * Load current subscription information
+   */
+  loadSubscriptionInfo() {
+    this.subscriptionLoading = true;
+
+    this.billingService.getCurrentSubscription().subscribe({
+      next: (subscription) => {
+        this.currentSubscription = subscription;
+        this.subscriptionLoading = false;
+      },
+      error: (error) => {
+        console.error('Error loading subscription:', error);
+        this.subscriptionLoading = false;
+        // Don't show error to user - subscription might not exist yet
+      }
+    });
   }
 
   loadPlansData() {
@@ -244,31 +301,135 @@ export class PlansComponent implements OnInit {
   switchPlan(plan: Plan) {
     if (this.isCurrentPlan(plan) || this.switching) return;
 
-    const confirmMessage = this.isUpgrade(plan)
-      ? `Upgrade to ${plan.name} plan for ₦${this.formatNumber(this.getPlanCost(plan))}/${this.billingCycle}?`
-      : `Downgrade to ${plan.name} plan for ₦${this.formatNumber(this.getPlanCost(plan))}/${this.billingCycle}?`;
-
-    if (!confirm(confirmMessage)) return;
-
+    this.selectedPlan = plan;
     this.switching = true;
     this.error = null;
     this.successMessage = null;
 
-    this.dashboardService.switchTenantPlan(plan.id, this.billingCycle).subscribe({
-      next: (response) => {
-        this.successMessage = `Successfully switched to ${plan.name} plan!`;
+    // First, get the preview to see if payment is required
+    this.dashboardService.previewPlanSwitch(plan.id, this.billingCycle).subscribe({
+      next: (preview: PlanSwitchPreview) => {
+        this.switchPreview = preview;
+
+        // Check if this requires contacting sales (Enterprise plan)
+        if (preview.action_required === 'contact_sales') {
+          this.switching = false;
+          this.error = preview.message;
+          return;
+        }
+
+        // If payment is required, show the payment modal
+        if (preview.requires_payment && preview.billing_info.prorated_amount > 0) {
+          this.showPaymentModal = true;
+          this.switching = false;
+        } else {
+          // No payment required (downgrade or no prorated amount)
+          // Confirm and proceed directly
+          const confirmMessage = preview.billing_info.is_downgrade
+            ? `Downgrade to ${plan.name}? This will take effect at the end of your current billing period.`
+            : `Switch to ${plan.name} plan?`;
+
+          if (confirm(confirmMessage)) {
+            this.executePlanSwitch();
+          } else {
+            this.switching = false;
+            this.selectedPlan = null;
+            this.switchPreview = null;
+          }
+        }
+      },
+      error: (error: any) => {
+        console.error('Error previewing plan switch:', error);
+        this.error = error.error?.detail || 'Failed to get plan details. Please try again.';
         this.switching = false;
+        this.selectedPlan = null;
+      }
+    });
+  }
+
+  // Execute plan switch after payment (or for downgrades without payment)
+  executePlanSwitch(paymentReference?: string) {
+    if (!this.selectedPlan) return;
+
+    this.switching = true;
+    this.processingPayment = false;
+
+    this.dashboardService.switchTenantPlan(
+      this.selectedPlan.id,
+      this.billingCycle,
+      paymentReference
+    ).subscribe({
+      next: (response) => {
+        this.successMessage = response.message || `Successfully switched to ${this.selectedPlan?.name} plan!`;
+        this.switching = false;
+        this.closePaymentModal();
+
         // Reload plans data to update current plan
         setTimeout(() => {
           this.loadPlansData();
-        }, 1000);
+          this.successMessage = null;
+        }, 5000);
       },
       error: (error: any) => {
         console.error('Error switching plan:', error);
-        this.error = error.error?.detail || 'Failed to switch plan. Please try again.';
+        this.error = error.error?.detail?.message || error.error?.detail || 'Failed to switch plan. Please try again.';
         this.switching = false;
+        this.closePaymentModal();
       }
     });
+  }
+
+  // Initiate Paystack payment for upgrade
+  initiatePayment() {
+    if (!this.switchPreview || !this.selectedPlan) return;
+
+    const currentUser = this.authService.getCurrentUser();
+    if (!currentUser?.email) {
+      this.error = 'User email not found. Please log in again.';
+      return;
+    }
+
+    this.processingPayment = true;
+    this.error = null;
+
+    // Convert amount to kobo (Paystack expects amount in smallest currency unit)
+    const amountInKobo = Math.round(this.switchPreview.billing_info.prorated_amount * 100);
+
+    // Generate unique payment reference
+    const paymentRef = `plan_upgrade_${this.selectedPlan.id}_${Date.now()}`;
+
+    this.paystackService.initializePayment({
+      key: environment.paystack.publicKey,
+      email: currentUser.email,
+      amount: amountInKobo,
+      ref: paymentRef,
+      currency: this.switchPreview.billing_info.currency || 'NGN',
+      metadata: {
+        plan_id: this.selectedPlan.id,
+        plan_name: this.selectedPlan.name,
+        billing_cycle: this.billingCycle,
+        type: 'plan_upgrade'
+      },
+      callback: (response: any) => {
+        // Payment successful
+        console.log('Payment successful:', response);
+        this.executePlanSwitch(response.reference);
+      },
+      onClose: () => {
+        // Payment cancelled by user
+        console.log('Payment cancelled');
+        this.processingPayment = false;
+        this.error = 'Payment was cancelled. Your plan has not been changed.';
+      }
+    });
+  }
+
+  // Close the payment modal
+  closePaymentModal() {
+    this.showPaymentModal = false;
+    this.selectedPlan = null;
+    this.switchPreview = null;
+    this.processingPayment = false;
   }
 
   goBack() {
@@ -277,5 +438,46 @@ export class PlansComponent implements OnInit {
 
   setBillingCycle(cycle: 'monthly' | 'yearly') {
     this.billingCycle = cycle;
+  }
+
+  /**
+   * Format subscription expiry date
+   */
+  formatExpiryDate(dateString: string): string {
+    const date = new Date(dateString);
+    return date.toLocaleDateString('en-US', {
+      year: 'numeric',
+      month: 'long',
+      day: 'numeric'
+    });
+  }
+
+  /**
+   * Get days until subscription expiry
+   */
+  getDaysUntilExpiry(): number {
+    if (!this.currentSubscription?.current_period_end) return 0;
+
+    const expiryDate = new Date(this.currentSubscription.current_period_end);
+    const today = new Date();
+    const diffTime = expiryDate.getTime() - today.getTime();
+    const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+
+    return diffDays;
+  }
+
+  /**
+   * Check if subscription is expiring soon (within 7 days)
+   */
+  isExpiringSoon(): boolean {
+    const daysUntil = this.getDaysUntilExpiry();
+    return daysUntil > 0 && daysUntil <= 7;
+  }
+
+  /**
+   * Check if subscription has expired
+   */
+  hasExpired(): boolean {
+    return this.getDaysUntilExpiry() <= 0;
   }
 }

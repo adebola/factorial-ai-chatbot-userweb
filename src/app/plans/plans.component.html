@@ -44,6 +44,27 @@
             {{ formatLimit(currentPlan.daily_chat_limit) }} daily chats
           </span>
         </div>
+
+        <!-- Subscription Expiry Information -->
+        <div *ngIf="currentSubscription && currentSubscription.current_period_end" class="subscription-expiry">
+          <div class="expiry-info" [ngClass]="{
+            'expiry-warning': isExpiringSoon(),
+            'expiry-danger': hasExpired()
+          }">
+            <span class="material-icons">
+              {{ hasExpired() ? 'error' : isExpiringSoon() ? 'warning' : 'event' }}
+            </span>
+            <div class="expiry-details">
+              <span class="expiry-label">
+                {{ hasExpired() ? 'Expired on' : currentSubscription.cancel_at_period_end ? 'Cancels on' : 'Renews on' }}
+              </span>
+              <span class="expiry-date">{{ formatExpiryDate(currentSubscription.current_period_end) }}</span>
+              <span class="expiry-countdown" *ngIf="!hasExpired()">
+                ({{ getDaysUntilExpiry() }} {{ getDaysUntilExpiry() === 1 ? 'day' : 'days' }} remaining)
+              </span>
+            </div>
+          </div>
+        </div>
       </div>
     </div>
 
@@ -141,6 +162,72 @@
             Current Plan
           </button>
         </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Payment Confirmation Modal -->
+  <div *ngIf="showPaymentModal && switchPreview" class="modal-overlay" (click)="closePaymentModal()">
+    <div class="modal-content" (click)="$event.stopPropagation()">
+      <div class="modal-header">
+        <h2>Confirm Upgrade</h2>
+        <button class="modal-close" (click)="closePaymentModal()">
+          <span class="material-icons">close</span>
+        </button>
+      </div>
+
+      <div class="modal-body">
+        <div class="upgrade-summary">
+          <div class="plan-comparison">
+            <div class="from-plan">
+              <span class="label">Current Plan</span>
+              <span class="plan-name">{{ switchPreview.preview.current_plan.name }}</span>
+              <span class="plan-cost">₦{{ formatNumber(switchPreview.billing_info.old_cost) }}/{{ billingCycle }}</span>
+            </div>
+            <div class="arrow">
+              <span class="material-icons">arrow_forward</span>
+            </div>
+            <div class="to-plan">
+              <span class="label">New Plan</span>
+              <span class="plan-name">{{ switchPreview.preview.new_plan.name }}</span>
+              <span class="plan-cost">₦{{ formatNumber(switchPreview.billing_info.new_cost) }}/{{ billingCycle }}</span>
+            </div>
+          </div>
+
+          <div class="payment-details">
+            <div class="detail-row">
+              <span class="label">Prorated Amount Due Now</span>
+              <span class="amount highlight">₦{{ formatNumber(switchPreview.billing_info.prorated_amount) }}</span>
+            </div>
+            <p class="note">
+              This is the difference in cost for the remaining days in your current billing period.
+              Your next billing cycle will be charged at the new rate.
+            </p>
+          </div>
+        </div>
+
+        <div *ngIf="error" class="modal-error">
+          <span class="material-icons">error</span>
+          {{ error }}
+        </div>
+      </div>
+
+      <div class="modal-footer">
+        <button
+          class="cancel-button"
+          (click)="closePaymentModal()"
+          [disabled]="processingPayment">
+          Cancel
+        </button>
+        <button
+          class="pay-button"
+          (click)="initiatePayment()"
+          [disabled]="processingPayment">
+          <span *ngIf="processingPayment" class="material-icons spinning">sync</span>
+          <span *ngIf="!processingPayment">
+            Pay ₦{{ formatNumber(switchPreview.billing_info.prorated_amount) }} & Upgrade
+          </span>
+        </button>
       </div>
     </div>
   </div>

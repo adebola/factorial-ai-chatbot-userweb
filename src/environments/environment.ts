@@ -26,5 +26,20 @@ export const environment = {
     enableFileUpload: true,
     enableWebsiteIngestion: true,
     enableQualityMonitoring: true
+  },
+
+  // Billing & Payment Configuration
+  paystack: {
+    publicKey: 'pk_test_ff767409ddc0e32c17b18e9a34175c4fb7332cb6', // Replace with actual test key
+    currency: 'NGN'
+  },
+  billing: {
+    paymentCallbackUrl: 'http://localhost:8000/api/v1/payments/callback',
+    defaultCurrency: 'NGN',
+    currencySymbol: '₦',
+    enablePayments: true,
+    enableInvoices: true,
+    enableAnalytics: true
   }
 };
+
