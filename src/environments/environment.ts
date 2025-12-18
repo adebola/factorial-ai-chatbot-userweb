@@ -30,7 +30,7 @@ export const environment = {
 
   // Billing & Payment Configuration
   paystack: {
-    publicKey: 'pk_test_ff767409ddc0e32c17b18e9a34175c4fb7332cb6', // Replace with actual test key
+    publicKey: 'pk_test_ff767409ddc0e32c17b18e9a34175c4fb7332cb6',
     currency: 'NGN'
   },
   billing: {

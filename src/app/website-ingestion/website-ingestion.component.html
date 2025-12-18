@@ -185,23 +185,30 @@
           </td>
           <td class="actions-col">
             <div class="action-buttons">
-              <button 
+              <button
                 [routerLink]="['/websites', ingestion.id, 'details']"
                 class="btn btn-primary btn-sm"
                 title="View Details"
               >
                 📊 Details
               </button>
-              <button 
+              <button
+                (click)="openRefreshModal(ingestion)"
+                class="btn btn-info btn-sm"
+                title="Refresh Ingestion"
+              >
+                <span class="material-icons">refresh</span> Refresh
+              </button>
+              <button
                 *ngIf="canRetry(ingestion.status)"
-                (click)="retryIngestion(ingestion.id)" 
+                (click)="retryIngestion(ingestion.id)"
                 class="btn btn-warning btn-sm"
                 title="Retry Ingestion"
               >
                 🔄 Retry
               </button>
-              <button 
-                (click)="deleteIngestion(ingestion.id)" 
+              <button
+                (click)="deleteIngestion(ingestion.id)"
                 class="btn btn-danger btn-sm"
                 title="Delete Ingestion"
               >
@@ -233,8 +240,8 @@
         <p>Enter the website URL you want to ingest. The system will crawl and process all accessible pages.</p>
         <div class="form-group">
           <label for="websiteUrl">Website URL *</label>
-          <input 
-            type="url" 
+          <input
+            type="url"
             id="websiteUrl"
             [(ngModel)]="newWebsiteUrl"
             placeholder="https://example.com"
@@ -244,7 +251,7 @@
           />
           <small class="url-info">Must start with http:// or https://</small>
         </div>
-        
+
         <div *ngIf="newWebsiteUrl" class="url-preview">
           <p><strong>URL to ingest:</strong> {{newWebsiteUrl}}</p>
         </div>
@@ -253,13 +260,60 @@
         <button (click)="closeAddModal()" class="btn btn-secondary" [disabled]="isStartingIngestion">
           Cancel
         </button>
-        <button 
-          (click)="startIngestion()" 
+        <button
+          (click)="startIngestion()"
           class="btn btn-primary"
           [disabled]="!newWebsiteUrl.trim() || isStartingIngestion"
         >
           <span *ngIf="isStartingIngestion" class="loading-spinner"></span>
           {{isStartingIngestion ? 'Starting...' : 'Start Ingestion'}}
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Refresh Confirmation Modal -->
+  <div *ngIf="showRefreshModal" class="modal-overlay" (click)="closeRefreshModal()">
+    <div class="modal-content modal-warning" (click)="$event.stopPropagation()">
+      <div class="modal-header">
+        <div class="modal-title-with-icon">
+          <span class="material-icons warning-icon">warning</span>
+          <h3>Confirm Refresh Ingestion</h3>
+        </div>
+        <button (click)="closeRefreshModal()" class="modal-close">✕</button>
+      </div>
+      <div class="modal-body">
+        <div class="warning-message">
+          <p><strong>Warning: This action will delete the existing ingestion data.</strong></p>
+          <p>Refreshing this ingestion will:</p>
+          <ul>
+            <li>Delete all existing data for this website</li>
+            <li>Re-crawl the website from scratch</li>
+            <li>Process all pages again</li>
+            <li>Generate new embeddings and categorizations</li>
+          </ul>
+        </div>
+
+        <div *ngIf="ingestionToRefresh" class="ingestion-info">
+          <p><strong>Website URL:</strong></p>
+          <p class="url-display">{{ingestionToRefresh.base_url}}</p>
+          <p><strong>Current Status:</strong> <span class="status-badge" [ngClass]="getStatusClass(ingestionToRefresh.status)">{{ingestionToRefresh.status}}</span></p>
+          <p><strong>Pages Processed:</strong> {{ingestionToRefresh.pages_processed}} / {{ingestionToRefresh.pages_discovered}}</p>
+        </div>
+
+        <p class="confirmation-question">Are you sure you want to proceed with refreshing this ingestion?</p>
+      </div>
+      <div class="modal-footer">
+        <button (click)="closeRefreshModal()" class="btn btn-secondary" [disabled]="isRefreshing">
+          Cancel
+        </button>
+        <button
+          (click)="confirmRefresh()"
+          class="btn btn-warning"
+          [disabled]="isRefreshing"
+        >
+          <span *ngIf="isRefreshing" class="loading-spinner"></span>
+          {{isRefreshing ? 'Refreshing...' : 'Yes, Refresh Ingestion'}}
         </button>
       </div>
     </div>

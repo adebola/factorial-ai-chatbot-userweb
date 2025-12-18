@@ -29,6 +29,11 @@ export class WebsiteIngestionComponent implements OnInit, OnDestroy {
   newWebsiteUrl = '';
   isStartingIngestion = false;
 
+  // Refresh confirmation modal
+  showRefreshModal = false;
+  ingestionToRefresh: WebsiteIngestion | null = null;
+  isRefreshing = false;
+
   // Auto-refresh for status updates
   private refreshInterval: any;
   autoRefreshEnabled = false;
@@ -206,6 +211,58 @@ export class WebsiteIngestionComponent implements OnInit, OnDestroy {
       error: (error) => {
         this.errorMessage = error.error?.detail || 'Failed to retry ingestion';
         console.error('Retry ingestion error:', error);
+      }
+    });
+  }
+
+  openRefreshModal(ingestion: WebsiteIngestion): void {
+    this.ingestionToRefresh = ingestion;
+    this.showRefreshModal = true;
+  }
+
+  closeRefreshModal(): void {
+    this.showRefreshModal = false;
+    this.ingestionToRefresh = null;
+    this.isRefreshing = false;
+  }
+
+  confirmRefresh(): void {
+    if (!this.ingestionToRefresh) return;
+
+    this.isRefreshing = true;
+    this.errorMessage = '';
+    this.successMessage = '';
+
+    const ingestionId = this.ingestionToRefresh.id;
+    const baseUrl = this.ingestionToRefresh.base_url;
+
+    console.log('🔄 Refreshing ingestion for:', baseUrl);
+    this.websiteIngestionService.retryIngestion(ingestionId).subscribe({
+      next: (response) => {
+        console.log('✅ Ingestion refresh started successfully:', response);
+        this.isRefreshing = false;
+
+        this.showImmediateFeedback(
+          `Refresh started for: ${response.base_url}. The existing ingestion will be deleted and reloaded.`,
+          'success'
+        );
+
+        this.closeRefreshModal();
+        this.loadIngestions();
+
+        setTimeout(() => {
+          this.enableAutoRefreshIfNeeded();
+        }, 2000);
+
+        setTimeout(() => {
+          this.successMessage = '';
+        }, 10000);
+      },
+      error: (error) => {
+        this.isRefreshing = false;
+        this.errorMessage = error.error?.detail || 'Failed to refresh ingestion';
+        console.error('Refresh ingestion error:', error);
+        this.closeRefreshModal();
       }
     });
   }
