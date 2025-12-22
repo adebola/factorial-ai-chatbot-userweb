@@ -2,6 +2,7 @@ import { Routes } from '@angular/router';
 import { DashboardComponent } from './dashboard/dashboard.component';
 import { DocumentUploadComponent } from './document-upload/document-upload.component';
 import { DocumentsComponent } from './documents/documents.component';
+import { DocumentDetailsComponent } from './documents/document-details/document-details.component';
 import { CategoriesComponent } from './categories/categories.component';
 import { WebsiteIngestionComponent } from './website-ingestion/website-ingestion.component';
 import { IngestionDetailsComponent } from './website-ingestion/ingestion-details/ingestion-details.component';
@@ -43,6 +44,7 @@ export const routes: Routes = [
       { path: '', redirectTo: 'dashboard', pathMatch: 'full' },
       { path: 'dashboard', component: DashboardComponent },
       { path: 'documents', component: DocumentsComponent },
+      { path: 'documents/:id/details', component: DocumentDetailsComponent },
       { path: 'categories', component: CategoriesComponent },
       { path: 'upload', component: DocumentUploadComponent },
       { path: 'websites', component: WebsiteIngestionComponent },

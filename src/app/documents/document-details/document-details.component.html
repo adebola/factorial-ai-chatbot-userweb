@@ -1,0 +1,324 @@
+<div class="document-details-container">
+  <!-- Header -->
+  <div class="page-header">
+    <div class="header-content">
+      <button (click)="goBack()" class="btn btn-secondary">
+        <span class="material-icons">arrow_back</span> Back to Documents
+      </button>
+      <div class="title-section">
+        <h2>Document Details</h2>
+        <p *ngIf="metadata">{{metadata.filename}}</p>
+      </div>
+      <div class="header-actions">
+        <button
+          *ngIf="metadata?.status === 'processing'"
+          (click)="toggleAutoRefresh()"
+          class="btn btn-outline"
+          [class.active]="autoRefreshEnabled"
+        >
+          <span class="material-icons">{{ autoRefreshEnabled ? 'pause' : 'play_arrow' }}</span>
+          Auto-refresh
+        </button>
+        <button (click)="loadDocumentMetadata()" class="btn btn-outline">
+          <span class="material-icons">refresh</span> Refresh
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Error Message -->
+  <div *ngIf="errorMessage" class="error-message">
+    <span class="material-icons">error</span> {{errorMessage}}
+  </div>
+
+  <!-- Loading State -->
+  <div *ngIf="isLoading" class="loading-container">
+    <div class="loading-spinner"></div>
+    <p>Loading document details...</p>
+  </div>
+
+  <!-- Main Content -->
+  <div *ngIf="metadata && !isLoading">
+
+    <!-- Stats Overview Grid -->
+    <div class="stats-overview">
+      <div class="stats-grid">
+        <div class="stat-card">
+          <div class="stat-icon">
+            <span class="material-icons">insert_drive_file</span>
+          </div>
+          <div class="stat-content">
+            <h3>{{metadata.file_size_formatted}}</h3>
+            <p>File Size</p>
+          </div>
+        </div>
+
+        <div class="stat-card">
+          <div class="stat-icon">
+            <span class="material-icons">{{metadata.status === 'completed' ? 'check_circle' : metadata.status === 'processing' ? 'schedule' : 'error'}}</span>
+          </div>
+          <div class="stat-content">
+            <h3 class="status-badge" [ngClass]="getStatusClass(metadata.status)">{{metadata.status}}</h3>
+            <p>Status</p>
+          </div>
+        </div>
+
+        <div class="stat-card">
+          <div class="stat-icon">
+            <span class="material-icons">auto_awesome</span>
+          </div>
+          <div class="stat-content">
+            <h3>{{metadata.processing_stats.chunk_count}}</h3>
+            <p>Text Chunks</p>
+          </div>
+        </div>
+
+        <div class="stat-card">
+          <div class="stat-icon">
+            <span class="material-icons">{{metadata.processing_stats.has_vector_data ? 'done' : 'close'}}</span>
+          </div>
+          <div class="stat-content">
+            <h3 [class.success]="metadata.processing_stats.has_vector_data" [class.warning]="!metadata.processing_stats.has_vector_data">
+              {{metadata.processing_stats.has_vector_data ? 'Available' : 'Not Available'}}
+            </h3>
+            <p>Vector Data</p>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Basic Information -->
+    <div class="metadata-section">
+      <h3>
+        <span class="material-icons">info</span>
+        Basic Information
+      </h3>
+      <div class="info-grid">
+        <div class="info-item">
+          <span class="label">Filename:</span>
+          <span class="value">{{ metadata.filename }}</span>
+        </div>
+        <div class="info-item">
+          <span class="label">File Size:</span>
+          <span class="value">{{ metadata.file_size_formatted }}</span>
+        </div>
+        <div class="info-item">
+          <span class="label">MIME Type:</span>
+          <span class="value">{{ metadata.mime_type }}</span>
+        </div>
+        <div class="info-item">
+          <span class="label">Status:</span>
+          <span class="value status-badge" [ngClass]="getStatusClass(metadata.status)">
+            {{ metadata.status }}
+          </span>
+        </div>
+        <div class="info-item">
+          <span class="label">Created:</span>
+          <span class="value">{{ formatDate(metadata.created_at) }}</span>
+        </div>
+        <div class="info-item" *ngIf="metadata.processed_at">
+          <span class="label">Processed:</span>
+          <span class="value">{{ formatDate(metadata.processed_at) }}</span>
+        </div>
+        <div class="info-item" *ngIf="metadata.error_message">
+          <span class="label">Error:</span>
+          <span class="value error-text">{{ metadata.error_message }}</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- Content Type Analysis -->
+    <div class="metadata-section" *ngIf="metadata.content_type || metadata.content_types_distribution">
+      <h3>
+        <span class="material-icons">article</span>
+        Content Type Analysis
+      </h3>
+      <div class="info-grid">
+        <div class="info-item" *ngIf="metadata.content_type">
+          <span class="label">Primary Type:</span>
+          <span class="value content-type-badge">{{ metadata.content_type }}</span>
+        </div>
+      </div>
+
+      <div *ngIf="metadata.content_types_distribution && getObjectKeys(metadata.content_types_distribution).length > 0" class="content-types-breakdown">
+        <h4>Content Distribution</h4>
+        <div class="distribution-list">
+          <div *ngFor="let type of getObjectKeys(metadata.content_types_distribution)" class="distribution-item">
+            <div class="distribution-header">
+              <span class="type-name">{{ type }}</span>
+              <span class="type-count">{{ metadata.content_types_distribution[type] }} chunks ({{getContentTypePercentage(metadata.content_types_distribution[type])}}%)</span>
+            </div>
+            <div class="distribution-bar">
+              <div
+                class="distribution-fill"
+                [style.width.%]="getContentTypePercentage(metadata.content_types_distribution[type])">
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Processing Statistics -->
+    <div class="metadata-section">
+      <h3>
+        <span class="material-icons">analytics</span>
+        Processing Statistics
+      </h3>
+      <div class="stats-grid">
+        <div class="stat-item">
+          <span class="stat-label">Text Chunks:</span>
+          <span class="stat-value">{{ metadata.processing_stats.chunk_count }}</span>
+        </div>
+        <div class="stat-item">
+          <span class="stat-label">Vector Data:</span>
+          <span class="stat-value" [class.success]="metadata.processing_stats.has_vector_data" [class.warning]="!metadata.processing_stats.has_vector_data">
+            {{ metadata.processing_stats.has_vector_data ? 'Available' : 'Not Available' }}
+          </span>
+        </div>
+      </div>
+    </div>
+
+    <!-- Categories -->
+    <div class="metadata-section" *ngIf="metadata.categories.length > 0">
+      <h3>
+        <span class="material-icons">category</span>
+        Categories ({{ metadata.categories.length }})
+      </h3>
+      <div class="categories-list">
+        <div *ngFor="let category of metadata.categories" class="category-item">
+          <div class="category-header">
+            <span
+              class="category-color"
+              [style.background-color]="category.color || '#6B7280'"
+            ></span>
+            <span class="category-name">{{ category.name }}</span>
+            <span
+              *ngIf="category.is_system_category"
+              class="system-badge"
+              title="System Category"
+            >
+              <span class="material-icons">verified</span>
+            </span>
+          </div>
+          <div class="category-meta">
+            <span class="confidence" [ngClass]="getConfidenceColor(category.confidence_score)">
+              <span class="material-icons">{{getAssignedByIcon(category.assigned_by)}}</span>
+              {{ formatConfidence(category.confidence_score) }}
+            </span>
+            <span class="assigned-by">Assigned by {{ category.assigned_by }}</span>
+            <span *ngIf="category.assigned_at" class="assigned-date">
+              {{ formatDate(category.assigned_at) }}
+            </span>
+          </div>
+          <p *ngIf="category.description" class="category-description">
+            {{ category.description }}
+          </p>
+        </div>
+      </div>
+    </div>
+
+    <!-- Tags -->
+    <div class="metadata-section" *ngIf="metadata.tags.length > 0">
+      <h3>
+        <span class="material-icons">local_offer</span>
+        Tags ({{ metadata.tags.length }})
+      </h3>
+      <div class="tags-list">
+        <div *ngFor="let tag of metadata.tags" class="tag-item">
+          <div class="tag-header">
+            <span class="material-icons tag-icon">
+              {{ getTagIcon(tag.tag_type) }}
+            </span>
+            <span class="tag-name">{{ tag.name }}</span>
+            <span class="tag-type-badge">{{ tag.tag_type }}</span>
+          </div>
+          <div class="tag-meta">
+            <span class="confidence" [ngClass]="getConfidenceColor(tag.confidence_score)">
+              {{ formatConfidence(tag.confidence_score) }}
+            </span>
+            <span class="usage-count">{{ tag.usage_count }} uses</span>
+            <span class="assigned-by">{{ tag.assigned_by }}</span>
+            <span *ngIf="tag.assigned_at" class="assigned-date">
+              {{ formatDate(tag.assigned_at) }}
+            </span>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Categorization Summary -->
+    <div class="metadata-section">
+      <h3>
+        <span class="material-icons">summarize</span>
+        Categorization Summary
+      </h3>
+      <div class="summary-grid">
+        <div class="summary-item">
+          <div class="summary-icon">
+            <span class="material-icons">category</span>
+          </div>
+          <div class="summary-content">
+            <span class="summary-value">{{ metadata.categorization_summary.total_categories }}</span>
+            <span class="summary-label">Total Categories</span>
+          </div>
+        </div>
+        <div class="summary-item">
+          <div class="summary-icon">
+            <span class="material-icons">smart_toy</span>
+          </div>
+          <div class="summary-content">
+            <span class="summary-value">{{ metadata.categorization_summary.ai_assigned_categories }}</span>
+            <span class="summary-label">AI Assigned</span>
+          </div>
+        </div>
+        <div class="summary-item">
+          <div class="summary-icon">
+            <span class="material-icons">person</span>
+          </div>
+          <div class="summary-content">
+            <span class="summary-value">{{ metadata.categorization_summary.user_assigned_categories }}</span>
+            <span class="summary-label">User Assigned</span>
+          </div>
+        </div>
+        <div class="summary-item">
+          <div class="summary-icon">
+            <span class="material-icons">local_offer</span>
+          </div>
+          <div class="summary-content">
+            <span class="summary-value">{{ metadata.categorization_summary.total_tags }}</span>
+            <span class="summary-label">Total Tags</span>
+          </div>
+        </div>
+        <div class="summary-item">
+          <div class="summary-icon">
+            <span class="material-icons">auto_awesome</span>
+          </div>
+          <div class="summary-content">
+            <span class="summary-value">{{ metadata.categorization_summary.auto_tags }}</span>
+            <span class="summary-label">Auto Tags</span>
+          </div>
+        </div>
+        <div class="summary-item">
+          <div class="summary-icon">
+            <span class="material-icons">edit</span>
+          </div>
+          <div class="summary-content">
+            <span class="summary-value">{{ metadata.categorization_summary.custom_tags }}</span>
+            <span class="summary-label">Custom Tags</span>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- No Categories/Tags State -->
+    <div *ngIf="metadata.categories.length === 0 && metadata.tags.length === 0" class="no-categorization">
+      <div class="no-data-icon">
+        <span class="material-icons">label_off</span>
+      </div>
+      <h4>No Categorization Data</h4>
+      <p>This document hasn't been categorized or tagged yet.</p>
+    </div>
+
+  </div>
+</div>

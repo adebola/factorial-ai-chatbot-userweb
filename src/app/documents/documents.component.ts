@@ -1,7 +1,7 @@
 import { Component, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
-import { Router } from '@angular/router';
+import { Router, RouterModule } from '@angular/router';
 import { DocumentService, Document, DocumentListResponse, DocumentFilters, DocumentMetadata } from '../services/document.service';
 import { CategorizationService, DocumentCategory, DocumentTag } from '../services/categorization.service';
 import { AuthService } from '../services/auth.service';
@@ -11,7 +11,7 @@ import { environment } from '../../environments/environment';
 
 @Component({
   selector: 'app-documents',
-  imports: [CommonModule, FormsModule, CategorySelectorComponent, TagSelectorComponent],
+  imports: [CommonModule, FormsModule, RouterModule, CategorySelectorComponent, TagSelectorComponent],
   templateUrl: './documents.component.html',
   styleUrl: './documents.component.scss'
 })
@@ -36,11 +36,6 @@ export class DocumentsComponent implements OnInit {
   currentPage = 1;
   pageSize = 20;
   totalCount = 0;
-
-  // Document view modal
-  selectedDocumentMetadata: DocumentMetadata | null = null;
-  isViewModalOpen = false;
-  isLoadingMetadata = false;
 
   // Available options for filtering
   categories: DocumentCategory[] = [];
@@ -348,40 +343,6 @@ export class DocumentsComponent implements OnInit {
     }
   }
 
-  // View document metadata
-  viewDocument(documentId: string): void {
-    this.isLoadingMetadata = true;
-    this.isViewModalOpen = true;
-    this.selectedDocumentMetadata = null;
-    this.errorMessage = '';
-
-    this.documentService.getDocumentMetadata(documentId).subscribe({
-      next: (metadata: DocumentMetadata) => {
-        this.selectedDocumentMetadata = metadata;
-        this.isLoadingMetadata = false;
-      },
-      error: (error) => {
-        this.isLoadingMetadata = false;
-        this.isViewModalOpen = false;
-        if (error.status === 401) {
-          // Store current URL before logout so user can return after re-authentication
-          this.authService.setReturnUrl(this.router.url);
-          this.authService.logout();
-        } else {
-          this.errorMessage = error.error?.detail || 'Failed to load document metadata';
-        }
-        console.error('Load metadata error:', error);
-      }
-    });
-  }
-
-  // Close document view modal
-  closeViewModal(): void {
-    this.isViewModalOpen = false;
-    this.selectedDocumentMetadata = null;
-    this.isLoadingMetadata = false;
-  }
-
   // Download document (placeholder for now)
   downloadDocument(documentId: string): void {
     const document = this.documents.find(d => d.id === documentId);
@@ -392,14 +353,4 @@ export class DocumentsComponent implements OnInit {
     setTimeout(() => this.successMessage = '', 3000);
   }
 
-  // Helper method to get object keys for template iteration
-  getObjectKeys(obj: any): string[] {
-    return obj ? Object.keys(obj) : [];
-  }
-
-  // Calculate content type percentage for progress bar
-  getContentTypePercentage(count: number): number {
-    if (!this.selectedDocumentMetadata?.processing_stats?.chunk_count) return 0;
-    return (count / this.selectedDocumentMetadata.processing_stats.chunk_count) * 100;
-  }
 }
