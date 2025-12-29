@@ -210,6 +210,21 @@ export interface ReactivateResponse {
   auto_renew: boolean;
 }
 
+export interface RenewSubscriptionResponse {
+  success: boolean;
+  message: string;
+  renewal: {
+    subscription_id: string;
+    payment_id: string;
+    payment_url: string;
+    payment_reference: string;
+    amount: number;
+    currency: string;
+    new_period_start: string;
+    new_period_end: string;
+  };
+}
+
 // ============================================================================
 // INVOICE MODELS
 // ============================================================================

@@ -14,6 +14,20 @@
   </div>
 </div>
 
+<!-- Plan Mismatch Warning Banner -->
+<div *ngIf="showMismatchWarning && planMismatch?.detected" class="warning-banner">
+  <div class="warning-content">
+    <span class="material-icons warning-icon">warning</span>
+    <div class="warning-message">
+      <strong>Plan Data Inconsistency Detected</strong>
+      <p>Your account data shows conflicting plan information. We're displaying your active subscription plan. Please contact support if this appears incorrect.</p>
+    </div>
+    <button class="dismiss-btn" (click)="dismissMismatchWarning()" title="Dismiss warning">
+      <span class="material-icons">close</span>
+    </button>
+  </div>
+</div>
+
 <!-- Loading State -->
 <div *ngIf="loading" class="loading-container">
   <div class="loading-spinner"></div>

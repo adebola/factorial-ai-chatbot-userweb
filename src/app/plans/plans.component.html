@@ -141,7 +141,7 @@
         </div>
 
         <div class="plan-actions">
-          <button 
+          <button
             *ngIf="!isCurrentPlan(plan)"
             (click)="switchPlan(plan)"
             [disabled]="switching"
@@ -153,13 +153,34 @@
               {{ isUpgrade(plan) ? 'Upgrade' : 'Switch' }} to {{ plan.name }}
             </span>
           </button>
-          
-          <button 
-            *ngIf="isCurrentPlan(plan)"
+
+          <!-- Loading State for Current Plan -->
+          <button
+            *ngIf="isCurrentPlan(plan) && subscriptionLoading"
+            disabled
+            class="current-plan-button">
+            <span class="material-icons spinning">sync</span>
+            Loading...
+          </button>
+
+          <!-- Current Plan Button - shows when not expired/expiring -->
+          <button
+            *ngIf="isCurrentPlan(plan) && !subscriptionLoading && !shouldShowRenewal()"
             disabled
             class="current-plan-button">
             <span class="material-icons">check_circle</span>
-            Current Plan
+            {{ getCurrentPlanButtonLabel() }}
+          </button>
+
+          <!-- Renew Plan Button - shows when plan is expiring or expired -->
+          <button
+            *ngIf="isCurrentPlan(plan) && !subscriptionLoading && shouldShowRenewal()"
+            (click)="renewSubscription()"
+            [disabled]="loading"
+            class="switch-button renewal-button">
+            <span *ngIf="loading" class="material-icons spinning">sync</span>
+            <span *ngIf="!loading" class="material-icons">autorenew</span>
+            <span *ngIf="!loading">{{ getCurrentPlanButtonLabel() }}</span>
           </button>
         </div>
       </div>

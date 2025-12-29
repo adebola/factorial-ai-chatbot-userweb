@@ -1,6 +1,8 @@
 import { Component, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { Router } from '@angular/router';
+import { forkJoin, of } from 'rxjs';
+import { catchError } from 'rxjs/operators';
 import { DashboardService } from '../services/dashboard.service';
 import { AuthService } from '../services/auth.service';
 import { PaystackService } from '../services/paystack.service';
@@ -99,11 +101,14 @@ export class PlansComponent implements OnInit {
 
     this.billingService.getCurrentSubscription().subscribe({
       next: (subscription) => {
+        console.log('Loaded subscription:', subscription);
         this.currentSubscription = subscription;
         this.subscriptionLoading = false;
       },
       error: (error) => {
         console.error('Error loading subscription:', error);
+        console.error('Error details:', error.error);
+        console.error('Error status:', error.status);
         this.subscriptionLoading = false;
         // Don't show error to user - subscription might not exist yet
       }
@@ -114,45 +119,71 @@ export class PlansComponent implements OnInit {
     this.loading = true;
     this.error = null;
 
-    // Get current user and their tenant info
     const currentUser = this.authService.getCurrentUser();
     const tenantId = currentUser?.tenant_id;
 
     if (tenantId) {
-      // First get tenant info to get plan_id
-      this.dashboardService.getTenantInfo().subscribe({
-        next: (tenant) => {
+      // Load both tenant and subscription in parallel
+      forkJoin({
+        tenant: this.dashboardService.getTenantInfo(),
+        subscription: this.billingService.getCurrentSubscription().pipe(
+          catchError(error => {
+            console.warn('[PLANS] No subscription found, using tenant plan');
+            return of(null);
+          })
+        )
+      }).subscribe({
+        next: ({ tenant, subscription }) => {
           this.tenantInfo = tenant;
 
-          // If tenant has a plan, get its details
-          if (tenant.planId) {
-            this.dashboardService.getPlanDetails(tenant.planId).subscribe({
+          // Determine authoritative plan ID
+          const subscriptionPlanId = subscription?.plan_id;
+          const tenantPlanId = tenant.planId;
+
+          // Log mismatch if detected
+          if (subscriptionPlanId && tenantPlanId && subscriptionPlanId !== tenantPlanId) {
+            console.warn(
+              '🚨 [PLANS PAGE] Plan mismatch detected',
+              {
+                subscription_plan_id: subscriptionPlanId,
+                tenant_plan_id: tenantPlanId,
+                authoritative_source: 'subscription.plan_id'
+              }
+            );
+          }
+
+          // Use subscription.plan_id as authoritative source
+          const authoritativePlanId = subscriptionPlanId || tenantPlanId;
+
+          if (authoritativePlanId) {
+            this.dashboardService.getPlanDetails(authoritativePlanId).subscribe({
               next: (response) => {
                 if (response.plan) {
                   this.currentPlan = response.plan;
+                  console.log(
+                    '✅ [PLANS] Current plan:',
+                    response.plan.name,
+                    `(source: ${subscriptionPlanId ? 'subscription' : 'tenant'})`
+                  );
                 }
-                // Load all available plans
                 this.loadPublicPlans();
               },
               error: (error: any) => {
-                console.error('Error loading current plan:', error);
-                // Still load available plans even if the current plan fails
+                console.error('❌ [PLANS] Error loading current plan:', error);
                 this.loadPublicPlans();
               }
             });
           } else {
-            // No current plan, just load available plans
+            console.warn('⚠️ [PLANS] No plan ID found');
             this.loadPublicPlans();
           }
         },
         error: (error: any) => {
-          console.error('Error loading tenant info:', error);
-          // Fallback to public plans
+          console.error('❌ [PLANS] Error loading tenant/subscription:', error);
           this.loadPublicPlans();
         }
       });
     } else {
-      // No tenant ID, just load public plans
       this.loadPublicPlans();
     }
   }
@@ -269,7 +300,17 @@ export class PlansComponent implements OnInit {
   }
 
   isCurrentPlan(plan: Plan): boolean {
-    return this.currentPlan?.id === plan.id;
+    // Primary check: match against currentPlan (loaded from authoritative source)
+    if (this.currentPlan?.id === plan.id) {
+      return true;
+    }
+
+    // Secondary check: match against subscription plan_id if available
+    if (this.currentSubscription?.plan_id === plan.id) {
+      return true;
+    }
+
+    return false;
   }
 
   isUpgrade(plan: Plan): boolean {
@@ -479,5 +520,116 @@ export class PlansComponent implements OnInit {
    */
   hasExpired(): boolean {
     return this.getDaysUntilExpiry() <= 0;
+  }
+
+  /**
+   * Check if renewal button should be shown
+   * Shows renewal for:
+   * - Subscriptions with status 'expired'
+   * - Active subscriptions that have passed their expiry date (backend hasn't updated status yet)
+   * - Active subscriptions expiring within 7 days
+   */
+  shouldShowRenewal(): boolean {
+    console.log('shouldShowRenewal - currentSubscription:', this.currentSubscription);
+
+    if (!this.currentSubscription) {
+      console.log('shouldShowRenewal - No subscription, returning false');
+      return false;
+    }
+
+    const status = this.currentSubscription.status;
+    const daysUntilExpiry = this.getDaysUntilExpiry();
+    const hasExpired = daysUntilExpiry <= 0;
+
+    console.log('shouldShowRenewal - Subscription status:', status);
+    console.log('shouldShowRenewal - Days until expiry:', daysUntilExpiry);
+    console.log('shouldShowRenewal - Has expired:', hasExpired);
+
+    // Show renewal for subscriptions with 'expired' status
+    if (status === 'expired') {
+      console.log('shouldShowRenewal - Status is expired, returning true');
+      return true;
+    }
+
+    // Show renewal for active subscriptions that have actually expired (date-based check)
+    // This handles cases where backend hasn't updated the status yet
+    if (status === 'active' && hasExpired) {
+      console.log('shouldShowRenewal - Status is active but subscription has expired, returning true');
+      return true;
+    }
+
+    // Show renewal for active subscriptions expiring soon (within 7 days)
+    if (status === 'active' && this.isExpiringSoon()) {
+      console.log('shouldShowRenewal - Status is active and expiring soon, returning true');
+      return true;
+    }
+
+    console.log('shouldShowRenewal - No renewal conditions met, returning false');
+    return false;
+  }
+
+  /**
+   * Get button label for current plan action
+   * Returns appropriate label based on subscription status
+   */
+  getCurrentPlanButtonLabel(): string {
+    if (!this.currentSubscription) return 'Subscribe';
+
+    if (this.shouldShowRenewal()) return 'Renew Plan';
+    if (this.currentSubscription.cancel_at_period_end) return 'Reactivate';
+
+    return 'Current Plan';
+  }
+
+  /**
+   * Renew current subscription
+   * Initiates renewal payment flow via Paystack
+   */
+  async renewSubscription(): Promise<void> {
+    if (!this.currentSubscription?.id) {
+      console.error('No subscription to renew');
+      return;
+    }
+
+    this.loading = true;
+    this.error = null;
+
+    try {
+      // Call renewal API
+      const response = await this.billingService
+        .renewSubscription(this.currentSubscription.id)
+        .toPromise();
+
+      if (response?.success && response.renewal) {
+        const { payment_url, payment_reference, amount, currency, new_period_end } = response.renewal;
+
+        // Show confirmation with renewal details
+        const confirmed = confirm(
+          `Renew your ${this.currentPlan?.name || 'subscription'} plan?\n\n` +
+          `Amount: ${currency === 'NGN' ? '₦' : '$'}${amount.toLocaleString()}\n` +
+          `New expiry date: ${new Date(new_period_end).toLocaleDateString()}\n\n` +
+          `You will be redirected to Paystack to complete payment.`
+        );
+
+        if (confirmed) {
+          // Redirect to Paystack payment page
+          window.location.href = payment_url;
+        }
+      }
+    } catch (error: any) {
+      console.error('Renewal error:', error);
+      this.error = error.error?.detail || 'Failed to initialize renewal. Please try again.';
+
+      // Show specific error messages
+      if (error.status === 400) {
+        this.error = error.error?.detail || 'Cannot renew subscription at this time.';
+      } else if (error.status === 403) {
+        this.error = 'You do not have permission to renew this subscription.';
+      } else if (error.status === 404) {
+        this.error = 'Subscription not found.';
+      }
+    } finally {
+      this.loading = false;
+    }
   }
 }

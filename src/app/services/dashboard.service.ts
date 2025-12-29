@@ -1,8 +1,10 @@
 import { Injectable } from '@angular/core';
 import { HttpClient, HttpHeaders } from '@angular/common/http';
-import { Observable } from 'rxjs';
+import { Observable, forkJoin, of } from 'rxjs';
+import { map, catchError, switchMap } from 'rxjs/operators';
 import { AuthService } from './auth.service';
 import { SettingsService, TenantSettings } from './settings.service';
+import { BillingService } from './billing.service';
 import { environment } from '../../environments/environment';
 
 export interface TenantInfo {
@@ -109,6 +111,11 @@ export interface DashboardData {
   tenantSettings?: TenantSettings;
   lastActivityDate?: string;
   storageUsed?: string;
+  planMismatch?: {
+    detected: boolean;
+    subscriptionPlanId?: string;
+    tenantPlanId?: string;
+  };
 }
 
 export interface UsageStatistics {
@@ -149,7 +156,8 @@ export class DashboardService {
   constructor(
     private http: HttpClient,
     private authService: AuthService,
-    private settingsService: SettingsService
+    private settingsService: SettingsService,
+    private billingService: BillingService
   ) {}
 
   private getHttpHeaders(): HttpHeaders {
@@ -330,9 +338,17 @@ export class DashboardService {
     return new Observable(observer => {
       const dashboardData: Partial<DashboardData> = {};
 
-      // Get tenant info
-      this.getTenantInfo().subscribe({
-        next: (tenant) => {
+      // Load tenant and subscription in parallel
+      forkJoin({
+        tenant: this.getTenantInfo(),
+        subscription: this.billingService.getCurrentSubscription().pipe(
+          catchError(error => {
+            console.warn('No active subscription found, using tenant plan');
+            return of(null);
+          })
+        )
+      }).subscribe({
+        next: ({ tenant, subscription }) => {
           dashboardData.tenant = tenant;
 
           // Get tenant settings
@@ -342,90 +358,83 @@ export class DashboardService {
             },
             error: (error) => {
               console.error('Error fetching tenant settings:', error);
-              // Continue without settings if it fails
             }
           });
 
-          // Get the current plan using plan_id from the tenant
-          if (tenant.planId) {
-            this.getPlanDetails(tenant.planId).subscribe({
+          // Determine authoritative plan ID
+          const subscriptionPlanId = subscription?.plan_id;
+          const tenantPlanId = tenant.planId;
+
+          // Detect and log mismatch
+          if (subscriptionPlanId && tenantPlanId && subscriptionPlanId !== tenantPlanId) {
+            console.warn(
+              '🚨 [PLAN MISMATCH DETECTED]',
+              {
+                subscription_plan_id: subscriptionPlanId,
+                tenant_plan_id: tenantPlanId,
+                authoritative_source: 'subscription.plan_id',
+                action: 'Using subscription plan as current plan'
+              }
+            );
+
+            dashboardData.planMismatch = {
+              detected: true,
+              subscriptionPlanId,
+              tenantPlanId
+            };
+          }
+
+          // Use subscription.plan_id as authoritative source, fallback to tenant.planId
+          const authoritativePlanId = subscriptionPlanId || tenantPlanId;
+
+          if (authoritativePlanId) {
+            this.getPlanDetails(authoritativePlanId).subscribe({
               next: (planResponse) => {
                 if (planResponse.plan) {
                   dashboardData.currentPlan = planResponse.plan;
+                  console.log(
+                    '✅ Loaded current plan:',
+                    planResponse.plan.name,
+                    `(source: ${subscriptionPlanId ? 'subscription' : 'tenant'})`
+                  );
                 }
                 // Get usage statistics
-                this.getCurrentUsage().subscribe({
-                  next: (usageResponse) => {
-                    console.log('Usage API Response:', usageResponse);
-                    // Check if the response is directly the usage statistics or nested
-                    if (usageResponse.usage_statistics) {
-                      dashboardData.currentUsage = usageResponse.usage_statistics;
-                    } else if (usageResponse.documents && usageResponse.websites) {
-                      // Response might be the usage statistics directly
-                      dashboardData.currentUsage = usageResponse;
-                    }
-                    console.log('Current Usage after parsing:', dashboardData.currentUsage);
-                    this.loadRemainingData(dashboardData, observer);
-                  },
-                  error: (error) => {
-                    console.error('Error fetching usage statistics:', error);
-                    // Continue without usage info if it fails
-                    this.loadRemainingData(dashboardData, observer);
-                  }
-                });
+                this.loadUsageAndContinue(dashboardData, observer);
               },
-              error: () => {
-                // Continue without plan info if it fails
-                // Still try to get usage statistics
-                this.getCurrentUsage().subscribe({
-                  next: (usageResponse) => {
-                    console.log('Usage API Response (no plan):', usageResponse);
-                    // Check if the response is directly the usage statistics or nested
-                    if (usageResponse.usage_statistics) {
-                      dashboardData.currentUsage = usageResponse.usage_statistics;
-                    } else if (usageResponse.documents && usageResponse.websites) {
-                      // Response might be the usage statistics directly
-                      dashboardData.currentUsage = usageResponse;
-                    }
-                    console.log('Current Usage after parsing (no plan):', dashboardData.currentUsage);
-                    this.loadRemainingData(dashboardData, observer);
-                  },
-                  error: (error) => {
-                    console.error('Error fetching usage statistics (no plan):', error);
-                    // Continue without usage info if it fails
-                    this.loadRemainingData(dashboardData, observer);
-                  }
-                });
+              error: (error) => {
+                console.error('❌ Error fetching plan details:', error);
+                this.loadUsageAndContinue(dashboardData, observer);
               }
             });
           } else {
-            // No plan_id, still try to get usage statistics
-            this.getCurrentUsage().subscribe({
-              next: (usageResponse) => {
-                console.log('Usage API Response (no plan ID):', usageResponse);
-                // Check if the response is directly the usage statistics or nested
-                if (usageResponse.usage_statistics) {
-                  dashboardData.currentUsage = usageResponse.usage_statistics;
-                } else if (usageResponse.documents && usageResponse.websites) {
-                  // Response might be the usage statistics directly
-                  dashboardData.currentUsage = usageResponse;
-                }
-                console.log('Current Usage after parsing (no plan ID):', dashboardData.currentUsage);
-                this.loadRemainingData(dashboardData, observer);
-              },
-              error: (error) => {
-                console.error('Error fetching usage statistics (no plan ID):', error);
-                // Continue without usage info if it fails
-                this.loadRemainingData(dashboardData, observer);
-              }
-            });
+            console.warn('⚠️ No plan ID found (neither subscription nor tenant)');
+            this.loadUsageAndContinue(dashboardData, observer);
           }
         },
         error: (error) => {
-          console.error('Error fetching tenant info:', error);
-          observer.error(error)
+          console.error('❌ Error fetching tenant/subscription info:', error);
+          observer.error(error);
         }
       });
+    });
+  }
+
+  private loadUsageAndContinue(dashboardData: Partial<DashboardData>, observer: any): void {
+    this.getCurrentUsage().subscribe({
+      next: (usageResponse) => {
+        console.log('Usage API Response:', usageResponse);
+        if (usageResponse.usage_statistics) {
+          dashboardData.currentUsage = usageResponse.usage_statistics;
+        } else if (usageResponse.documents && usageResponse.websites) {
+          dashboardData.currentUsage = usageResponse;
+        }
+        console.log('Current Usage:', dashboardData.currentUsage);
+        this.loadRemainingData(dashboardData, observer);
+      },
+      error: (error) => {
+        console.error('Error fetching usage statistics:', error);
+        this.loadRemainingData(dashboardData, observer);
+      }
     });
   }
 

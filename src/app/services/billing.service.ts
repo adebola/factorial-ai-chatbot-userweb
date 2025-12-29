@@ -21,6 +21,7 @@ import {
   DowngradeResponse,
   CancelResponse,
   ReactivateResponse,
+  RenewSubscriptionResponse,
   Subscription,
   // Invoice models
   Invoice,
@@ -196,6 +197,20 @@ export class BillingService {
   reactivateSubscription(subscriptionId: string): Observable<ReactivateResponse> {
     return this.http.post<ReactivateResponse>(
       `${this.baseUrl}/subscriptions/${subscriptionId}/reactivate`,
+      {},
+      { headers: this.getHttpHeaders() }
+    );
+  }
+
+  /**
+   * Renew subscription before or after expiration
+   * Returns payment URL for user to complete renewal payment
+   * @param subscriptionId - ID of subscription to renew
+   * @returns Observable with payment initialization details and new period dates
+   */
+  renewSubscription(subscriptionId: string): Observable<RenewSubscriptionResponse> {
+    return this.http.post<RenewSubscriptionResponse>(
+      `${this.baseUrl}/subscriptions/${subscriptionId}/renew`,
       {},
       { headers: this.getHttpHeaders() }
     );

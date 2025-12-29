@@ -23,6 +23,8 @@ export class DashboardComponent implements OnInit, OnDestroy {
   currentUser: any = null;
   currentSubscription: Subscription | null = null;
   subscriptionLoading = false;
+  planMismatch: { detected: boolean; subscriptionPlanId?: string; tenantPlanId?: string; } | null = null;
+  showMismatchWarning = false;
 
   constructor(
     private dashboardService: DashboardService,
@@ -73,11 +75,27 @@ export class DashboardComponent implements OnInit, OnDestroy {
       .subscribe({
         next: (data) => {
           this.dashboardData = data;
+
+          // Check for plan mismatch
+          if (data.planMismatch?.detected) {
+            this.planMismatch = data.planMismatch;
+            this.showMismatchWarning = true;
+
+            console.warn(
+              '📊 [DASHBOARD] Displaying plan from subscription (authoritative source)',
+              {
+                displayed_plan: data.currentPlan?.name,
+                mismatch_details: this.planMismatch
+              }
+            );
+          }
+
           this.loading = false;
         },
         error: (error) => {
           this.error = 'Failed to load dashboard data';
           this.loading = false;
+          console.error('Dashboard loading error:', error);
         }
       });
   }
@@ -140,6 +158,10 @@ export class DashboardComponent implements OnInit, OnDestroy {
   refresh(): void {
     this.loadDashboardData();
     this.loadSubscriptionInfo();
+  }
+
+  dismissMismatchWarning(): void {
+    this.showMismatchWarning = false;
   }
 
   /**
