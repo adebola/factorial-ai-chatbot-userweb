@@ -252,4 +252,77 @@
       </div>
     </div>
   </div>
+
+  <!-- Renewal Confirmation Modal -->
+  <div *ngIf="showRenewalModal && renewalDetails" class="modal-overlay" (click)="closeRenewalModal()">
+    <div class="modal-content" (click)="$event.stopPropagation()">
+      <div class="modal-header">
+        <h2>Confirm Plan Renewal</h2>
+        <button class="modal-close" (click)="closeRenewalModal()">
+          <span class="material-icons">close</span>
+        </button>
+      </div>
+
+      <div class="modal-body">
+        <div class="renewal-summary">
+          <div class="renewal-icon">
+            <span class="material-icons">autorenew</span>
+          </div>
+
+          <div class="renewal-details">
+            <h3>{{ currentPlan?.name || 'Subscription' }} Plan Renewal</h3>
+            <p class="renewal-description">
+              Continue enjoying all the features and benefits of your {{ currentPlan?.name || 'current' }} plan.
+            </p>
+
+            <div class="renewal-info">
+              <div class="info-row">
+                <span class="label">Renewal Amount</span>
+                <span class="value highlight">
+                  {{ renewalDetails.currency === 'NGN' ? '₦' : '$' }}{{ formatNumber(renewalDetails.amount) }}
+                </span>
+              </div>
+              <div class="info-row">
+                <span class="label">New Expiry Date</span>
+                <span class="value">{{ formatExpiryDate(renewalDetails.new_period_end) }}</span>
+              </div>
+              <div class="info-row">
+                <span class="label">Payment Method</span>
+                <span class="value">Paystack (Card, Bank Transfer, USSD)</span>
+              </div>
+            </div>
+
+            <div class="renewal-note">
+              <span class="material-icons">info</span>
+              <p>You will be redirected to Paystack to complete your payment securely. Your subscription will be renewed immediately upon successful payment.</p>
+            </div>
+          </div>
+        </div>
+
+        <div *ngIf="error" class="modal-error">
+          <span class="material-icons">error</span>
+          {{ error }}
+        </div>
+      </div>
+
+      <div class="modal-footer">
+        <button
+          class="cancel-button"
+          (click)="closeRenewalModal()"
+          [disabled]="processingRenewal">
+          Cancel
+        </button>
+        <button
+          class="pay-button"
+          (click)="confirmRenewal()"
+          [disabled]="processingRenewal">
+          <span *ngIf="processingRenewal" class="material-icons spinning">sync</span>
+          <span *ngIf="!processingRenewal">
+            <span class="material-icons">payment</span>
+            Proceed to Payment
+          </span>
+        </button>
+      </div>
+    </div>
+  </div>
 </div>

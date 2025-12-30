@@ -9,6 +9,12 @@ import { throwError, BehaviorSubject, Observable } from 'rxjs';
 let isRefreshing = false;
 let refreshTokenSubject = new BehaviorSubject<string | null>(null);
 
+// Export function to reset interceptor state on logout
+export function resetAuthInterceptorState(): void {
+  isRefreshing = false;
+  refreshTokenSubject.next(null);
+}
+
 export const authInterceptor: HttpInterceptorFn = (req, next) => {
   const authService = inject(AuthService);
   const router = inject(Router);

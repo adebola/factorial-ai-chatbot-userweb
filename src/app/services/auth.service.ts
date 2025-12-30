@@ -4,6 +4,7 @@ import {HttpClient, HttpHeaders, HttpParams} from '@angular/common/http';
 import {Router} from '@angular/router';
 import {Observable, BehaviorSubject, throwError, of} from 'rxjs';
 import {tap, catchError, switchMap} from 'rxjs/operators';
+import {resetAuthInterceptorState} from '../interceptors/auth.interceptor';
 
 // User interface derived from JWT
 export interface User {
@@ -141,6 +142,9 @@ export class AuthService {
     // sessionStorage.removeItem(this.PKCE_VERIFIER_KEY);
 
     this.currentUserSubject.next(null);
+
+    // Reset interceptor state to prevent stale refresh tokens
+    resetAuthInterceptorState();
 
     if (isUserInitiated) {
       // User explicitly logged out - clear tokens and stay on login page
@@ -298,26 +302,27 @@ export class AuthService {
    * Get user from storage on service initialization
    */
   private getUserFromStorage(): User | null {
-    // First attempt to read cached user
-    const userStr = localStorage.getItem(this.USER_KEY);
-    if (userStr) {
-      try {
-        const user = JSON.parse(userStr) as User;
-        if (this.isAuthenticated()) {
-          return user;
-        }
-        // If token is no longer valid, fall through to attempt fresh decode
-      } catch {
-        // ignore and try to decode from token below
-      }
-    }
-
-    // If no cached user (or invalid), try to derive from access token in localStorage
     const token = this.getToken();
     if (!token) {
       return null;
     }
 
+    // First attempt to read cached user
+    const userStr = localStorage.getItem(this.USER_KEY);
+    if (userStr) {
+      try {
+        const user = JSON.parse(userStr) as User;
+        // Validate that cached user's token matches current token
+        if (user.token === token && this.isAuthenticated()) {
+          return user;
+        }
+        // If tokens don't match, fall through to decode fresh user from token
+      } catch {
+        // ignore and try to decode from token below
+      }
+    }
+
+    // Decode user from access token
     try {
       const payload = this.decodeJWT(token);
       const user: User = {

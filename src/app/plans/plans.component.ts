@@ -76,6 +76,17 @@ export class PlansComponent implements OnInit {
   switchPreview: PlanSwitchPreview | null = null;
   processingPayment = false;
 
+  // Renewal modal state
+  showRenewalModal = false;
+  renewalDetails: {
+    amount: number;
+    currency: string;
+    payment_url: string;
+    payment_reference: string;
+    new_period_end: string;
+  } | null = null;
+  processingRenewal = false;
+
   // Subscription information
   currentSubscription: Subscription | null = null;
   subscriptionLoading = false;
@@ -601,20 +612,15 @@ export class PlansComponent implements OnInit {
         .toPromise();
 
       if (response?.success && response.renewal) {
-        const { payment_url, payment_reference, amount, currency, new_period_end } = response.renewal;
-
-        // Show confirmation with renewal details
-        const confirmed = confirm(
-          `Renew your ${this.currentPlan?.name || 'subscription'} plan?\n\n` +
-          `Amount: ${currency === 'NGN' ? '₦' : '$'}${amount.toLocaleString()}\n` +
-          `New expiry date: ${new Date(new_period_end).toLocaleDateString()}\n\n` +
-          `You will be redirected to Paystack to complete payment.`
-        );
-
-        if (confirmed) {
-          // Redirect to Paystack payment page
-          window.location.href = payment_url;
-        }
+        // Store renewal details and show modal
+        this.renewalDetails = {
+          amount: response.renewal.amount,
+          currency: response.renewal.currency,
+          payment_url: response.renewal.payment_url,
+          payment_reference: response.renewal.payment_reference,
+          new_period_end: response.renewal.new_period_end
+        };
+        this.showRenewalModal = true;
       }
     } catch (error: any) {
       console.error('Renewal error:', error);
@@ -631,5 +637,25 @@ export class PlansComponent implements OnInit {
     } finally {
       this.loading = false;
     }
+  }
+
+  /**
+   * Confirm renewal and redirect to payment
+   */
+  confirmRenewal(): void {
+    if (!this.renewalDetails?.payment_url) return;
+
+    this.processingRenewal = true;
+    // Redirect to Paystack payment page
+    window.location.href = this.renewalDetails.payment_url;
+  }
+
+  /**
+   * Close renewal modal
+   */
+  closeRenewalModal(): void {
+    this.showRenewalModal = false;
+    this.renewalDetails = null;
+    this.processingRenewal = false;
   }
 }
