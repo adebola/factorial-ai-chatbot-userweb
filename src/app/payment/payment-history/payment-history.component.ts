@@ -150,7 +150,10 @@ export class PaymentHistoryComponent implements OnInit {
   /**
    * Format payment method for display
    */
-  formatPaymentMethod(method: string): string {
+  formatPaymentMethod(method: string | null): string {
+    if (!method) {
+      return 'N/A';
+    }
     return method.replace(/_/g, ' ').split(' ').map(word =>
       word.charAt(0).toUpperCase() + word.slice(1).toLowerCase()
     ).join(' ');
@@ -200,10 +203,14 @@ export class PaymentHistoryComponent implements OnInit {
 
   /**
    * View invoice for payment
+   * Navigates to /invoices/{id} route - no API calls, just navigation
+   * The invoice details component will handle fetching GET /api/v1/invoices/{id}
+   * Note: Button is disabled if payment.invoice_id is not available
    */
-  viewInvoice(payment: Payment) {
-    // Navigate to invoices and try to find invoice for this payment's subscription
-    this.router.navigate(['/invoices']);
+  viewInvoice(payment: Payment, event: Event) {
+    if (payment.invoice_id) {
+      this.router.navigate(['/invoices', payment.invoice_id]);
+    }
   }
 
   /**

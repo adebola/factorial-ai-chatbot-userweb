@@ -50,16 +50,17 @@ export enum PaymentMethod {
 export interface Payment {
   id: string;
   subscription_id: string;
+  invoice_id?: string;
   amount: number;
   currency: string;
   status: PaymentStatus;
-  payment_method: PaymentMethod;
+  payment_method: PaymentMethod | null;
   paystack_reference: string;
-  transaction_id?: string;
+  transaction_id?: string | null;
   access_code?: string;
   authorization_code?: string;
-  paid_at?: string;
-  failure_reason?: string;
+  paid_at?: string | null;
+  failure_reason?: string | null;
   payment_metadata?: Record<string, any>;
   created_at: string;
   updated_at?: string;
