@@ -1,18 +1,5 @@
-// Variables - New Brand Colors
-$primary-color: #2B55FF;   // Blue
-$secondary-color: #CDF547; // Lime Green
-$tertiary-color: #CDF547;  // Lime Green
-$success-color: #CDF547;   // Using lime green for success
-$info-color: #2B55FF;      // Using blue for info
-$warning-color: #ff9800;   // Orange for warning
-$danger-color: #f44336;    // Red for danger
-$light-gray: #f8f9fa;
-$medium-gray: #6c757d;
-$dark-gray: #343a40;
-$white: #ffffff;
-$border-radius: 8px;
-$box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
-$transition: all 0.3s ease;
+@import '../../styles/variables';
+@import '../../styles/mixins';
 
 // Dashboard container
 .dashboard-content {
@@ -70,10 +57,7 @@ $transition: all 0.3s ease;
         font-size: 2rem;
         font-weight: 700;
         color: $dark-gray;
-        background: linear-gradient(135deg, $primary-color 0%, $tertiary-color 100%);
-        -webkit-background-clip: text;
-        -webkit-text-fill-color: transparent;
-        background-clip: text;
+        @include gradient-text;
         
         @media (max-width: 768px) {
           font-size: 1.75rem;
@@ -89,27 +73,16 @@ $transition: all 0.3s ease;
   }
 
   .refresh-btn {
-    background: linear-gradient(135deg, $primary-color 0%, $secondary-color 100%);
+    @include primary-gradient;
+    @include button-base;
+    @include button-hover-lift;
+    @include button-disabled;
     color: $white;
-    border: none;
-    border-radius: $border-radius;
     padding: 0.75rem 1.5rem;
     font-size: 1rem;
-    cursor: pointer;
-    transition: $transition;
     display: flex;
     align-items: center;
     gap: 0.5rem;
-
-    &:hover:not(:disabled) {
-      transform: translateY(-2px);
-      box-shadow: 0 6px 20px rgba(93, 62, 193, 0.3);
-    }
-
-    &:disabled {
-      opacity: 0.6;
-      cursor: not-allowed;
-    }
 
     .refresh-icon {
       font-size: 1.2rem;
@@ -357,14 +330,12 @@ $transition: all 0.3s ease;
 
 // Stat card
 .stat-card {
-  background: $white !important;
-  border-radius: $border-radius;
+  @include card;
+  @include card-hover;
   padding: 2rem;
-  box-shadow: $box-shadow;
   display: flex;
   align-items: center;
   gap: 1.5rem;
-  transition: $transition;
   position: relative;
   overflow: hidden;
 
@@ -375,12 +346,7 @@ $transition: all 0.3s ease;
     left: 0;
     right: 0;
     height: 4px;
-    background: linear-gradient(135deg, $primary-color 0%, $secondary-color 100%);
-  }
-
-  &:hover {
-    transform: translateY(-4px);
-    box-shadow: 0 8px 25px rgba(0, 0, 0, 0.15);
+    @include primary-gradient;
   }
 
   .stat-icon {
@@ -451,19 +417,16 @@ $transition: all 0.3s ease;
 
 // Info cards
 .info-card {
-  background: $white !important;
-  border-radius: $border-radius;
-  box-shadow: $box-shadow;
+  @include card;
   margin-bottom: 2rem;
   overflow: hidden;
-  transition: $transition;
 
   &:hover {
     box-shadow: 0 8px 25px rgba(0, 0, 0, 0.12);
   }
 
   .card-header {
-    background: linear-gradient(135deg, $primary-color 0%, $secondary-color 100%);
+    @include primary-gradient;
     color: $white;
     padding: 1.5rem 2rem;
 
@@ -1203,26 +1166,6 @@ $transition: all 0.3s ease;
     }
   }
 }
-
-// Dark mode support disabled - keeping cards white
-// @media (prefers-color-scheme: dark) {
-//   .dashboard-content {
-//     background: #1a1d29;
-//   }
-//
-//   .info-card,
-//   .stat-card,
-//   .dashboard-header .header-content {
-//     background: #2d3748;
-//     color: #e2e8f0;
-//   }
-//
-//   .stat-card .stat-content .stat-value,
-//   .org-details h3,
-//   .user-details h3 {
-//     color: #e2e8f0;
-//   }
-// }
 
 // Warning Banner Styles
 .warning-banner {
