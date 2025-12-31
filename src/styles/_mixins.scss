@@ -1,0 +1,82 @@
+@import 'variables';
+
+// Primary gradient (used throughout the app)
+@mixin primary-gradient {
+  background: linear-gradient(135deg, $primary-color 0%, $secondary-color 100%);
+}
+
+// Secondary gradient variations
+@mixin gradient-primary-dark {
+  background: linear-gradient(135deg, $primary-color 0%, #4a2d9a 100%);
+}
+
+@mixin gradient-secondary {
+  background: linear-gradient(135deg, $secondary-color 0%, #9a4a2d 100%);
+}
+
+@mixin gradient-success {
+  background: linear-gradient(135deg, $success-color 0%, #2d9a4a 100%);
+}
+
+@mixin gradient-tertiary {
+  background: linear-gradient(135deg, $tertiary-color 0%, #2d9a4a 100%);
+}
+
+// Gradient text effect
+@mixin gradient-text {
+  background: linear-gradient(135deg, $primary-color 0%, $tertiary-color 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+
+// Card base styles
+@mixin card {
+  background: $white !important;
+  border-radius: $border-radius;
+  box-shadow: $box-shadow;
+  transition: $transition;
+}
+
+// Card hover effect
+@mixin card-hover {
+  &:hover {
+    transform: translateY(-4px);
+    box-shadow: 0 8px 25px rgba(0, 0, 0, 0.15);
+  }
+}
+
+// Button base styles
+@mixin button-base {
+  border: none;
+  border-radius: $border-radius;
+  cursor: pointer;
+  transition: $transition;
+  font-weight: 600;
+}
+
+// Button hover lift effect
+@mixin button-hover-lift($shadow-color: rgba(93, 62, 193, 0.3)) {
+  &:hover:not(:disabled) {
+    transform: translateY(-2px);
+    box-shadow: 0 6px 20px $shadow-color;
+  }
+}
+
+// Disabled button state
+@mixin button-disabled {
+  &:disabled {
+    opacity: 0.6;
+    cursor: not-allowed;
+  }
+}
+
+// Spinner animation (already defined as keyframe, but including reference)
+@mixin spinner {
+  width: 48px;
+  height: 48px;
+  border: 4px solid $light-gray;
+  border-top: 4px solid $primary-color;
+  border-radius: 50%;
+  animation: spin 1s linear infinite;
+}
