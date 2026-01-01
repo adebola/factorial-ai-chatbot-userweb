@@ -3,6 +3,7 @@ import { CommonModule } from '@angular/common';
 import { Router } from '@angular/router';
 import { BillingService } from '../../services/billing.service';
 import { Invoice, InvoiceStatus } from '../../models/billing.models';
+import { ModalService } from '../../shared/modal/modal.service';
 
 /**
  * Invoice List Component
@@ -33,7 +34,8 @@ export class InvoiceListComponent implements OnInit {
 
   constructor(
     private billingService: BillingService,
-    private router: Router
+    private router: Router,
+    private modalService: ModalService
   ) {}
 
   ngOnInit() {
@@ -87,16 +89,29 @@ export class InvoiceListComponent implements OnInit {
   /**
    * Send invoice via email
    */
-  sendInvoice(invoice: Invoice, event: Event) {
+  async sendInvoice(invoice: Invoice, event: Event) {
     event.stopPropagation();
 
-    if (confirm(`Send invoice ${invoice.invoice_number} via email?`)) {
+    const confirmed = await this.modalService.confirm(
+      'Send Invoice',
+      `Are you sure you want to send invoice ${invoice.invoice_number} via email?`,
+      'Send',
+      'Cancel'
+    );
+
+    if (confirmed) {
       this.billingService.sendInvoiceEmail(invoice.id).subscribe({
         next: (response) => {
-          alert(`Invoice sent successfully to ${response.sent_to}`);
+          this.modalService.success(
+            'Invoice Sent',
+            `Invoice sent successfully to ${response.sent_to}`
+          );
         },
         error: (err) => {
-          alert(err.error?.detail || 'Failed to send invoice');
+          this.modalService.error(
+            'Send Failed',
+            err.error?.detail || 'Failed to send invoice. Please try again.'
+          );
         }
       });
     }

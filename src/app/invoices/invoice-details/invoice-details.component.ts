@@ -4,6 +4,7 @@ import { ActivatedRoute, Router } from '@angular/router';
 import { DomSanitizer, SafeHtml } from '@angular/platform-browser';
 import { BillingService } from '../../services/billing.service';
 import { Invoice } from '../../models/billing.models';
+import { ModalService } from '../../shared/modal/modal.service';
 
 /**
  * Invoice Details Component
@@ -29,7 +30,8 @@ export class InvoiceDetailsComponent implements OnInit {
     private route: ActivatedRoute,
     private router: Router,
     private billingService: BillingService,
-    private sanitizer: DomSanitizer
+    private sanitizer: DomSanitizer,
+    private modalService: ModalService
   ) {}
 
   ngOnInit() {
@@ -80,7 +82,10 @@ export class InvoiceDetailsComponent implements OnInit {
         },
         error: (err) => {
           console.error('Error loading HTML invoice:', err);
-          alert(err.error?.detail || 'Failed to load HTML invoice');
+          this.modalService.error(
+            'Load Failed',
+            err.error?.detail || 'Failed to load HTML invoice'
+          );
         }
       });
     }
@@ -96,19 +101,32 @@ export class InvoiceDetailsComponent implements OnInit {
   /**
    * Send invoice via email
    */
-  sendInvoice() {
+  async sendInvoice() {
     if (!this.invoice) return;
 
-    if (confirm(`Send invoice ${this.invoice.invoice_number} via email?`)) {
+    const confirmed = await this.modalService.confirm(
+      'Send Invoice',
+      `Are you sure you want to send invoice ${this.invoice.invoice_number} via email?`,
+      'Send',
+      'Cancel'
+    );
+
+    if (confirmed) {
       this.sendingEmail = true;
 
       this.billingService.sendInvoiceEmail(this.invoice.id).subscribe({
         next: (response) => {
-          alert(`Invoice sent successfully to ${response.sent_to}`);
+          this.modalService.success(
+            'Invoice Sent',
+            `Invoice sent successfully to ${response.sent_to}`
+          );
           this.sendingEmail = false;
         },
         error: (err) => {
-          alert(err.error?.detail || 'Failed to send invoice');
+          this.modalService.error(
+            'Send Failed',
+            err.error?.detail || 'Failed to send invoice. Please try again.'
+          );
           this.sendingEmail = false;
         }
       });
@@ -135,7 +153,10 @@ export class InvoiceDetailsComponent implements OnInit {
         },
         error: (err) => {
           console.error('Error loading HTML invoice:', err);
-          alert('Failed to load invoice for printing');
+          this.modalService.error(
+            'Print Failed',
+            'Failed to load invoice for printing. Please try again.'
+          );
           printWindow.close();
         }
       });
