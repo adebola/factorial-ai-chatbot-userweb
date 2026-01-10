@@ -716,6 +716,111 @@
     margin-top: 1rem;
     margin-bottom: 0;
   }
+
+  // Auto-Categorize Section Styles
+  .auto-categorize-section {
+    margin-top: 1.5rem;
+    padding: 1rem;
+    background: #f8f9fa;
+    border-radius: 8px;
+    border: 2px solid #e9ecef;
+
+    .section-label {
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+      font-size: 1.1rem;
+      font-weight: 600;
+      color: #2B55FF;
+      margin-bottom: 0.5rem;
+
+      .material-icons {
+        font-size: 1.25rem;
+      }
+    }
+
+    .help-text {
+      margin: 0 0 1rem 0;
+      color: #666;
+      font-size: 0.9rem;
+    }
+
+    .categorize-options {
+      display: flex;
+      flex-direction: column;
+      gap: 0.75rem;
+
+      .radio-option {
+        display: flex;
+        align-items: flex-start;
+        padding: 0.75rem 1rem;
+        background: white;
+        border: 2px solid #e1e5e9;
+        border-radius: 6px;
+        cursor: pointer;
+        transition: all 0.2s ease;
+
+        &:hover {
+          border-color: #2B55FF;
+          background: #f8f9ff;
+        }
+
+        input[type="radio"] {
+          margin-top: 0.25rem;
+          margin-right: 0.75rem;
+          cursor: pointer;
+          width: 18px;
+          height: 18px;
+          flex-shrink: 0;
+
+          &:checked {
+            accent-color: #2B55FF;
+          }
+
+          &:disabled {
+            cursor: not-allowed;
+          }
+        }
+
+        .option-content {
+          flex: 1;
+
+          .option-title {
+            display: block;
+            font-weight: 600;
+            color: #333;
+            margin-bottom: 0.25rem;
+          }
+
+          .option-description {
+            display: block;
+            color: #666;
+            font-size: 0.85rem;
+            line-height: 1.4;
+          }
+        }
+
+        input[type="radio"]:checked ~ .option-content .option-title {
+          color: #2B55FF;
+        }
+
+        &:has(input[type="radio"]:checked) {
+          border-color: #2B55FF;
+          background: #f8f9ff;
+        }
+
+        &:has(input[type="radio"]:disabled) {
+          opacity: 0.6;
+          cursor: not-allowed;
+
+          &:hover {
+            border-color: #e1e5e9;
+            background: white;
+          }
+        }
+      }
+    }
+  }
 }
 
 .modal-footer {

@@ -8,6 +8,7 @@ import {
   WebsiteIngestionsListResponse
 } from '../services/website-ingestion.service';
 import { AuthService } from '../services/auth.service';
+import { ModalService } from '../shared/modal/modal.service';
 import { environment } from '../../environments/environment';
 
 @Component({
@@ -27,6 +28,7 @@ export class WebsiteIngestionComponent implements OnInit, OnDestroy {
   // New ingestion form
   showAddModal = false;
   newWebsiteUrl = '';
+  autoCategorize: boolean | null = null; // null = use global config, true = enable, false = disable
   isStartingIngestion = false;
 
   // Refresh confirmation modal
@@ -45,7 +47,8 @@ export class WebsiteIngestionComponent implements OnInit, OnDestroy {
   constructor(
     private websiteIngestionService: WebsiteIngestionService,
     private authService: AuthService,
-    private router: Router
+    private router: Router,
+    private modalService: ModalService
   ) {
     this.currentUser = this.authService.getCurrentUser();
   }
@@ -118,11 +121,13 @@ export class WebsiteIngestionComponent implements OnInit, OnDestroy {
   openAddModal(): void {
     this.showAddModal = true;
     this.newWebsiteUrl = '';
+    this.autoCategorize = null; // Reset to use global config
   }
 
   closeAddModal(): void {
     this.showAddModal = false;
     this.newWebsiteUrl = '';
+    this.autoCategorize = null;
   }
 
   startIngestion(): void {
@@ -141,8 +146,8 @@ export class WebsiteIngestionComponent implements OnInit, OnDestroy {
     this.errorMessage = '';
     this.successMessage = '';
 
-    console.log('🚀 Starting ingestion for:', this.newWebsiteUrl);
-    this.websiteIngestionService.startIngestion(this.newWebsiteUrl).subscribe({
+    console.log('🚀 Starting ingestion for:', this.newWebsiteUrl, 'with auto_categorize:', this.autoCategorize);
+    this.websiteIngestionService.startIngestion(this.newWebsiteUrl, this.autoCategorize).subscribe({
       next: (response) => {
         console.log('✅ Ingestion started successfully:', response);
         this.isStartingIngestion = false;
@@ -177,39 +182,65 @@ export class WebsiteIngestionComponent implements OnInit, OnDestroy {
     });
   }
 
-  deleteIngestion(ingestionId: string): void {
+  async deleteIngestion(ingestionId: string): Promise<void> {
     const ingestion = this.ingestions.find(ing => ing.id === ingestionId);
-    if (!confirm(`Are you sure you want to delete the ingestion for "${ingestion?.base_url}"?`)) {
+
+    const confirmed = await this.modalService.confirm(
+      'Delete Ingestion',
+      `Are you sure you want to delete the ingestion for "${ingestion?.base_url}"? This action cannot be undone.`,
+      'Delete',
+      'Cancel'
+    );
+
+    if (!confirmed) {
       return;
     }
 
     this.websiteIngestionService.deleteIngestion(ingestionId).subscribe({
       next: (response) => {
-        this.successMessage = `Ingestion deleted: ${response.base_url}`;
+        this.modalService.success(
+          'Ingestion Deleted',
+          `Successfully deleted ingestion for ${response.base_url}`
+        );
         this.loadIngestions();
-        setTimeout(() => this.successMessage = '', 5000);
       },
       error: (error) => {
-        this.errorMessage = error.error?.detail || 'Failed to delete ingestion';
+        this.modalService.error(
+          'Delete Failed',
+          error.error?.detail || 'Failed to delete ingestion. Please try again.'
+        );
         console.error('Delete ingestion error:', error);
       }
     });
   }
 
-  retryIngestion(ingestionId: string): void {
+  async retryIngestion(ingestionId: string): Promise<void> {
     const ingestion = this.ingestions.find(ing => ing.id === ingestionId);
-    if (!confirm(`Are you sure you want to retry the ingestion for "${ingestion?.base_url}"?`)) {
+
+    const confirmed = await this.modalService.confirm(
+      'Retry Ingestion',
+      `Are you sure you want to retry the ingestion for "${ingestion?.base_url}"? This will restart the crawling process.`,
+      'Retry',
+      'Cancel'
+    );
+
+    if (!confirmed) {
       return;
     }
 
     this.websiteIngestionService.retryIngestion(ingestionId).subscribe({
       next: (response) => {
-        this.successMessage = `Ingestion retry started: ${response.base_url}`;
+        this.modalService.success(
+          'Retry Started',
+          `Ingestion retry started for ${response.base_url}`
+        );
         this.loadIngestions();
-        setTimeout(() => this.successMessage = '', 5000);
       },
       error: (error) => {
-        this.errorMessage = error.error?.detail || 'Failed to retry ingestion';
+        this.modalService.error(
+          'Retry Failed',
+          error.error?.detail || 'Failed to retry ingestion. Please try again.'
+        );
         console.error('Retry ingestion error:', error);
       }
     });
@@ -267,13 +298,23 @@ export class WebsiteIngestionComponent implements OnInit, OnDestroy {
     });
   }
 
-  deleteSelectedIngestions(): void {
+  async deleteSelectedIngestions(): Promise<void> {
     if (this.selectedIngestions.size === 0) {
-      this.errorMessage = 'Please select ingestions to delete';
+      await this.modalService.alert(
+        'No Selection',
+        'Please select ingestions to delete'
+      );
       return;
     }
 
-    if (!confirm(`Are you sure you want to delete ${this.selectedIngestions.size} ingestion(s)?`)) {
+    const confirmed = await this.modalService.warning(
+      'Delete Multiple Ingestions',
+      `Are you sure you want to delete ${this.selectedIngestions.size} ingestion(s)? This action cannot be undone.`,
+      'Delete All',
+      'Cancel'
+    );
+
+    if (!confirmed) {
       return;
     }
 
@@ -290,15 +331,28 @@ export class WebsiteIngestionComponent implements OnInit, OnDestroy {
         next: () => {
           completed++;
           if (completed + failed === deletions.length) {
-            this.successMessage = `Deleted ${completed} of ${deletions.length} ingestions`;
+            this.modalService.success(
+              'Deletion Complete',
+              `Successfully deleted ${completed} of ${deletions.length} ingestion(s)${failed > 0 ? `. Failed to delete ${failed}.` : ''}`
+            );
             this.loadIngestions();
-            setTimeout(() => this.successMessage = '', 5000);
           }
         },
         error: () => {
           failed++;
           if (completed + failed === deletions.length) {
-            this.errorMessage = `Failed to delete ${failed} of ${deletions.length} ingestions`;
+            if (completed === 0) {
+              this.modalService.error(
+                'Deletion Failed',
+                `Failed to delete all ${deletions.length} ingestion(s)`
+              );
+            } else {
+              this.modalService.warning(
+                'Partial Success',
+                `Deleted ${completed} of ${deletions.length} ingestion(s). Failed to delete ${failed}.`
+              );
+            }
+            this.loadIngestions();
           }
         }
       });

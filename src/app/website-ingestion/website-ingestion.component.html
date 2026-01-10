@@ -255,6 +255,59 @@
         <div *ngIf="newWebsiteUrl" class="url-preview">
           <p><strong>URL to ingest:</strong> {{newWebsiteUrl}}</p>
         </div>
+
+        <!-- Auto-Categorize Option -->
+        <div class="form-group auto-categorize-section">
+          <label class="section-label">
+            <span class="material-icons">category</span>
+            AI Categorization & Tagging
+          </label>
+          <p class="help-text">Enable AI-powered automatic categorization and tagging of website content</p>
+
+          <div class="categorize-options">
+            <label class="radio-option">
+              <input
+                type="radio"
+                name="autoCategorize"
+                [value]="null"
+                [(ngModel)]="autoCategorize"
+                [disabled]="isStartingIngestion"
+              />
+              <div class="option-content">
+                <span class="option-title">Use Global Setting</span>
+                <small class="option-description">Use the system's default categorization setting</small>
+              </div>
+            </label>
+
+            <label class="radio-option">
+              <input
+                type="radio"
+                name="autoCategorize"
+                [value]="true"
+                [(ngModel)]="autoCategorize"
+                [disabled]="isStartingIngestion"
+              />
+              <div class="option-content">
+                <span class="option-title">Enable Categorization</span>
+                <small class="option-description">AI will categorize and tag content during ingestion</small>
+              </div>
+            </label>
+
+            <label class="radio-option">
+              <input
+                type="radio"
+                name="autoCategorize"
+                [value]="false"
+                [(ngModel)]="autoCategorize"
+                [disabled]="isStartingIngestion"
+              />
+              <div class="option-content">
+                <span class="option-title">Disable Categorization</span>
+                <small class="option-description">Skip AI categorization to speed up ingestion</small>
+              </div>
+            </label>
+          </div>
+        </div>
       </div>
       <div class="modal-footer">
         <button (click)="closeAddModal()" class="btn btn-secondary" [disabled]="isStartingIngestion">

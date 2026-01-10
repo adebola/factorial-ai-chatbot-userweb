@@ -197,10 +197,15 @@ export class WebsiteIngestionService {
   }
 
   // Start a new website ingestion
-  startIngestion(websiteUrl: string): Observable<StartIngestionResponse> {
+  startIngestion(websiteUrl: string, autoCategorize: boolean | null = null): Observable<StartIngestionResponse> {
     const formData = new FormData();
     formData.append('website_url', websiteUrl);
-    
+
+    // Add auto_categorize parameter if specified (null = use global config)
+    if (autoCategorize !== null) {
+      formData.append('auto_categorize', autoCategorize.toString());
+    }
+
     return this.http.post<StartIngestionResponse>(`${this.baseUrl}/websites/ingest`, formData);
   }
 
