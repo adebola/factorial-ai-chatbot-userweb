@@ -34,6 +34,7 @@ export interface ChatStats {
   user_messages: number;
   assistant_messages: number;
   recent_messages_24h: number;
+  tenant_id: string;
 }
 
 export interface SearchMessagesRequest {
@@ -52,7 +53,7 @@ export class MessagesService {
 
   constructor(private http: HttpClient) {}
 
-  // Get list of chat sessions
+  // Get list of chat sessions (tenant-scoped)
   getChatSessions(
     limit: number = 50,
     offset: number = 0,
@@ -63,10 +64,10 @@ export class MessagesService {
       .set('offset', offset.toString())
       .set('active_only', activeOnly.toString());
 
-    return this.http.get<ChatSession[]>(`${this.baseUrl}/admin/sessions`, { params });
+    return this.http.get<ChatSession[]>(`${this.baseUrl}/tenant/sessions`, { params });
   }
 
-  // Get messages for a specific session
+  // Get messages for a specific session (tenant-scoped)
   getSessionMessages(
     sessionId: string,
     limit: number = 100,
@@ -76,10 +77,10 @@ export class MessagesService {
       .set('limit', limit.toString())
       .set('offset', offset.toString());
 
-    return this.http.get<ChatMessage[]>(`${this.baseUrl}/admin/sessions/${sessionId}/messages`, { params });
+    return this.http.get<ChatMessage[]>(`${this.baseUrl}/tenant/sessions/${sessionId}/messages`, { params });
   }
 
-  // Get session with messages
+  // Get session with messages (tenant-scoped)
   getSessionWithMessages(
     sessionId: string,
     messageLimit: number = 100
@@ -87,10 +88,11 @@ export class MessagesService {
     let params = new HttpParams()
       .set('message_limit', messageLimit.toString());
 
-    return this.http.get<ChatSessionWithMessages>(`${this.baseUrl}/admin/sessions/${sessionId}`, { params });
+    return this.http.get<ChatSessionWithMessages>(`${this.baseUrl}/tenant/sessions/${sessionId}`, { params });
   }
 
-  // Search messages
+  // Search messages (SYSTEM ADMIN ONLY - will return 403 for tenant admins)
+  // This endpoint requires ROLE_SYSTEM_ADMIN and searches across all sessions
   searchMessages(searchRequest: SearchMessagesRequest): Observable<ChatMessage[]> {
     let params = new HttpParams()
       .set('query', searchRequest.query);
@@ -111,8 +113,8 @@ export class MessagesService {
     return this.http.get<ChatMessage[]>(`${this.baseUrl}/admin/messages/search`, { params });
   }
 
-  // Get chat statistics
+  // Get chat statistics (tenant-scoped)
   getChatStats(): Observable<ChatStats> {
-    return this.http.get<ChatStats>(`${this.baseUrl}/admin/stats`);
+    return this.http.get<ChatStats>(`${this.baseUrl}/tenant/stats`);
   }
 }

@@ -581,7 +581,7 @@ export class PlansComponent implements OnInit {
 
   /**
    * Get button label for current plan action
-   * Returns appropriate label based on subscription status
+   * Returns the appropriate label based on subscription status
    */
   getCurrentPlanButtonLabel(): string {
     if (!this.currentSubscription) return 'Subscribe';
