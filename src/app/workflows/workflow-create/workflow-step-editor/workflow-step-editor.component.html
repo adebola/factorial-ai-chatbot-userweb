@@ -131,57 +131,31 @@
         </option>
       </select>
 
+      <small *ngIf="actionGroup.get('type')?.value === 'api_call'" class="help-text">
+        API Call actions use POST method only.
+      </small>
+
       <!-- Action Parameters -->
       <div formGroupName="params" class="action-params">
         <h4>Action Parameters</h4>
         <div *ngFor="let paramKey of getActionParamKeys()" class="param-item">
           <label [for]="paramKey">{{ paramKey | titlecase }}</label>
+          <textarea
+            *ngIf="paramKey === 'body' || paramKey === 'headers'"
+            [id]="paramKey"
+            [formControlName]="paramKey"
+            [placeholder]="'Enter ' + paramKey + ' as JSON'"
+            class="form-textarea"
+            rows="3">
+          </textarea>
           <input
+            *ngIf="paramKey !== 'body' && paramKey !== 'headers'"
             [id]="paramKey"
             type="text"
             [formControlName]="paramKey"
             [placeholder]="'Enter ' + paramKey"
             class="form-input">
         </div>
-      </div>
-    </div>
-
-    <!-- Sub-workflow Configuration (for Sub-workflow steps) -->
-    <div *ngIf="stepType === StepType.SUB_WORKFLOW" class="form-group">
-      <label for="sub_workflow_id">Sub-workflow ID *</label>
-      <input
-        id="sub_workflow_id"
-        type="text"
-        formControlName="sub_workflow_id"
-        placeholder="Enter workflow ID"
-        class="form-input">
-
-      <label for="params">Parameters (JSON)</label>
-      <textarea
-        id="params"
-        formControlName="params"
-        placeholder='{"key": "value"}'
-        class="form-textarea"
-        rows="3">
-      </textarea>
-    </div>
-
-    <!-- Delay Configuration (for Delay steps) -->
-    <div *ngIf="stepType === StepType.DELAY" formGroupName="delay" class="form-group">
-      <label>Delay Duration *</label>
-      <div class="delay-fields">
-        <input
-          type="number"
-          formControlName="duration"
-          placeholder="30"
-          class="form-input delay-duration"
-          min="1">
-        <select formControlName="unit" class="form-select delay-unit">
-          <option value="seconds">Seconds</option>
-          <option value="minutes">Minutes</option>
-          <option value="hours">Hours</option>
-          <option value="days">Days</option>
-        </select>
       </div>
     </div>
 

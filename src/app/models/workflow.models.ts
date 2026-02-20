@@ -10,8 +10,7 @@ export enum WorkflowStatus {
 export enum TriggerType {
   MESSAGE = 'message',
   INTENT = 'intent',
-  KEYWORD = 'keyword',
-  MANUAL = 'manual'
+  KEYWORD = 'keyword'
 }
 
 export enum StepType {
@@ -19,10 +18,10 @@ export enum StepType {
   CHOICE = 'choice',
   INPUT = 'input',
   CONDITION = 'condition',
-  ACTION = 'action',
-  SUB_WORKFLOW = 'sub_workflow',
-  DELAY = 'delay'
+  ACTION = 'action'
 }
+
+export const FALLBACK_TO_AI_SENTINEL = '__fallback_to_ai';
 
 export enum ExecutionStatus {
   RUNNING = 'running',

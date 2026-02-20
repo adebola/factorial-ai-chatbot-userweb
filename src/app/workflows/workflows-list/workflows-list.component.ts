@@ -54,8 +54,7 @@ export class WorkflowsListComponent implements OnInit {
     { value: '', label: 'All Trigger Types' },
     { value: TriggerType.MESSAGE, label: 'Message' },
     { value: TriggerType.INTENT, label: 'Intent' },
-    { value: TriggerType.KEYWORD, label: 'Keyword' },
-    { value: TriggerType.MANUAL, label: 'Manual' }
+    { value: TriggerType.KEYWORD, label: 'Keyword' }
   ];
 
   activeFilterOptions = [
@@ -341,8 +340,6 @@ export class WorkflowsListComponent implements OnInit {
         return 'psychology';
       case 'keyword':
         return 'key';
-      case 'manual':
-        return 'touch_app';
       default:
         return 'help';
     }

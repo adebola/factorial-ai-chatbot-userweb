@@ -181,8 +181,6 @@ export class WorkflowDetailsComponent implements OnInit {
         return 'psychology';
       case 'keyword':
         return 'key';
-      case 'manual':
-        return 'touch_app';
       default:
         return 'help';
     }

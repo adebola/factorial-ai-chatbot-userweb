@@ -552,9 +552,9 @@ export class PlansComponent implements OnInit {
     const daysUntilExpiry = this.getDaysUntilExpiry();
     const hasExpired = daysUntilExpiry <= 0;
 
-    console.log('shouldShowRenewal - Subscription status:', status);
-    console.log('shouldShowRenewal - Days until expiry:', daysUntilExpiry);
-    console.log('shouldShowRenewal - Has expired:', hasExpired);
+    console.debug('shouldShowRenewal - Subscription status:', status);
+    console.debug('shouldShowRenewal - Days until expiry:', daysUntilExpiry);
+    console.debug('shouldShowRenewal - Has expired:', hasExpired);
 
     // Show renewal for subscriptions with 'expired' status
     if (status === 'expired') {

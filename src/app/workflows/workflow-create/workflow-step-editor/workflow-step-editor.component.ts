@@ -1,7 +1,7 @@
 import { Component, Input, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { ReactiveFormsModule, FormGroup, FormArray, FormBuilder, AbstractControl } from '@angular/forms';
-import { StepType } from '../../../models/workflow.models';
+import { StepType, FALLBACK_TO_AI_SENTINEL } from '../../../models/workflow.models';
 
 @Component({
   selector: 'app-workflow-step-editor',
@@ -17,12 +17,9 @@ export class WorkflowStepEditorComponent implements OnInit {
   StepType = StepType;
 
   actionTypes = [
+    { value: 'log', label: 'Log', description: 'Log information for debugging' },
     { value: 'send_email', label: 'Send Email', description: 'Send an email notification' },
-    { value: 'webhook', label: 'Webhook', description: 'Call an external webhook' },
-    { value: 'database', label: 'Database', description: 'Perform database operation' },
-    { value: 'api_call', label: 'API Call', description: 'Make an API request' },
-    { value: 'set_variable', label: 'Set Variable', description: 'Update a workflow variable' },
-    { value: 'log', label: 'Log', description: 'Log information for debugging' }
+    { value: 'api_call', label: 'API Call', description: 'Make an outbound POST request to an external API' }
   ];
 
   constructor(private fb: FormBuilder) {}
@@ -58,9 +55,6 @@ export class WorkflowStepEditorComponent implements OnInit {
         break;
       case StepType.ACTION:
         this.ensureActionFields();
-        break;
-      case StepType.DELAY:
-        this.ensureDelayFields();
         break;
     }
   }
@@ -105,7 +99,7 @@ export class WorkflowStepEditorComponent implements OnInit {
 
       // Create FormGroup structure, preserving loaded action type
       this.formGroup.addControl('action', this.fb.group({
-        type: [existingData?.type || 'send_email'],
+        type: [existingData?.type || 'log'],
         params: this.fb.group({})
       }));
 
@@ -144,35 +138,19 @@ export class WorkflowStepEditorComponent implements OnInit {
 
     // Add action-specific params
     switch (actionType) {
+      case 'log':
+        paramsGroup.addControl('message', this.fb.control(''));
+        paramsGroup.addControl('level', this.fb.control('info'));
+        break;
       case 'send_email':
         paramsGroup.addControl('to', this.fb.control(''));
         paramsGroup.addControl('subject', this.fb.control(''));
-        paramsGroup.addControl('content', this.fb.control(''));  // Backend expects "content" not "body"
-        break;
-      case 'webhook':
-        paramsGroup.addControl('url', this.fb.control(''));
-        paramsGroup.addControl('method', this.fb.control('POST'));
-        paramsGroup.addControl('headers', this.fb.control('{}'));
-        paramsGroup.addControl('data', this.fb.control(''));  // Backend expects "data" not "body"
-        break;
-      case 'database':
-        paramsGroup.addControl('operation', this.fb.control('insert'));
-        paramsGroup.addControl('table', this.fb.control(''));
-        paramsGroup.addControl('data', this.fb.control('{}'));
+        paramsGroup.addControl('content', this.fb.control(''));
         break;
       case 'api_call':
         paramsGroup.addControl('url', this.fb.control(''));
-        paramsGroup.addControl('method', this.fb.control('GET'));
+        paramsGroup.addControl('body', this.fb.control('{}'));
         paramsGroup.addControl('headers', this.fb.control('{}'));
-        paramsGroup.addControl('params', this.fb.control('{}'));
-        break;
-      case 'set_variable':
-        paramsGroup.addControl('variable', this.fb.control(''));
-        paramsGroup.addControl('value', this.fb.control(''));
-        break;
-      case 'log':
-        paramsGroup.addControl('level', this.fb.control('info'));
-        paramsGroup.addControl('message', this.fb.control(''));
         break;
     }
   }
@@ -205,7 +183,7 @@ export class WorkflowStepEditorComponent implements OnInit {
   getAvailableStepOptions(): any[] {
     const currentStepId = this.formGroup.get('id')?.value;
 
-    return this.availableSteps.map((step, index) => ({
+    const steps = this.availableSteps.map((step, index) => ({
       value: step.get('id')?.value,
       label: step.get('name')?.value || `Step ${index + 1}`,
       stepIndex: index
@@ -222,6 +200,15 @@ export class WorkflowStepEditorComponent implements OnInit {
 
       return true;
     });
+
+    // Add the sentinel option at the end
+    steps.push({
+      value: FALLBACK_TO_AI_SENTINEL,
+      label: '\u21A9 End & Return to AI',
+      stepIndex: -1
+    });
+
+    return steps;
   }
 
   getActionParamKeys(): string[] {
@@ -234,9 +221,7 @@ export class WorkflowStepEditorComponent implements OnInit {
       [StepType.CHOICE]: ['content', 'variable', 'options'],
       [StepType.INPUT]: ['content', 'variable'],
       [StepType.CONDITION]: ['condition', 'next_step'],
-      [StepType.ACTION]: ['action'],
-      [StepType.SUB_WORKFLOW]: ['params'],
-      [StepType.DELAY]: ['delay']
+      [StepType.ACTION]: ['action']
     };
 
     return requiredFields[stepType]?.includes(fieldName) || false;

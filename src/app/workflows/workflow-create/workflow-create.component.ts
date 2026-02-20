@@ -47,8 +47,7 @@ export class WorkflowCreateComponent implements OnInit {
   triggerTypes = [
     { value: TriggerType.MESSAGE, label: 'Message Keywords', description: 'Triggered by specific words or phrases' },
     { value: TriggerType.INTENT, label: 'Intent Detection', description: 'Triggered by detected user intents' },
-    { value: TriggerType.KEYWORD, label: 'Keyword Match', description: 'Triggered by exact keyword matches' },
-    { value: TriggerType.MANUAL, label: 'Manual Trigger', description: 'Started manually by user or system' }
+    { value: TriggerType.KEYWORD, label: 'Keyword Match', description: 'Triggered by exact keyword matches' }
   ];
 
   stepTypes = [
