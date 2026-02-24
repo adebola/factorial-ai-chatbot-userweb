@@ -125,6 +125,15 @@
             {{ workflow.updated_at ? formatDate(workflow.updated_at) : 'Never' }}
           </span>
         </div>
+        <div class="metadata-item">
+          <span class="label">Authentication</span>
+          <span class="value">
+            <span class="material-icons" style="font-size: 16px; vertical-align: middle;">
+              {{ workflow.requires_auth ? 'lock' : 'lock_open' }}
+            </span>
+            {{ workflow.requires_auth ? 'Required' : 'Not required' }}
+          </span>
+        </div>
       </div>
     </div>
 

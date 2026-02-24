@@ -96,6 +96,18 @@
             rows="3">
           </textarea>
         </div>
+        <div class="form-group auth-toggle">
+          <label class="toggle-label">
+            <span class="material-icons">lock</span>
+            Requires Authentication
+          </label>
+          <p class="field-description">When enabled, only authenticated users can trigger this workflow. User claims (email, name) will be available as template variables.</p>
+          <label class="toggle-switch">
+            <input type="checkbox" formControlName="requiresAuth" />
+            <span class="slider"></span>
+          </label>
+          <span class="toggle-text">{{ workflowForm.get('requiresAuth')?.value ? 'Required' : 'Not required' }}</span>
+        </div>
       </div>
     </div>
 

@@ -388,6 +388,25 @@
           font-weight: 600;
         }
       }
+
+      .limit-badge {
+        display: inline-block;
+        padding: 0.15rem 0.5rem;
+        border-radius: 10px;
+        font-size: 0.7rem;
+        font-weight: 600;
+        background: #fff3e0;
+        color: #e65100;
+        border: 1px solid #ffcc80;
+        margin-top: 0.25rem;
+      }
+
+      .urls-found-text {
+        display: block;
+        color: #999;
+        font-size: 0.75rem;
+        margin-top: 0.15rem;
+      }
     }
   }
 

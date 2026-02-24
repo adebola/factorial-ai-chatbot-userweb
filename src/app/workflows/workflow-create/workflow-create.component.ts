@@ -93,6 +93,7 @@ export class WorkflowCreateComponent implements OnInit {
       name: ['', [Validators.required, Validators.minLength(3)]],
       description: [''],
       status: [WorkflowStatus.DRAFT, Validators.required],
+      requiresAuth: [false],
       triggerType: [TriggerType.MESSAGE, Validators.required],
       triggerConfig: this.fb.group({
         conditions: this.fb.array([]),
@@ -149,6 +150,7 @@ export class WorkflowCreateComponent implements OnInit {
       name: workflow.name,
       description: workflow.description,
       status: workflow.status,
+      requiresAuth: workflow.requires_auth || false,
       triggerType: workflow.trigger_type
     });
 
@@ -394,6 +396,7 @@ export class WorkflowCreateComponent implements OnInit {
       definition,
       trigger_type: formValue.triggerType,
       trigger_config: formValue.triggerConfig,
+      requires_auth: formValue.requiresAuth,
       status: formValue.status
     };
   }

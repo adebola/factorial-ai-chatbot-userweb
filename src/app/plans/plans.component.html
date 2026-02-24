@@ -72,13 +72,13 @@
     <div class="billing-toggle">
       <label>Billing Cycle:</label>
       <div class="toggle-buttons">
-        <button 
+        <button
           [class.active]="billingCycle === 'monthly'"
           (click)="setBillingCycle('monthly')"
           class="toggle-button">
           Monthly
         </button>
-        <button 
+        <button
           [class.active]="billingCycle === 'yearly'"
           (click)="setBillingCycle('yearly')"
           class="toggle-button">
@@ -89,13 +89,13 @@
 
     <!-- Plans Grid -->
     <div class="plans-grid">
-      <div 
-        *ngFor="let plan of plans" 
+      <div
+        *ngFor="let plan of plans"
         class="plan-card"
         [class.current]="isCurrentPlan(plan)"
         [class.upgrade]="isUpgrade(plan)"
         [class.downgrade]="isDowngrade(plan)">
-        
+
         <div class="plan-header">
           <h3>{{ plan.name }}</h3>
           <div class="plan-badge" *ngIf="isCurrentPlan(plan)">Current Plan</div>
@@ -118,7 +118,7 @@
           </div>
           <div class="limit-item">
             <span class="material-icons">language</span>
-            <span>{{ formatLimit(plan.website_limit) }} websites</span>
+            <span>{{ formatLimit(plan.website_limit) }} website ({{ plan.max_pages_per_website ? plan.max_pages_per_website : 'Unlimited' }} pages) </span>
           </div>
           <div class="limit-item">
             <span class="material-icons">chat</span>

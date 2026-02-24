@@ -161,7 +161,12 @@
           </td>
           <td class="workflow-name">
             <div class="name-content">
-              <span class="name">{{ workflow.name }}</span>
+              <span class="name">
+                {{ workflow.name }}
+                <span *ngIf="workflow.requires_auth" class="auth-badge" title="Requires authentication">
+                  <span class="material-icons">lock</span>
+                </span>
+              </span>
               <span class="description" *ngIf="workflow.description">
                 {{ workflow.description }}
               </span>

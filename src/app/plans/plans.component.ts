@@ -20,6 +20,7 @@ interface Plan {
   monthly_chat_limit: number;
   monthly_plan_cost: string;
   yearly_plan_cost: string;
+  max_pages_per_website?: number
   features: any;
   is_active: boolean;
   is_current?: boolean;
@@ -238,7 +239,7 @@ export class PlansComponent implements OnInit {
 
   formatLimit(value: number): string {
     // -1 means unlimited
-    return value === -1 ? 'Unlimited' : this.formatNumber(value);
+    return value === -1 ? 'Custom' : this.formatNumber(value);
   }
 
   getPlanCostDisplay(plan: Plan): string {

@@ -186,8 +186,10 @@ export class IngestionDetailsComponent implements OnInit, OnDestroy {
   }
 
   getProgressPercentage(): number {
-    if (!this.stats?.summary.pages_discovered) return 0;
-    return Math.round((this.stats.summary.pages_processed / this.stats.summary.pages_discovered) * 100);
+    if (!this.stats) return 0;
+    const limit = this.stats.summary.max_pages_limit || this.stats.summary.pages_discovered;
+    if (!limit) return 0;
+    return Math.min(100, Math.round((this.stats.summary.pages_processed / limit) * 100));
   }
 
   private startAutoRefreshIfNeeded(): void {

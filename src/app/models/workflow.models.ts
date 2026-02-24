@@ -77,6 +77,7 @@ export interface WorkflowCreateRequest {
   trigger_type: TriggerType;
   trigger_config?: Record<string, any>;
   is_active?: boolean;
+  requires_auth?: boolean;
 }
 
 export interface WorkflowUpdateRequest {
@@ -86,6 +87,7 @@ export interface WorkflowUpdateRequest {
   trigger_type?: TriggerType;
   trigger_config?: Record<string, any>;
   is_active?: boolean;
+  requires_auth?: boolean;
   status?: WorkflowStatus;
 }
 
@@ -101,6 +103,7 @@ export interface WorkflowResponse {
   trigger_type: TriggerType;
   trigger_config?: Record<string, any>;
   is_active: boolean;
+  requires_auth: boolean;
   usage_count: number;
   last_used_at?: string;
   created_at: string;
@@ -116,6 +119,7 @@ export interface WorkflowSummary {
   status: WorkflowStatus;
   trigger_type: TriggerType;
   is_active: boolean;
+  requires_auth: boolean;
   usage_count: number;
   last_used_at?: string;
   created_at: string;

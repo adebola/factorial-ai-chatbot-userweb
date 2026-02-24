@@ -20,6 +20,12 @@ export interface TenantSettings {
   isActive?: boolean;
   createdAt?: string;
   updatedAt?: string;
+  allowAuthentication?: boolean;
+  authAuthorizationEndpoint?: string;
+  authTokenEndpoint?: string;
+  authClientId?: string;
+  authScopes?: string;
+  authCallbackUrl?: string;
 }
 
 export interface ChatLogoInfo {
@@ -36,6 +42,12 @@ export interface SettingsUpdate {
   welcomeMessage?: string;
   chatWindowTitle?: string;
   additionalSettings?: Record<string, any>;
+  allowAuthentication?: boolean;
+  authAuthorizationEndpoint?: string;
+  authTokenEndpoint?: string;
+  authClientId?: string;
+  authScopes?: string;
+  authCallbackUrl?: string;
 }
 
 export interface LogoUploadResponse {

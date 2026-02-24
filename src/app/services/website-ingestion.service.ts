@@ -10,6 +10,9 @@ export interface WebsiteIngestion {
   pages_discovered: number;
   pages_processed: number;
   pages_failed: number;
+  urls_found: number;
+  max_pages_limit: number | null;
+  limit_reached: boolean;
   started_at: string | null;
   completed_at: string | null;
   error_message: string | null;
@@ -62,6 +65,9 @@ export interface IngestionStatusResponse {
   pages_discovered: number;
   pages_processed: number;
   pages_failed: number;
+  urls_found: number;
+  max_pages_limit: number | null;
+  limit_reached: boolean;
   started_at: string | null;
   completed_at: string | null;
   error_message: string | null;
@@ -136,6 +142,9 @@ export interface IngestionStatsResponse {
     pages_discovered: number;
     pages_processed: number;
     pages_failed: number;
+    urls_found: number;
+    max_pages_limit: number | null;
+    limit_reached: boolean;
     unique_content_pages: number;
     processing_time_seconds: number | null;
     started_at: string | null;

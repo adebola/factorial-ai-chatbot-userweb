@@ -121,10 +121,14 @@
                 <div class="progress-fill" [style.width.%]="getProgressPercentage(ingestion)"></div>
               </div>
               <small class="progress-text">
-                {{ingestion.pages_processed}}/{{ingestion.pages_discovered}} pages
+                {{ingestion.pages_processed}} of {{ingestion.max_pages_limit || ingestion.pages_discovered}} pages
                 <span *ngIf="ingestion.pages_failed > 0" class="failed-count">
                   ({{ingestion.pages_failed}} failed)
                 </span>
+              </small>
+              <span *ngIf="ingestion.limit_reached" class="limit-badge">Limit reached</span>
+              <small *ngIf="ingestion.urls_found > ingestion.pages_discovered" class="urls-found-text">
+                {{ingestion.urls_found}} URLs found
               </small>
             </div>
           </td>
@@ -351,7 +355,7 @@
           <p><strong>Website URL:</strong></p>
           <p class="url-display">{{ingestionToRefresh.base_url}}</p>
           <p><strong>Current Status:</strong> <span class="status-badge" [ngClass]="getStatusClass(ingestionToRefresh.status)">{{ingestionToRefresh.status}}</span></p>
-          <p><strong>Pages Processed:</strong> {{ingestionToRefresh.pages_processed}} / {{ingestionToRefresh.pages_discovered}}</p>
+          <p><strong>Pages Processed:</strong> {{ingestionToRefresh.pages_processed}} / {{ingestionToRefresh.max_pages_limit || ingestionToRefresh.pages_discovered}}</p>
         </div>
 
         <p class="confirmation-question">Are you sure you want to proceed with refreshing this ingestion?</p>

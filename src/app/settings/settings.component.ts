@@ -19,7 +19,12 @@ export class SettingsComponent implements OnInit {
     hoverText: 'Chat with us!',
     welcomeMessage: 'Hello! How can I help you today?',
     chatWindowTitle: 'Chat Support',
-    additionalSettings: {}
+    additionalSettings: {},
+    allowAuthentication: false,
+    authAuthorizationEndpoint: '',
+    authTokenEndpoint: '',
+    authClientId: '',
+    authScopes: 'openid profile email'
   };
 
   additionalSettingsJson: string = '{}';
@@ -85,7 +90,12 @@ export class SettingsComponent implements OnInit {
       hoverText: this.settings.hoverText,
       welcomeMessage: this.settings.welcomeMessage,
       chatWindowTitle: this.settings.chatWindowTitle,
-      additionalSettings: this.parseAdditionalSettings()
+      additionalSettings: this.parseAdditionalSettings(),
+      allowAuthentication: this.settings.allowAuthentication,
+      authAuthorizationEndpoint: this.settings.authAuthorizationEndpoint,
+      authTokenEndpoint: this.settings.authTokenEndpoint,
+      authClientId: this.settings.authClientId,
+      authScopes: this.settings.authScopes
     };
 
     this.settingsService.updateSettings(updateData).subscribe({
@@ -243,6 +253,15 @@ export class SettingsComponent implements OnInit {
       return JSON.parse(this.additionalSettingsJson);
     } catch (error) {
       return {};
+    }
+  }
+
+  onAuthToggleChange(): void {
+    if (!this.settings.allowAuthentication) {
+      this.settings.authAuthorizationEndpoint = '';
+      this.settings.authTokenEndpoint = '';
+      this.settings.authClientId = '';
+      this.settings.authScopes = 'openid profile email';
     }
   }
 

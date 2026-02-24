@@ -41,16 +41,6 @@
     <div class="stats-grid">
       <div class="stat-card">
         <div class="stat-icon">
-          <span class="material-icons">web</span>
-        </div>
-        <div class="stat-content">
-          <h3>{{stats.summary.pages_discovered}}</h3>
-          <p>Pages Discovered</p>
-        </div>
-      </div>
-      
-      <div class="stat-card">
-        <div class="stat-icon">
           <span class="material-icons">done</span>
         </div>
         <div class="stat-content">
@@ -58,7 +48,7 @@
           <p>Pages Processed</p>
         </div>
       </div>
-      
+
       <div class="stat-card">
         <div class="stat-icon">
           <span class="material-icons">error</span>
@@ -68,7 +58,17 @@
           <p>Pages Failed</p>
         </div>
       </div>
-      
+
+      <div class="stat-card">
+        <div class="stat-icon">
+          <span class="material-icons">web</span>
+        </div>
+        <div class="stat-content">
+          <h3>{{stats.summary.urls_found || stats.summary.pages_discovered}}</h3>
+          <p>URLs Found</p>
+        </div>
+      </div>
+
       <div class="stat-card">
         <div class="stat-icon">
           <span class="material-icons">schedule</span>
@@ -78,6 +78,17 @@
           <p>Processing Time</p>
         </div>
       </div>
+    </div>
+
+    <!-- Limit Info Bar -->
+    <div class="limit-info-bar" *ngIf="stats.summary.max_pages_limit">
+      <div class="limit-details">
+        <span class="material-icons">tune</span>
+        <span>Page limit: <strong>{{stats.summary.max_pages_limit}}</strong></span>
+        <span class="separator">|</span>
+        <span>Pages attempted: <strong>{{stats.summary.pages_discovered}}</strong></span>
+      </div>
+      <span *ngIf="stats.summary.limit_reached" class="limit-badge">Limit reached</span>
     </div>
 
     <!-- Status and Progress -->
