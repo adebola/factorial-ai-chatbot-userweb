@@ -217,6 +217,78 @@
           margin-bottom: 4px;
         }
       }
+
+      .kv-section {
+        margin-top: 8px;
+
+        .help-text {
+          margin-bottom: 8px;
+
+          code {
+            background: #f3e8ff;
+            color: #7c3aed;
+            padding: 1px 4px;
+            border-radius: 3px;
+            font-size: 12px;
+          }
+        }
+
+        .kv-container {
+          margin-bottom: 8px;
+
+          .kv-row {
+            display: grid;
+            grid-template-columns: 1fr 1fr auto;
+            gap: 8px;
+            align-items: center;
+            padding: 8px;
+            background: white;
+            border: 1px solid #e5e7eb;
+            border-radius: 6px;
+            margin-bottom: 6px;
+
+            &:last-child {
+              margin-bottom: 0;
+            }
+
+            .kv-key, .kv-value {
+              margin: 0;
+            }
+
+            .kv-value.variable-ref {
+              border-color: #7c3aed;
+              background: #faf5ff;
+            }
+
+            .btn-remove {
+              padding: 8px;
+              background: #fee2e2;
+              color: #dc2626;
+              border: none;
+              border-radius: 4px;
+              cursor: pointer;
+              display: flex;
+              align-items: center;
+              justify-content: center;
+              transition: all 0.2s;
+
+              &:hover:not(:disabled) {
+                background: #fecaca;
+                transform: scale(1.05);
+              }
+
+              &:disabled {
+                opacity: 0.4;
+                cursor: not-allowed;
+              }
+
+              .material-icons {
+                font-size: 18px;
+              }
+            }
+          }
+        }
+      }
     }
 
     // Delay Fields
@@ -308,6 +380,16 @@
       .delay-fields {
         grid-template-columns: 1fr;
         gap: 6px;
+      }
+
+      .action-params .kv-section .kv-container .kv-row {
+        grid-template-columns: 1fr;
+        gap: 6px;
+
+        .btn-remove {
+          justify-self: end;
+          width: fit-content;
+        }
       }
     }
   }

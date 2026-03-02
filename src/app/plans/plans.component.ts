@@ -164,7 +164,7 @@ export class PlansComponent implements OnInit {
             );
           }
 
-          // Use subscription.plan_id as authoritative source
+          // Use subscription.plan_id as an authoritative source
           const authoritativePlanId = subscriptionPlanId || tenantPlanId;
 
           if (authoritativePlanId) {

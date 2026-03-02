@@ -140,21 +140,56 @@
         <h4>Action Parameters</h4>
         <div *ngFor="let paramKey of getActionParamKeys()" class="param-item">
           <label [for]="paramKey">{{ paramKey | titlecase }}</label>
-          <textarea
-            *ngIf="paramKey === 'body' || paramKey === 'headers'"
-            [id]="paramKey"
-            [formControlName]="paramKey"
-            [placeholder]="'Enter ' + paramKey + ' as JSON'"
-            class="form-textarea"
-            rows="3">
-          </textarea>
           <input
-            *ngIf="paramKey !== 'body' && paramKey !== 'headers'"
             [id]="paramKey"
             type="text"
             [formControlName]="paramKey"
             [placeholder]="'Enter ' + paramKey"
             class="form-input">
+        </div>
+
+        <!-- Headers Key-Value Pairs -->
+        <div *ngIf="hasKvFields()" class="param-item kv-section">
+          <label>Headers</label>
+          <small class="help-text">Use <code>{{"{{variable_name}}"}}</code> syntax in values to reference workflow variables.</small>
+          <div formArrayName="headers" class="kv-container">
+            <div *ngFor="let pair of headersKvArray.controls; let i = index"
+                 class="kv-row" [formGroupName]="i">
+              <input formControlName="key" placeholder="Header name" class="form-input kv-key">
+              <input formControlName="value" placeholder="Header value" class="form-input kv-value"
+                     [class.variable-ref]="isVariableReference(pair.get('value')?.value)">
+              <button type="button" (click)="removeKeyValuePair('headers', i)" class="btn-remove"
+                      [disabled]="headersKvArray.length === 1" title="Remove header">
+                <span class="material-icons">remove</span>
+              </button>
+            </div>
+          </div>
+          <button type="button" (click)="addKeyValuePair('headers')" class="btn-add">
+            <span class="material-icons">add</span>
+            Add Header
+          </button>
+        </div>
+
+        <!-- Body Key-Value Pairs -->
+        <div *ngIf="hasKvFields()" class="param-item kv-section">
+          <label>Body</label>
+          <small class="help-text">Use <code>{{"{{variable_name}}"}}</code> syntax in values to reference workflow variables.</small>
+          <div formArrayName="body" class="kv-container">
+            <div *ngFor="let pair of bodyKvArray.controls; let i = index"
+                 class="kv-row" [formGroupName]="i">
+              <input formControlName="key" placeholder="Field name" class="form-input kv-key">
+              <input formControlName="value" placeholder="Field value" class="form-input kv-value"
+                     [class.variable-ref]="isVariableReference(pair.get('value')?.value)">
+              <button type="button" (click)="removeKeyValuePair('body', i)" class="btn-remove"
+                      [disabled]="bodyKvArray.length === 1" title="Remove field">
+                <span class="material-icons">remove</span>
+              </button>
+            </div>
+          </div>
+          <button type="button" (click)="addKeyValuePair('body')" class="btn-add">
+            <span class="material-icons">add</span>
+            Add Field
+          </button>
         </div>
       </div>
     </div>

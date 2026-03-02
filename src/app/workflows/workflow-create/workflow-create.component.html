@@ -159,22 +159,22 @@
           </div>
 
           <div *ngIf="workflowForm.get('triggerType')?.value === 'intent'">
-            <label>Intent Conditions</label>
-            <div formArrayName="conditions">
-              <div *ngFor="let condition of triggerConditions.controls; let i = index" class="input-array-item">
+            <label>Intent Patterns</label>
+            <div formArrayName="intent_patterns">
+              <div *ngFor="let pattern of triggerIntentPatterns.controls; let i = index" class="input-array-item">
                 <input
                   type="text"
                   [formControlName]="i"
-                  placeholder="Enter intent condition..."
+                  placeholder="e.g., I want to apply for a loan"
                   class="form-input">
-                <button type="button" (click)="removeTriggerCondition(i)" class="btn-remove">
+                <button type="button" (click)="removeTriggerIntentPattern(i)" class="btn-remove">
                   <span class="material-icons">remove</span>
                 </button>
               </div>
             </div>
-            <button type="button" (click)="addTriggerCondition()" class="btn-add">
+            <button type="button" (click)="addTriggerIntentPattern()" class="btn-add">
               <span class="material-icons">add</span>
-              Add Condition
+              Add Pattern
             </button>
           </div>
         </div>

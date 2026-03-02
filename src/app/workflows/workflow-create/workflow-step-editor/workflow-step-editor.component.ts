@@ -45,6 +45,24 @@ export class WorkflowStepEditorComponent implements OnInit {
     return options;
   }
 
+  get bodyKvArray(): FormArray {
+    let body = this.actionParamsGroup.get('body') as FormArray;
+    if (!body) {
+      body = this.fb.array([]);
+      this.actionParamsGroup.setControl('body', body);
+    }
+    return body;
+  }
+
+  get headersKvArray(): FormArray {
+    let headers = this.actionParamsGroup.get('headers') as FormArray;
+    if (!headers) {
+      headers = this.fb.array([]);
+      this.actionParamsGroup.setControl('headers', headers);
+    }
+    return headers;
+  }
+
   onStepTypeChange(): void {
     const stepType = this.stepType;
 
@@ -80,6 +98,21 @@ export class WorkflowStepEditorComponent implements OnInit {
     this.optionsArray.removeAt(index);
   }
 
+  // Key-Value Pair Methods (for body/headers in API Call actions)
+  addKeyValuePair(field: 'body' | 'headers', key = '', value = ''): void {
+    const kvArray = field === 'body' ? this.bodyKvArray : this.headersKvArray;
+    kvArray.push(this.fb.group({ key: [key], value: [value] }));
+  }
+
+  removeKeyValuePair(field: 'body' | 'headers', index: number): void {
+    const kvArray = field === 'body' ? this.bodyKvArray : this.headersKvArray;
+    kvArray.removeAt(index);
+  }
+
+  isVariableReference(value: string): boolean {
+    return /\{\{.+?\}\}/.test(value);
+  }
+
   // Action Step Methods
   ensureActionFields(): void {
     const existingAction = this.formGroup.get('action');
@@ -110,9 +143,13 @@ export class WorkflowStepEditorComponent implements OnInit {
       if (existingData?.params) {
         const paramsGroup = this.actionParamsGroup;
         Object.keys(existingData.params).forEach(key => {
-          const control = paramsGroup.get(key);
-          if (control) {
-            control.setValue(existingData.params[key]);
+          if (key === 'body' || key === 'headers') {
+            this.populateKvArrayFromData(key, existingData.params[key]);
+          } else {
+            const control = paramsGroup.get(key);
+            if (control) {
+              control.setValue(existingData.params[key]);
+            }
           }
         });
       }
@@ -125,6 +162,48 @@ export class WorkflowStepEditorComponent implements OnInit {
 
   get actionParamsGroup(): FormGroup {
     return this.actionGroup.get('params') as FormGroup;
+  }
+
+  populateKvArrayFromData(field: 'body' | 'headers', data: any): void {
+    const kvArray = field === 'body' ? this.bodyKvArray : this.headersKvArray;
+
+    // Clear existing entries (the default empty row added by onActionTypeChange)
+    while (kvArray.length > 0) {
+      kvArray.removeAt(0);
+    }
+
+    let entries: [string, any][] = [];
+
+    if (typeof data === 'string') {
+      // Legacy JSON string: try to parse
+      try {
+        const parsed = JSON.parse(data);
+        if (parsed && typeof parsed === 'object') {
+          entries = Object.entries(parsed);
+        }
+      } catch {
+        // Malformed JSON string — put raw value in a single row
+        if (data.trim()) {
+          this.addKeyValuePair(field, '', data);
+          return;
+        }
+      }
+    } else if (data && typeof data === 'object' && !Array.isArray(data)) {
+      entries = Object.entries(data);
+    }
+
+    if (entries.length > 0) {
+      entries.forEach(([key, value]) => {
+        this.addKeyValuePair(field, key, typeof value === 'string' ? value : JSON.stringify(value));
+      });
+    } else {
+      // Empty or null — add one empty row as default
+      this.addKeyValuePair(field);
+    }
+  }
+
+  hasKvFields(): boolean {
+    return this.actionGroup.get('type')?.value === 'api_call';
   }
 
   onActionTypeChange(): void {
@@ -149,8 +228,10 @@ export class WorkflowStepEditorComponent implements OnInit {
         break;
       case 'api_call':
         paramsGroup.addControl('url', this.fb.control(''));
-        paramsGroup.addControl('body', this.fb.control('{}'));
-        paramsGroup.addControl('headers', this.fb.control('{}'));
+        paramsGroup.addControl('body', this.fb.array([]));
+        paramsGroup.addControl('headers', this.fb.array([]));
+        this.addKeyValuePair('body');
+        this.addKeyValuePair('headers');
         break;
     }
   }
@@ -212,7 +293,7 @@ export class WorkflowStepEditorComponent implements OnInit {
   }
 
   getActionParamKeys(): string[] {
-    return Object.keys(this.actionParamsGroup.controls);
+    return Object.keys(this.actionParamsGroup.controls).filter(key => key !== 'body' && key !== 'headers');
   }
 
   isFieldRequired(stepType: string, fieldName: string): boolean {

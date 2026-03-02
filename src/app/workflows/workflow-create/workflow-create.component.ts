@@ -127,6 +127,10 @@ export class WorkflowCreateComponent implements OnInit {
     return this.workflowForm.get('triggerConfig.keywords') as FormArray;
   }
 
+  get triggerIntentPatterns(): FormArray {
+    return this.workflowForm.get('triggerConfig.intent_patterns') as FormArray;
+  }
+
   loadWorkflow(): void {
     if (!this.workflowId) return;
 
@@ -181,6 +185,17 @@ export class WorkflowCreateComponent implements OnInit {
         this.clearFormArray(this.triggerKeywords);
         trigger.keywords.forEach(keyword => {
           this.addTriggerKeyword(keyword);
+        });
+      }
+      // For intent workflows: load intent_patterns, falling back to conditions (legacy)
+      const intentSource = trigger.intent_patterns?.length
+        ? trigger.intent_patterns
+        : (workflow.trigger_type === 'intent' && trigger.conditions?.length ? trigger.conditions : null);
+      if (intentSource) {
+        const intentPatternsArray = this.workflowForm.get('triggerConfig.intent_patterns') as FormArray;
+        this.clearFormArray(intentPatternsArray);
+        intentSource.forEach(pattern => {
+          this.addTriggerIntentPattern(pattern);
         });
       }
     }
@@ -297,6 +312,14 @@ export class WorkflowCreateComponent implements OnInit {
     this.triggerKeywords.removeAt(index);
   }
 
+  addTriggerIntentPattern(pattern = ''): void {
+    this.triggerIntentPatterns.push(this.fb.control(pattern, Validators.required));
+  }
+
+  removeTriggerIntentPattern(index: number): void {
+    this.triggerIntentPatterns.removeAt(index);
+  }
+
   // Section Management
   toggleSection(section: string): void {
     this.sectionsExpanded = {
@@ -337,12 +360,32 @@ export class WorkflowCreateComponent implements OnInit {
     const steps = formValue.steps.map((step: any) => {
       // For ACTION steps, flatten the nested structure
       if (step.type === StepType.ACTION && step.action && typeof step.action === 'object') {
+        const params = { ...step.action.params };
+
+        // Convert body KV array to plain object
+        if (Array.isArray(params.body)) {
+          const bodyObj: Record<string, any> = {};
+          params.body.forEach((pair: { key: string; value: string }) => {
+            if (pair.key?.trim()) bodyObj[pair.key.trim()] = pair.value;
+          });
+          params.body = bodyObj;
+        }
+
+        // Convert headers KV array to plain object
+        if (Array.isArray(params.headers)) {
+          const headersObj: Record<string, any> = {};
+          params.headers.forEach((pair: { key: string; value: string }) => {
+            if (pair.key?.trim()) headersObj[pair.key.trim()] = pair.value;
+          });
+          params.headers = headersObj;
+        }
+
         return {
           id: step.id,
           type: step.type,
           name: step.name,
           action: step.action.type,  // Extract action type from nested object
-          params: step.action.params, // Extract params from nested object
+          params,                    // Use transformed params
           next_step: step.next_step,
           metadata: step.metadata
         };
