@@ -84,6 +84,51 @@
         </div>
       </div>
 
+      <!-- Unknown Answer Behavior Section -->
+      <div class="form-section">
+        <h3 class="section-title">
+          <span class="material-icons">psychology</span>
+          Unknown Answer Behavior
+        </h3>
+        <p class="section-description">
+          Choose how the chatbot responds when it cannot find relevant information in your knowledge base.
+        </p>
+
+        <div class="behavior-options">
+          <label class="behavior-option" [class.selected]="settings.unknownAnswerBehavior === 'decline'">
+            <input
+              type="radio"
+              name="unknownAnswerBehavior"
+              value="decline"
+              [(ngModel)]="settings.unknownAnswerBehavior"
+            />
+            <div class="option-content">
+              <div class="option-header">
+                <span class="material-icons">block</span>
+                <strong>Politely Decline</strong>
+              </div>
+              <p>The bot will say it doesn't have that information and suggest contacting your organization directly. Best for accuracy-critical use cases.</p>
+            </div>
+          </label>
+
+          <label class="behavior-option" [class.selected]="settings.unknownAnswerBehavior === 'best_effort'">
+            <input
+              type="radio"
+              name="unknownAnswerBehavior"
+              value="best_effort"
+              [(ngModel)]="settings.unknownAnswerBehavior"
+            />
+            <div class="option-content">
+              <div class="option-header">
+                <span class="material-icons">lightbulb</span>
+                <strong>Best Effort (General Knowledge)</strong>
+              </div>
+              <p>The bot will attempt to answer from general knowledge, clearly marked with a disclaimer. Best for broader helpfulness.</p>
+            </div>
+          </label>
+        </div>
+      </div>
+
       <!-- Color Configuration Section -->
       <div class="form-section">
         <h3 class="section-title">

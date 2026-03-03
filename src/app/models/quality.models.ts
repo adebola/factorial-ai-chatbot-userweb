@@ -50,6 +50,8 @@ export interface RAGQualityMetrics {
   sources_cited?: number;
   answer_length?: number;
   response_time_ms?: number;
+  user_question?: string;
+  is_knowledge_gap: boolean;
   has_low_confidence: boolean;
   has_poor_retrieval: boolean;
   has_slow_response: boolean;
@@ -114,6 +116,8 @@ export interface LowQualityMessage {
   answer_confidence?: number;
   retrieval_score?: number;
   response_time_ms?: number;
+  user_question?: string;
+  is_knowledge_gap?: boolean;
   created_at: string;
 }
 

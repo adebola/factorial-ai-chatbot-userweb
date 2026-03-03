@@ -472,6 +472,24 @@
             color: #666;
           }
 
+          &.user-question {
+            max-width: 300px;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+            color: #334155;
+          }
+
+          .gap-badge {
+            display: inline-flex;
+            align-items: center;
+            color: #e65100;
+
+            .material-icons {
+              font-size: 1.1rem;
+            }
+          }
+
           .score-badge {
             padding: 0.25rem 0.75rem;
             border-radius: 12px;

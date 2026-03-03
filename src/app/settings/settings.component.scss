@@ -605,6 +605,67 @@
   }
 }
 
+// Unknown Answer Behavior radio card styles
+.behavior-options {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+
+  .behavior-option {
+    display: flex;
+    align-items: flex-start;
+    gap: 0.75rem;
+    padding: 1rem 1.25rem;
+    border: 2px solid #e2e8f0;
+    border-radius: 8px;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    background: white;
+
+    &:hover {
+      border-color: #94a3b8;
+    }
+
+    &.selected {
+      border-color: #2B55FF;
+      background: #f0f4ff;
+    }
+
+    input[type="radio"] {
+      margin-top: 0.25rem;
+      accent-color: #2B55FF;
+    }
+
+    .option-content {
+      flex: 1;
+
+      .option-header {
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+        margin-bottom: 0.25rem;
+
+        .material-icons {
+          font-size: 1.1rem;
+          color: #475569;
+        }
+
+        strong {
+          color: #1e293b;
+          font-size: 0.95rem;
+        }
+      }
+
+      p {
+        margin: 0;
+        color: #64748b;
+        font-size: 0.85rem;
+        line-height: 1.4;
+      }
+    }
+  }
+}
+
 .api-info {
   margin-top: 2rem;
   background: #f8f9fa;

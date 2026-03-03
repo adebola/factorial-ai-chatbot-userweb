@@ -147,18 +147,19 @@
         <table class="messages-table">
           <thead>
             <tr>
-              <th>Message ID</th>
-              <th>Session ID</th>
+              <th>User Question</th>
               <th>Confidence</th>
               <th>Retrieval Score</th>
               <th>Response Time</th>
+              <th>Gap</th>
               <th>Created At</th>
             </tr>
           </thead>
           <tbody>
             <tr *ngFor="let message of lowQualityMessages">
-              <td class="message-id">{{ message.message_id.substring(0, 8) }}...</td>
-              <td class="session-id">{{ message.session_id.substring(0, 8) }}...</td>
+              <td class="user-question" [title]="message.user_question || ''">
+                {{ message.user_question ? (message.user_question.length > 60 ? message.user_question.substring(0, 60) + '...' : message.user_question) : message.message_id.substring(0, 8) + '...' }}
+              </td>
               <td>
                 <span class="score-badge" [ngClass]="getScoreClass(message.answer_confidence)">
                   {{ formatScore(message.answer_confidence) }}
@@ -170,6 +171,11 @@
                 </span>
               </td>
               <td>{{ message.response_time_ms ? message.response_time_ms + 'ms' : 'N/A' }}</td>
+              <td>
+                <span *ngIf="message.is_knowledge_gap" class="gap-badge" title="Knowledge gap detected">
+                  <span class="material-icons">report_problem</span>
+                </span>
+              </td>
               <td>{{ formatDateTime(message.created_at) }}</td>
             </tr>
           </tbody>

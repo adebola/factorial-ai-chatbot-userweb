@@ -6,6 +6,8 @@ import { environment } from '../../environments/environment';
 import { AuthService } from './auth.service';
 
 // Updated interface to match authorization-server2 backend
+export type UnknownAnswerBehavior = 'decline' | 'best_effort';
+
 export interface TenantSettings {
   id?: string;
   tenantId: string;
@@ -16,6 +18,7 @@ export interface TenantSettings {
   welcomeMessage: string;
   chatWindowTitle: string;
   chatLogo?: ChatLogoInfo;
+  unknownAnswerBehavior?: UnknownAnswerBehavior;
   additionalSettings?: Record<string, any>;
   isActive?: boolean;
   createdAt?: string;
@@ -41,6 +44,7 @@ export interface SettingsUpdate {
   hoverText?: string;
   welcomeMessage?: string;
   chatWindowTitle?: string;
+  unknownAnswerBehavior?: UnknownAnswerBehavior;
   additionalSettings?: Record<string, any>;
   allowAuthentication?: boolean;
   authAuthorizationEndpoint?: string;
