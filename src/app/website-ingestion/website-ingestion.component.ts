@@ -392,7 +392,7 @@ export class WebsiteIngestionComponent implements OnInit, OnDestroy {
   }
 
   getProgressPercentage(ingestion: WebsiteIngestion): number {
-    const limit = ingestion.max_pages_limit || ingestion.pages_discovered;
+    const limit = ingestion.pages_discovered;
     if (!limit) return 0;
     return Math.min(100, Math.round((ingestion.pages_processed / limit) * 100));
   }

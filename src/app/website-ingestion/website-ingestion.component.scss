@@ -399,6 +399,12 @@
         color: #e65100;
         border: 1px solid #ffcc80;
         margin-top: 0.25rem;
+
+        &.within-limit {
+          background: #e8f5e9;
+          color: #2e7d32;
+          border-color: #a5d6a7;
+        }
       }
 
       .urls-found-text {
