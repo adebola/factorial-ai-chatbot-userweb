@@ -73,6 +73,12 @@ export class SideMenuComponent implements OnInit {
       active: false
     },
     {
+      label: 'Services',
+      icon: 'dns',
+      route: '/services',
+      active: false
+    },
+    {
       label: 'Plans',
       icon: 'workspace_premium',
       route: '/plans',

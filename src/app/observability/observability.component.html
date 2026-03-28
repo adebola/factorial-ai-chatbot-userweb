@@ -1,0 +1,75 @@
+<!-- Slide-over panel triggered from service card -->
+<div class="backends-overlay" *ngIf="visible" (click)="onOverlayClick($event)">
+  <div class="backends-panel">
+    <!-- Panel Header -->
+    <div class="panel-header">
+      <div class="panel-title">
+        <span class="material-icons">monitoring</span>
+        <div>
+          <h2>{{ serviceName }} Backends</h2>
+          <p class="panel-subtitle">Configured monitoring endpoints</p>
+        </div>
+      </div>
+      <button class="close-btn" (click)="close()">
+        <span class="material-icons">close</span>
+      </button>
+    </div>
+
+    <!-- Panel Body -->
+    <div class="panel-body">
+      <!-- Loading -->
+      <div class="panel-loading" *ngIf="loading">
+        <div class="loading-spinner"></div>
+        <p>Loading backends...</p>
+      </div>
+
+      <!-- Error -->
+      <div class="panel-error" *ngIf="!loading && error">
+        <span class="material-icons">error_outline</span>
+        <p>{{ error }}</p>
+        <button class="retry-btn" (click)="loadBackends()">
+          <span class="material-icons">refresh</span>
+          Retry
+        </button>
+      </div>
+
+      <!-- Backend List -->
+      <div class="backend-list" *ngIf="!loading && !error && backends.length > 0">
+        <div class="backend-item" *ngFor="let backend of backends"
+             [class.inactive]="!backend.is_active">
+          <div class="backend-item-icon" [ngClass]="'icon-' + backend.backend_type">
+            <span class="material-icons">{{ getBackendIcon(backend.backend_type) }}</span>
+          </div>
+          <div class="backend-item-info">
+            <div class="backend-item-header">
+              <strong>{{ getBackendLabel(backend.backend_type) }}</strong>
+              <span class="status-dot" [class.active]="backend.is_active" [class.inactive]="!backend.is_active"></span>
+            </div>
+            <span class="backend-url" *ngIf="backend.url">{{ backend.url }}</span>
+            <span class="backend-url empty" *ngIf="!backend.url">No URL configured</span>
+            <div class="backend-meta">
+              <span class="meta-tag">
+                <span class="material-icons">lock</span>
+                {{ backend.auth_type }}
+              </span>
+              <span class="meta-tag" *ngIf="backend.verify_ssl">
+                <span class="material-icons">verified</span>
+                SSL
+              </span>
+              <span class="meta-tag">
+                <span class="material-icons">timer</span>
+                {{ backend.timeout_seconds }}s
+              </span>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Empty -->
+      <div class="panel-empty" *ngIf="!loading && !error && backends.length === 0">
+        <span class="material-icons">info</span>
+        <p>No backends configured yet. Contact your system administrator.</p>
+      </div>
+    </div>
+  </div>
+</div>

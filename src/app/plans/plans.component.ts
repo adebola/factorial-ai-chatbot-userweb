@@ -445,7 +445,7 @@ export class PlansComponent implements OnInit {
     this.processingPayment = true;
     this.error = null;
 
-    // Convert amount to kobo (Paystack expects amount in smallest currency unit)
+    // Convert amount to kobo (Paystack expects amount in the smallest currency unit)
     const amountInKobo = Math.round(this.switchPreview.billing_info.prorated_amount * 100);
 
     // Generate unique payment reference
@@ -469,12 +469,12 @@ export class PlansComponent implements OnInit {
         this.executePlanSwitch(response.reference);
       },
       onClose: () => {
-        // Payment cancelled by user
+        // Payment cancelled by a user
         console.log('Payment cancelled');
         this.processingPayment = false;
         this.error = 'Payment was cancelled. Your plan has not been changed.';
       }
-    });
+    }).then(r => { console.debug(r)});
   }
 
   // Close the payment modal

@@ -1,0 +1,109 @@
+<div class="services-content">
+  <!-- Header -->
+  <div class="services-header">
+    <div class="header-content">
+      <div class="header-info">
+        <div class="title-section">
+          <h1>Your Services</h1>
+          <p class="subtitle">Backends processing queries for your customers</p>
+        </div>
+      </div>
+      <button class="refresh-btn" (click)="loadServices(); loadObservabilityBackends()" [disabled]="loading">
+        <span class="material-icons refresh-icon" [class.spinning]="loading">refresh</span>
+        Refresh
+      </button>
+    </div>
+  </div>
+
+  <!-- Loading State -->
+  <div class="loading-container" *ngIf="loading">
+    <div class="loading-spinner"></div>
+    <p>Loading services...</p>
+  </div>
+
+  <!-- Error State -->
+  <div class="error-container" *ngIf="!loading && error">
+    <span class="material-icons error-icon">error_outline</span>
+    <h3>Something went wrong</h3>
+    <p>{{ error }}</p>
+    <button class="retry-btn" (click)="loadServices()">
+      <span class="material-icons">refresh</span>
+      Try Again
+    </button>
+  </div>
+
+  <!-- Services Grid -->
+  <div class="services-grid" *ngIf="!loading && !error">
+    <!-- Standard services from agentic-services registry -->
+    <div class="service-card" *ngFor="let service of services" [class.core-service]="service.category === 'core'">
+      <div class="service-card-header">
+        <div class="service-icon" [ngClass]="'icon-' + service.category">
+          <span class="material-icons">{{ getCategoryIcon(service.category) }}</span>
+        </div>
+        <span class="category-badge" [ngClass]="'badge-' + service.category">
+          {{ getCategoryLabel(service.category) }}
+        </span>
+      </div>
+
+      <div class="service-card-body">
+        <h3 class="service-name">{{ service.name }}</h3>
+        <p class="service-description" *ngIf="service.description">{{ service.description }}</p>
+        <p class="service-description empty" *ngIf="!service.description">No description available.</p>
+      </div>
+
+      <div class="service-card-footer">
+        <span class="status-indicator active" *ngIf="service.category === 'core'">
+          <span class="material-icons">check_circle</span>
+          Always Active
+        </span>
+        <span class="status-indicator active" *ngIf="service.category !== 'core'">
+          <span class="material-icons">check_circle</span>
+          Assigned
+        </span>
+      </div>
+    </div>
+
+    <!-- Observability Agent card — shown only when tenant has backends configured -->
+    <div class="service-card observability-card" *ngIf="hasObservability">
+      <div class="service-card-header">
+        <div class="service-icon icon-observability">
+          <span class="material-icons">monitoring</span>
+        </div>
+        <span class="category-badge badge-agentic">
+          Agentic
+        </span>
+      </div>
+
+      <div class="service-card-body">
+        <h3 class="service-name">Observability Agent</h3>
+        <p class="service-description">AI-powered infrastructure monitoring — queries Prometheus, Elasticsearch, Jaeger, and more via natural language.</p>
+      </div>
+
+      <div class="service-card-footer">
+        <span class="status-indicator active">
+          <span class="material-icons">check_circle</span>
+          {{ observabilityBackends.length }} backend{{ observabilityBackends.length > 1 ? 's' : '' }}
+        </span>
+        <div class="footer-actions">
+          <button class="backends-btn" (click)="viewBackends($event)">
+            <span class="material-icons">dns</span>
+            Backends
+          </button>
+          <button class="backends-btn ai-model-btn" routerLink="/ai-model">
+            <span class="material-icons">smart_toy</span>
+            AI Model
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Empty State (only RAG, no agentic services, no observability) -->
+  <div class="empty-notice" *ngIf="!loading && !error && services.length === 1 && !hasObservability">
+    <span class="material-icons">info</span>
+    <p>No additional services have been assigned to your account yet. Contact your administrator to enable agentic services.</p>
+  </div>
+
+  <!-- Backends slide-over panel -->
+  <app-service-backends #backendsPanel></app-service-backends>
+</div>

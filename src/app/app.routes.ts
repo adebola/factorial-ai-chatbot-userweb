@@ -29,6 +29,8 @@ import { PaymentCallbackComponent } from './payment/payment-callback/payment-cal
 import { PaymentHistoryComponent } from './payment/payment-history/payment-history.component';
 import { InvoiceListComponent } from './invoices/invoice-list/invoice-list.component';
 import { InvoiceDetailsComponent } from './invoices/invoice-details/invoice-details.component';
+import { ServicesOverviewComponent } from './services-overview/services-overview.component';
+import { LLMSelectionComponent } from './llm-selection/llm-selection.component';
 import { authGuard } from './guards/auth.guard';
 
 export const routes: Routes = [
@@ -58,8 +60,10 @@ export const routes: Routes = [
       { path: 'workflows/:id', component: WorkflowDetailsComponent },
       { path: 'messages', component: MessagesComponent },
       { path: 'communications', component: CommunicationsComponent },
+      { path: 'services', component: ServicesOverviewComponent },
       { path: 'plans', component: PlansComponent },
       { path: 'settings', component: SettingsComponent },
+      { path: 'ai-model', component: LLMSelectionComponent },
       // Billing & Payment Routes
       { path: 'payment/callback', component: PaymentCallbackComponent },
       { path: 'payment/history', component: PaymentHistoryComponent },

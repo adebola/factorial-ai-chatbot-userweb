@@ -131,9 +131,16 @@
         </option>
       </select>
 
-      <small *ngIf="actionGroup.get('type')?.value === 'api_call'" class="help-text">
-        API Call actions use POST method only.
-      </small>
+      <!-- HTTP Method Selector (for API Call actions) -->
+      <div *ngIf="actionGroup.get('type')?.value === 'api_call'" class="form-group" formGroupName="params">
+        <label>HTTP Method</label>
+        <select formControlName="method" class="form-select">
+          <option *ngFor="let m of httpMethods" [value]="m.value">{{ m.label }}</option>
+        </select>
+        <small class="help-text">
+          {{ selectedHttpMethod === 'GET' ? 'Body fields will be sent as query parameters.' : 'Body fields will be sent as JSON in the request body.' }}
+        </small>
+      </div>
 
       <!-- Action Parameters -->
       <div formGroupName="params" class="action-params">
@@ -170,9 +177,9 @@
           </button>
         </div>
 
-        <!-- Body Key-Value Pairs -->
+        <!-- Body / Query Parameters Key-Value Pairs -->
         <div *ngIf="hasKvFields()" class="param-item kv-section">
-          <label>Body</label>
+          <label>{{ selectedHttpMethod === 'GET' ? 'Query Parameters' : 'Body' }}</label>
           <small class="help-text">Use <code>{{"{{variable_name}}"}}</code> syntax in values to reference workflow variables.</small>
           <div formArrayName="body" class="kv-container">
             <div *ngFor="let pair of bodyKvArray.controls; let i = index"

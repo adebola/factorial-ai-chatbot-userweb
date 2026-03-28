@@ -19,7 +19,12 @@ export class WorkflowStepEditorComponent implements OnInit {
   actionTypes = [
     { value: 'log', label: 'Log', description: 'Log information for debugging' },
     { value: 'send_email', label: 'Send Email', description: 'Send an email notification' },
-    { value: 'api_call', label: 'API Call', description: 'Make an outbound POST request to an external API' }
+    { value: 'api_call', label: 'API Call', description: 'Make an outbound HTTP request to an external API' }
+  ];
+
+  httpMethods = [
+    { value: 'POST', label: 'POST' },
+    { value: 'GET', label: 'GET' }
   ];
 
   constructor(private fb: FormBuilder) {}
@@ -206,6 +211,10 @@ export class WorkflowStepEditorComponent implements OnInit {
     return this.actionGroup.get('type')?.value === 'api_call';
   }
 
+  get selectedHttpMethod(): string {
+    return this.actionParamsGroup?.get('method')?.value || 'POST';
+  }
+
   onActionTypeChange(): void {
     const actionType = this.actionGroup.get('type')?.value;
     const paramsGroup = this.actionParamsGroup;
@@ -227,6 +236,7 @@ export class WorkflowStepEditorComponent implements OnInit {
         paramsGroup.addControl('content', this.fb.control(''));
         break;
       case 'api_call':
+        paramsGroup.addControl('method', this.fb.control('POST'));
         paramsGroup.addControl('url', this.fb.control(''));
         paramsGroup.addControl('body', this.fb.array([]));
         paramsGroup.addControl('headers', this.fb.array([]));
@@ -293,7 +303,7 @@ export class WorkflowStepEditorComponent implements OnInit {
   }
 
   getActionParamKeys(): string[] {
-    return Object.keys(this.actionParamsGroup.controls).filter(key => key !== 'body' && key !== 'headers');
+    return Object.keys(this.actionParamsGroup.controls).filter(key => key !== 'body' && key !== 'headers' && key !== 'method');
   }
 
   isFieldRequired(stepType: string, fieldName: string): boolean {

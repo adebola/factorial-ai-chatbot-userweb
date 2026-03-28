@@ -1,0 +1,136 @@
+<div class="llm-selection-container">
+  <!-- Page Header -->
+  <div class="page-header">
+    <h2>
+      <span class="material-icons">smart_toy</span>
+      Observability AI Model
+    </h2>
+    <p>Select the AI model used by the observability agent for infrastructure monitoring queries</p>
+  </div>
+
+  <!-- Messages -->
+  <div *ngIf="errorMessage" class="error-message">
+    <p>{{errorMessage}}</p>
+    <button (click)="clearMessages()" class="clear-btn">Clear</button>
+  </div>
+
+  <div *ngIf="successMessage" class="success-message">
+    <p>{{successMessage}}</p>
+    <button (click)="clearMessages()" class="clear-btn">Clear</button>
+  </div>
+
+  <!-- Loading State -->
+  <div *ngIf="isLoading" class="loading-container">
+    <div class="loading-spinner"></div>
+    <p>Loading available models...</p>
+  </div>
+
+  <!-- Content -->
+  <div *ngIf="!isLoading" class="selection-form">
+    <!-- Current Selection Banner -->
+    <div *ngIf="currentSelection" class="current-selection-banner">
+      <span class="material-icons">check_circle</span>
+      <div class="banner-text">
+        <strong>Current model:</strong> {{ currentSelection.display_name }}
+        <span class="model-detail">({{ currentSelection.provider }} / {{ currentSelection.model_id }})</span>
+      </div>
+      <button (click)="removeSelection()" class="remove-btn" [disabled]="isSaving">Reset to Default</button>
+    </div>
+
+    <!-- Provider Cards -->
+    <div class="form-section">
+      <h3 class="section-title">
+        <span class="material-icons">dns</span>
+        Available Models
+      </h3>
+      <p class="section-description">Select an AI model for your observability agent. This does not affect the RAG chat pipeline.</p>
+
+      <div *ngIf="providers.length === 0" class="empty-state">
+        <span class="material-icons">info</span>
+        <p>No AI models available yet. Please contact your system administrator.</p>
+      </div>
+
+      <div class="provider-grid">
+        <div *ngFor="let provider of providers"
+             class="provider-card"
+             [class.selected]="selectedProviderId === provider.id"
+             (click)="selectProvider(provider)">
+          <div class="card-header">
+            <span class="material-icons provider-icon">{{ getProviderIcon(provider.provider) }}</span>
+            <span class="provider-badge">{{ provider.provider }}</span>
+          </div>
+          <h4 class="card-title">{{ provider.display_name }}</h4>
+          <div class="card-details">
+            <span class="model-id">{{ provider.model_id }}</span>
+            <span *ngIf="provider.base_url" class="base-url">{{ provider.base_url }}</span>
+          </div>
+          <div class="card-footer">
+            <span *ngIf="!provider.requires_api_key" class="key-badge no-key">No API Key Needed</span>
+            <span *ngIf="provider.requires_api_key && provider.has_system_api_key" class="key-badge has-key">System Key Available</span>
+            <span *ngIf="provider.requires_api_key && !provider.has_system_api_key" class="key-badge needs-key">API Key Required</span>
+          </div>
+          <div *ngIf="selectedProviderId === provider.id" class="selected-indicator">
+            <span class="material-icons">check_circle</span>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Configuration Section -->
+    <div *ngIf="selectedProviderId" class="form-section">
+      <h3 class="section-title">
+        <span class="material-icons">tune</span>
+        Configuration
+      </h3>
+
+      <div class="form-row">
+        <!-- API Key -->
+        <div class="form-group" *ngIf="getSelectedProvider()?.requires_api_key">
+          <label for="apiKey">API Key</label>
+          <input
+            type="password"
+            id="apiKey"
+            name="apiKey"
+            [(ngModel)]="apiKey"
+            class="form-control"
+            [placeholder]="currentSelection?.has_tenant_api_key ? 'Leave empty to keep existing key' : 'Enter your API key'"
+          />
+          <small class="form-text" *ngIf="getSelectedProvider()?.has_system_api_key">
+            A system-level key is available. Provide your own to override it.
+          </small>
+          <small class="form-text" *ngIf="needsApiKey() && !currentSelection?.has_tenant_api_key">
+            This provider requires an API key. No system key is configured.
+          </small>
+        </div>
+
+        <!-- Temperature -->
+        <div class="form-group">
+          <label for="temperature">Temperature</label>
+          <input
+            type="number"
+            id="temperature"
+            name="temperature"
+            [(ngModel)]="temperature"
+            class="form-control"
+            min="0"
+            max="2"
+            step="0.1"
+            placeholder="0"
+          />
+          <small class="form-text">0 = deterministic, 1 = creative, 2 = very random. Recommended: 0 for observability.</small>
+        </div>
+      </div>
+    </div>
+
+    <!-- Save Button -->
+    <div *ngIf="selectedProviderId" class="action-bar">
+      <button
+        (click)="saveSelection()"
+        class="save-btn"
+        [disabled]="isSaving || !canSave()">
+        <div *ngIf="isSaving" class="loading-spinner-small"></div>
+        {{ isSaving ? 'Saving...' : (currentSelection ? 'Update Selection' : 'Save Selection') }}
+      </button>
+    </div>
+  </div>
+</div>
