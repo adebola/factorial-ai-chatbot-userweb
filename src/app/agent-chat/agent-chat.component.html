@@ -1,0 +1,202 @@
+<div class="agent-chat-container">
+
+  <!-- Session Sidebar -->
+  <div class="session-sidebar" [class.collapsed]="!showSidebar">
+    <div class="sidebar-header">
+      <span>Sessions</span>
+      <button class="icon-btn" (click)="startNewSession()" title="New session">
+        <span class="material-icons">add</span>
+      </button>
+    </div>
+    <div class="session-list">
+      <div class="session-item"
+           *ngFor="let session of sessions"
+           [class.active]="session.id === activeSession?.id"
+           (click)="switchSession(session.id)">
+        <span class="material-icons session-icon">{{ getSessionStatusIcon(session.status) }}</span>
+        <div class="session-info">
+          <span class="session-date">{{ session.created_at | date:'MMM d, HH:mm' }}</span>
+          <span class="session-meta">{{ session.status }}
+            <span *ngIf="session.message_count"> · {{ session.message_count }} msgs</span>
+          </span>
+        </div>
+      </div>
+      <div class="empty-sessions" *ngIf="sessions.length === 0">No sessions yet</div>
+    </div>
+  </div>
+
+  <!-- Main Chat Area -->
+  <div class="chat-main">
+
+    <!-- Chat Header -->
+    <div class="chat-header">
+      <div class="header-left">
+        <button class="icon-btn" (click)="goBack()" title="Back to services">
+          <span class="material-icons">arrow_back</span>
+        </button>
+        <button class="icon-btn sidebar-toggle" (click)="toggleSidebar()" title="Toggle sessions">
+          <span class="material-icons">{{ showSidebar ? 'menu_open' : 'menu' }}</span>
+        </button>
+        <div class="header-agent">
+          <span class="material-icons agent-icon">psychology</span>
+          <div>
+            <span class="agent-name">{{ serviceKey | titlecase }} Agent</span>
+            <span class="connection-badge" [ngClass]="connectionStatus">{{ connectionStatus }}</span>
+          </div>
+        </div>
+      </div>
+      <div class="header-right">
+        <!-- Context indicator -->
+        <div class="context-indicator" *ngIf="activeSession?.context_limit_tokens">
+          <div class="context-bar" [ngClass]="contextBarClass">
+            <div class="context-fill" [style.width.%]="contextPercentage"></div>
+          </div>
+          <span class="context-label">
+            {{ activeSession!.total_tokens_used | number }} / {{ activeSession!.context_limit_tokens | number }}
+          </span>
+        </div>
+        <!-- Export -->
+        <div class="export-actions">
+          <button class="export-btn" (click)="exportSession('pdf')" title="Export PDF">
+            <span class="material-icons">picture_as_pdf</span>
+          </button>
+          <button class="export-btn" (click)="exportSession('docx')" title="Export Word">
+            <span class="material-icons">description</span>
+          </button>
+          <button class="export-btn" (click)="exportSession('pptx')" title="Export PowerPoint">
+            <span class="material-icons">slideshow</span>
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Session boundary marker -->
+    <div class="session-boundary" *ngIf="activeSession?.parent_session_id">
+      <span class="material-icons">sync</span>
+      Continued from previous session (context carried over)
+    </div>
+
+    <!-- Messages -->
+    <div class="messages-container" #messagesContainer>
+      <div class="message" *ngFor="let msg of messages" [ngClass]="'message-' + msg.role">
+        <div class="message-avatar">
+          <span class="material-icons">{{ msg.role === 'user' ? 'person' : 'smart_toy' }}</span>
+        </div>
+        <div class="message-body">
+          <div class="message-header">
+            <span class="role-label">{{ msg.role === 'user' ? 'You' : 'Agent' }}</span>
+            <span class="timestamp">{{ msg.created_at | date:'HH:mm' }}</span>
+          </div>
+
+          <!-- User messages: plain text -->
+          <div class="user-text" *ngIf="msg.role === 'user'">{{ msg.content }}</div>
+
+          <!-- Agent messages: rich blocks or fallback -->
+          <ng-container *ngIf="msg.role !== 'user'">
+            <ng-container *ngIf="msg.structured_blocks && msg.structured_blocks.length > 0; else plainText">
+              <div *ngFor="let block of msg.structured_blocks" class="content-block">
+
+                <div *ngIf="block.type === 'text'" class="block-text" [innerHTML]="renderMarkdown(block.content)"></div>
+
+                <div *ngIf="block.type === 'table' && block.data?.['headers']" class="block-table">
+                  <div class="table-scroll">
+                    <table>
+                      <thead>
+                        <tr><th *ngFor="let h of block.data!['headers']">{{ h }}</th></tr>
+                      </thead>
+                      <tbody>
+                        <tr *ngFor="let row of block.data!['rows']?.slice(0, 50)">
+                          <td *ngFor="let cell of row">{{ cell }}</td>
+                        </tr>
+                      </tbody>
+                    </table>
+                  </div>
+                </div>
+
+                <div *ngIf="block.type === 'code'" class="block-code">
+                  <div class="code-lang" *ngIf="block.language">{{ block.language }}</div>
+                  <pre><code>{{ block.content }}</code></pre>
+                </div>
+
+                <div *ngIf="block.type === 'alert'" class="block-alert" [ngClass]="'alert-' + (block.severity || 'info')">
+                  <span class="material-icons alert-icon">{{ getAlertIcon(block.severity) }}</span>
+                  <span [innerHTML]="renderMarkdown(block.content)"></span>
+                </div>
+
+                <div *ngIf="block.type === 'chart'" class="block-placeholder">
+                  <span class="material-icons">bar_chart</span>
+                  Chart: {{ block.chart_type || 'data' }}
+                </div>
+
+                <div *ngIf="block.type === 'diagram'" class="block-placeholder">
+                  <span class="material-icons">schema</span>
+                  Diagram
+                </div>
+
+                <div *ngIf="block.type === 'image'" class="block-image">
+                  <img [src]="block.url" [alt]="block.alt || 'Image'" loading="lazy" />
+                </div>
+              </div>
+            </ng-container>
+            <ng-template #plainText>
+              <div class="block-text" [innerHTML]="renderMarkdown(msg.content)"></div>
+            </ng-template>
+
+            <!-- Tool calls -->
+            <div class="tool-calls" *ngIf="msg.tool_calls && msg.tool_calls.length > 0">
+              <details *ngFor="let tc of msg.tool_calls" class="tool-call">
+                <summary>
+                  <span class="material-icons tool-icon">build</span>
+                  {{ tc.tool }}
+                  <span class="tool-duration" *ngIf="tc.duration_ms">{{ tc.duration_ms | number:'1.0-0' }}ms</span>
+                </summary>
+                <div class="tool-detail">
+                  <div *ngIf="tc.input"><strong>Input:</strong><pre>{{ tc.input | json }}</pre></div>
+                  <div *ngIf="tc.output"><strong>Output:</strong><pre>{{ tc.output.slice(0, 1000) }}</pre></div>
+                </div>
+              </details>
+            </div>
+          </ng-container>
+        </div>
+      </div>
+
+      <!-- Typing indicator -->
+      <div class="message message-assistant" *ngIf="isTyping">
+        <div class="message-avatar">
+          <span class="material-icons">smart_toy</span>
+        </div>
+        <div class="message-body typing-indicator">
+          <div class="typing-dots">
+            <span></span><span></span><span></span>
+          </div>
+          Agent is thinking...
+        </div>
+      </div>
+
+      <!-- Empty state -->
+      <div class="empty-chat" *ngIf="messages.length === 0 && !isTyping && connectionStatus === 'connected'">
+        <span class="material-icons empty-icon">psychology</span>
+        <h3>Start a conversation</h3>
+        <p>Ask the {{ serviceKey }} agent anything.</p>
+      </div>
+    </div>
+
+    <!-- Input Area -->
+    <div class="chat-input">
+      <div class="input-row">
+        <textarea
+          [(ngModel)]="inputText"
+          placeholder="Ask a question..."
+          (keydown)="onKeydown($event)"
+          rows="1"
+          [disabled]="connectionStatus !== 'connected'">
+        </textarea>
+        <button class="send-btn"
+                (click)="sendMessage()"
+                [disabled]="!inputText.trim() || connectionStatus !== 'connected'">
+          <span class="material-icons">send</span>
+        </button>
+      </div>
+    </div>
+  </div>
+</div>

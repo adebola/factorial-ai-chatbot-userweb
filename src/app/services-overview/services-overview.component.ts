@@ -1,6 +1,6 @@
 import { Component, OnInit, ViewChild } from '@angular/core';
 import { CommonModule } from '@angular/common';
-import { RouterModule } from '@angular/router';
+import { Router, RouterModule } from '@angular/router';
 import { TenantServiceService } from '../services/tenant-service.service';
 import { TenantService } from '../models/service.models';
 import { ObservabilityService, ObservabilityBackend } from '../services/observability.service';
@@ -25,7 +25,8 @@ export class ServicesOverviewComponent implements OnInit {
 
   constructor(
     private tenantServiceService: TenantServiceService,
-    private observabilityService: ObservabilityService
+    private observabilityService: ObservabilityService,
+    private router: Router
   ) {}
 
   ngOnInit(): void {
@@ -97,5 +98,10 @@ export class ServicesOverviewComponent implements OnInit {
       case 'analytics': return 'Analytics';
       default: return category.charAt(0).toUpperCase() + category.slice(1);
     }
+  }
+
+  openChat(serviceKey: string, event: Event): void {
+    event.stopPropagation();
+    this.router.navigate(['/agents', serviceKey, 'chat']);
   }
 }

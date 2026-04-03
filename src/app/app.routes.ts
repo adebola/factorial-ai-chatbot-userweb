@@ -31,6 +31,7 @@ import { InvoiceListComponent } from './invoices/invoice-list/invoice-list.compo
 import { InvoiceDetailsComponent } from './invoices/invoice-details/invoice-details.component';
 import { ServicesOverviewComponent } from './services-overview/services-overview.component';
 import { LLMSelectionComponent } from './llm-selection/llm-selection.component';
+import { AgentChatComponent } from './agent-chat/agent-chat.component';
 import { authGuard } from './guards/auth.guard';
 
 export const routes: Routes = [
@@ -61,6 +62,8 @@ export const routes: Routes = [
       { path: 'messages', component: MessagesComponent },
       { path: 'communications', component: CommunicationsComponent },
       { path: 'services', component: ServicesOverviewComponent },
+      { path: 'agents/:serviceKey/chat', component: AgentChatComponent },
+      { path: 'agents/:serviceKey/chat/:sessionId', component: AgentChatComponent },
       { path: 'plans', component: PlansComponent },
       { path: 'settings', component: SettingsComponent },
       { path: 'ai-model', component: LLMSelectionComponent },

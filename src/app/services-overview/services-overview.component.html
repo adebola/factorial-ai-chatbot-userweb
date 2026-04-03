@@ -60,6 +60,12 @@
           <span class="material-icons">check_circle</span>
           Assigned
         </span>
+        <div class="footer-actions" *ngIf="service.category === 'agentic'">
+          <button class="chat-btn" (click)="openChat(service.service_key, $event)">
+            <span class="material-icons">chat</span>
+            Open Chat
+          </button>
+        </div>
       </div>
     </div>
 
@@ -85,6 +91,10 @@
           {{ observabilityBackends.length }} backend{{ observabilityBackends.length > 1 ? 's' : '' }}
         </span>
         <div class="footer-actions">
+          <button class="chat-btn" (click)="openChat('observability', $event)">
+            <span class="material-icons">chat</span>
+            Open Chat
+          </button>
           <button class="backends-btn" (click)="viewBackends($event)">
             <span class="material-icons">dns</span>
             Backends
