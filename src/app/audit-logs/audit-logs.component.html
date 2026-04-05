@@ -1,0 +1,284 @@
+<div class="services-content">
+  <!-- Header -->
+  <div class="services-header">
+    <div class="header-content">
+      <div class="header-info">
+        <div class="title-section">
+          <h1>Audit Logs</h1>
+          <p class="subtitle">Track and review activity across your tenant</p>
+        </div>
+      </div>
+      <button class="refresh-btn" (click)="loadEvents(); loadStats()" [disabled]="isLoading">
+        <span class="material-icons refresh-icon" [class.spinning]="isLoading">refresh</span>
+        Refresh
+      </button>
+    </div>
+  </div>
+
+  <!-- Stats Summary -->
+  <div class="stats-grid" *ngIf="stats">
+    <div class="stat-card">
+      <div class="stat-icon-box stat-icon-total">
+        <span class="material-icons">summarize</span>
+      </div>
+      <div class="stat-content">
+        <h3>{{ stats.total_events | number }}</h3>
+        <p>Total Events</p>
+      </div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-icon-box stat-icon-security">
+        <span class="material-icons">shield</span>
+      </div>
+      <div class="stat-content">
+        <h3>{{ getStatCount('security') | number }}</h3>
+        <p>Security Events</p>
+      </div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-icon-box stat-icon-data">
+        <span class="material-icons">storage</span>
+      </div>
+      <div class="stat-content">
+        <h3>{{ getStatCount('data') | number }}</h3>
+        <p>Data Events</p>
+      </div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-icon-box stat-icon-system">
+        <span class="material-icons">settings</span>
+      </div>
+      <div class="stat-content">
+        <h3>{{ getStatCount('system') | number }}</h3>
+        <p>System Events</p>
+      </div>
+    </div>
+  </div>
+
+  <!-- Error Message -->
+  <div *ngIf="errorMessage" class="error-container compact">
+    <span class="material-icons error-icon">error_outline</span>
+    <p>{{ errorMessage }}</p>
+    <button class="dismiss-btn" (click)="clearError()">
+      <span class="material-icons">close</span>
+    </button>
+  </div>
+
+  <!-- Filter Bar -->
+  <div class="filter-bar">
+    <div class="filter-row">
+      <div class="filter-group">
+        <label for="filterTier">Tier</label>
+        <select id="filterTier" [(ngModel)]="filterTier" class="filter-control">
+          <option value="">All Tiers</option>
+          <option value="security">Security</option>
+          <option value="data">Data</option>
+          <option value="system">System</option>
+          <option value="billing">Billing</option>
+          <option value="admin">Admin</option>
+        </select>
+      </div>
+      <div class="filter-group">
+        <label for="filterService">Source Service</label>
+        <select id="filterService" [(ngModel)]="filterSourceService" class="filter-control">
+          <option value="">All Services</option>
+          <option value="chat-service">Chat Service</option>
+          <option value="onboarding-service">Onboarding Service</option>
+          <option value="billing-service">Billing Service</option>
+          <option value="workflow-service">Workflow Service</option>
+          <option value="auth-service">Auth Service</option>
+        </select>
+      </div>
+      <div class="filter-group">
+        <label for="filterAction">Action Type</label>
+        <select id="filterAction" [(ngModel)]="filterActionType" class="filter-control">
+          <option value="">All Actions</option>
+          <option value="create">Create</option>
+          <option value="update">Update</option>
+          <option value="delete">Delete</option>
+          <option value="login">Login</option>
+          <option value="logout">Logout</option>
+          <option value="access">Access</option>
+          <option value="configure">Configure</option>
+          <option value="subscribe">Subscribe</option>
+          <option value="payment">Payment</option>
+        </select>
+      </div>
+      <div class="filter-group">
+        <label for="filterDateFrom">Date From</label>
+        <input type="date" id="filterDateFrom" [(ngModel)]="filterDateFrom" class="filter-control" />
+      </div>
+      <div class="filter-group">
+        <label for="filterDateTo">Date To</label>
+        <input type="date" id="filterDateTo" [(ngModel)]="filterDateTo" class="filter-control" />
+      </div>
+      <div class="filter-actions">
+        <button class="btn-filter-apply" (click)="applyFilters()">
+          <span class="material-icons">filter_list</span>
+          Apply
+        </button>
+        <button class="btn-filter-clear" (click)="clearFilters()">
+          <span class="material-icons">clear</span>
+          Clear
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Loading State -->
+  <div class="loading-container" *ngIf="isLoading">
+    <div class="loading-spinner"></div>
+    <p>Loading audit events...</p>
+  </div>
+
+  <!-- Events Table -->
+  <div class="table-container" *ngIf="!isLoading">
+    <table class="audit-table">
+      <thead>
+        <tr>
+          <th>Time</th>
+          <th>Action</th>
+          <th>Tier</th>
+          <th>Actor</th>
+          <th>Service</th>
+          <th>Resource</th>
+          <th></th>
+        </tr>
+      </thead>
+      <tbody>
+        <ng-container *ngFor="let event of events">
+          <tr class="event-row" (click)="toggleEventDetail(event.id)" [class.expanded]="isExpanded(event.id)">
+            <td class="date-col">
+              <span class="date-text">{{ formatDate(event.occurred_at) }}</span>
+            </td>
+            <td class="action-col">
+              <div class="action-cell">
+                <span class="material-icons action-icon">{{ getActionIcon(event.action_type) }}</span>
+                <span class="action-label">{{ event.action_type }}</span>
+              </div>
+            </td>
+            <td class="tier-col">
+              <span class="tier-badge" [ngClass]="getTierClass(event.tier)">
+                {{ event.tier }}
+              </span>
+            </td>
+            <td class="actor-col">
+              <span class="actor-email" *ngIf="event.actor_email">{{ event.actor_email }}</span>
+              <span class="actor-system" *ngIf="!event.actor_email">{{ event.actor_type || 'system' }}</span>
+            </td>
+            <td class="service-col">
+              <span class="service-label">{{ event.source_service }}</span>
+            </td>
+            <td class="resource-col">
+              <span class="resource-type">{{ event.resource_type }}</span>
+            </td>
+            <td class="expand-col">
+              <span class="material-icons expand-icon" [class.rotated]="isExpanded(event.id)">expand_more</span>
+            </td>
+          </tr>
+          <!-- Expanded Detail Row -->
+          <tr *ngIf="isExpanded(event.id)" class="detail-row">
+            <td colspan="7">
+              <div class="detail-content">
+                <div class="detail-grid">
+                  <div class="detail-item">
+                    <label>Event ID</label>
+                    <span class="mono">{{ event.event_id }}</span>
+                  </div>
+                  <div class="detail-item">
+                    <label>Resource ID</label>
+                    <span class="mono">{{ event.resource_id || 'N/A' }}</span>
+                  </div>
+                  <div class="detail-item">
+                    <label>Trace ID</label>
+                    <span class="mono">{{ event.trace_id || 'N/A' }}</span>
+                  </div>
+                  <div class="detail-item">
+                    <label>Actor User ID</label>
+                    <span class="mono">{{ event.actor_user_id || 'N/A' }}</span>
+                  </div>
+                  <div class="detail-item">
+                    <label>Actor Type</label>
+                    <span>{{ event.actor_type }}</span>
+                  </div>
+                  <div class="detail-item">
+                    <label>Created At</label>
+                    <span>{{ formatDate(event.created_at) }}</span>
+                  </div>
+                </div>
+                <div class="detail-states" *ngIf="hasState(event.before_state) || hasState(event.after_state)">
+                  <div class="state-block" *ngIf="hasState(event.before_state)">
+                    <h4>Before State</h4>
+                    <pre>{{ event.before_state | json }}</pre>
+                  </div>
+                  <div class="state-block" *ngIf="hasState(event.after_state)">
+                    <h4>After State</h4>
+                    <pre>{{ event.after_state | json }}</pre>
+                  </div>
+                </div>
+                <div class="detail-states" *ngIf="hasState(event.event_metadata)">
+                  <div class="state-block">
+                    <h4>Metadata</h4>
+                    <pre>{{ event.event_metadata | json }}</pre>
+                  </div>
+                </div>
+              </div>
+            </td>
+          </tr>
+        </ng-container>
+      </tbody>
+    </table>
+
+    <!-- Empty State -->
+    <div *ngIf="events.length === 0" class="empty-state">
+      <span class="material-icons empty-icon">policy</span>
+      <h3>No Audit Events Found</h3>
+      <p>No events match your current filters. Try adjusting or clearing filters.</p>
+    </div>
+  </div>
+
+  <!-- Pagination -->
+  <div class="pagination" *ngIf="totalPages > 1 && !isLoading">
+    <div class="pagination-info">
+      Showing {{ ((currentPage - 1) * pageSize) + 1 }}–{{ currentPage * pageSize > totalEvents ? totalEvents : currentPage * pageSize }} of {{ totalEvents }} events
+    </div>
+    <div class="pagination-controls">
+      <button
+        class="page-btn"
+        (click)="goToPage(1)"
+        [disabled]="currentPage === 1"
+      >
+        <span class="material-icons">first_page</span>
+      </button>
+      <button
+        class="page-btn"
+        (click)="goToPage(currentPage - 1)"
+        [disabled]="currentPage === 1"
+      >
+        <span class="material-icons">chevron_left</span>
+      </button>
+      <button
+        *ngFor="let page of visiblePages"
+        class="page-btn"
+        [class.active]="page === currentPage"
+        (click)="goToPage(page)"
+      >
+        {{ page }}
+      </button>
+      <button
+        class="page-btn"
+        (click)="goToPage(currentPage + 1)"
+        [disabled]="currentPage === totalPages"
+      >
+        <span class="material-icons">chevron_right</span>
+      </button>
+      <button
+        class="page-btn"
+        (click)="goToPage(totalPages)"
+        [disabled]="currentPage === totalPages"
+      >
+        <span class="material-icons">last_page</span>
+      </button>
+    </div>
+  </div>
+</div>

@@ -79,6 +79,12 @@ export class SideMenuComponent implements OnInit {
       active: false
     },
     {
+      label: 'Audit Logs',
+      icon: 'policy',
+      route: '/audit-logs',
+      active: false
+    },
+    {
       label: 'Plans',
       icon: 'workspace_premium',
       route: '/plans',

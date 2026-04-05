@@ -30,6 +30,7 @@ import { PaymentHistoryComponent } from './payment/payment-history/payment-histo
 import { InvoiceListComponent } from './invoices/invoice-list/invoice-list.component';
 import { InvoiceDetailsComponent } from './invoices/invoice-details/invoice-details.component';
 import { ServicesOverviewComponent } from './services-overview/services-overview.component';
+import { AuditLogsComponent } from './audit-logs/audit-logs.component';
 import { LLMSelectionComponent } from './llm-selection/llm-selection.component';
 import { AgentChatComponent } from './agent-chat/agent-chat.component';
 import { authGuard } from './guards/auth.guard';
@@ -62,6 +63,7 @@ export const routes: Routes = [
       { path: 'messages', component: MessagesComponent },
       { path: 'communications', component: CommunicationsComponent },
       { path: 'services', component: ServicesOverviewComponent },
+      { path: 'audit-logs', component: AuditLogsComponent },
       { path: 'agents/:serviceKey/chat', component: AgentChatComponent },
       { path: 'agents/:serviceKey/chat/:sessionId', component: AgentChatComponent },
       { path: 'plans', component: PlansComponent },
