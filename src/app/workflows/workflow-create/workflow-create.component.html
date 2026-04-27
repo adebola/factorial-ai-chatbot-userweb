@@ -6,6 +6,14 @@
       <p class="subtitle">{{ isEditing ? 'Modify your workflow configuration' : 'Build a conversational workflow step by step' }}</p>
     </div>
     <div class="header-actions">
+      <a
+        *ngIf="isEditing && workflowId"
+        [routerLink]="['/workflows', workflowId, 'visual']"
+        class="btn-toggle"
+        title="Open visual builder">
+        <span class="material-icons">account_tree</span>
+        Visual builder
+      </a>
       <button (click)="toggleJsonEditor()" class="btn-toggle" [class.active]="showJsonEditor">
         <span class="material-icons">{{ showJsonEditor ? 'edit' : 'code' }}</span>
         {{ showJsonEditor ? 'Form View' : 'JSON View' }}

@@ -1,0 +1,38 @@
+:host {
+  display: contents;
+}
+
+.edge-hit {
+  fill: none;
+  stroke: transparent;
+  stroke-width: 16;
+  cursor: pointer;
+  pointer-events: stroke;
+}
+
+.edge-line {
+  fill: none;
+  stroke: #94a3b8;
+  stroke-width: 2;
+  pointer-events: none;
+  transition: stroke 120ms ease, stroke-width 120ms ease;
+
+  &.draft {
+    stroke: #2B55FF;
+    stroke-dasharray: 6 4;
+  }
+
+  &.highlighted,
+  :host(:hover) & {
+    stroke: #2B55FF;
+    stroke-width: 2.5;
+  }
+
+  &[data-severity='warning'] {
+    stroke: #f59e0b;
+  }
+
+  &[data-severity='error'] {
+    stroke: #ef4444;
+  }
+}

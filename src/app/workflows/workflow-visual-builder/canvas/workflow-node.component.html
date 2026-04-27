@@ -1,0 +1,61 @@
+<div
+  class="wf-node"
+  [class.selected]="selected"
+  [class.kind-start]="node.kind === 'start'"
+  [class.kind-end]="node.kind === 'end'"
+  [class.severity-error]="validation.severity === 'error'"
+  [class.severity-warning]="validation.severity === 'warning'"
+  [attr.data-accent]="accent"
+  [style.width.px]="width"
+  [style.transform]="'translate(' + node.position.x + 'px, ' + node.position.y + 'px)'"
+  (mousedown)="onMouseDown($event)"
+  (click)="onClick($event)">
+  <div class="wf-node-header">
+    <span class="material-icons icon">{{ icon }}</span>
+    <div class="text">
+      <div class="title" [title]="title">{{ title }}</div>
+      <div class="subtitle">{{ subtitle }}</div>
+    </div>
+    <span
+      *ngIf="validation.severity !== 'ok'"
+      class="badge material-icons"
+      [title]="validation.message || ''">
+      {{ validation.severity === 'error' ? 'error' : 'warning' }}
+    </span>
+  </div>
+
+  <div class="wf-node-body" *ngIf="node.kind === 'step' && node.type === StepType.CHOICE">
+    <ng-container *ngFor="let opt of options; let i = index">
+      <div class="option-row">
+        <span class="option-text">{{ opt.text || opt.value || 'Option ' + (i + 1) }}</span>
+        <app-node-port
+          [nodeId]="node.id"
+          side="out"
+          portKind="option"
+          [optionIndex]="i"
+          [connected]="optionConnected(i)"
+          [label]="'Option ' + (i + 1)"
+          (portMouseDown)="forwardPortMouseDown($event)"></app-node-port>
+      </div>
+    </ng-container>
+  </div>
+
+  <app-node-port
+    *ngIf="hasInputPort"
+    class="port-anchor port-anchor-in"
+    [nodeId]="node.id"
+    side="in"
+    portKind="default"
+    label="Input"
+    (portMouseUp)="forwardPortMouseUp($event)"></app-node-port>
+
+  <app-node-port
+    *ngIf="hasDefaultOutPort"
+    class="port-anchor port-anchor-out"
+    [nodeId]="node.id"
+    side="out"
+    portKind="default"
+    [connected]="outgoingDefault"
+    label="Next"
+    (portMouseDown)="forwardPortMouseDown($event)"></app-node-port>
+</div>

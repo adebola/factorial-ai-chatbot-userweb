@@ -1,7 +1,7 @@
 import { Component, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule, ReactiveFormsModule, FormBuilder, FormGroup, Validators, FormArray } from '@angular/forms';
-import { ActivatedRoute, Router } from '@angular/router';
+import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import { WorkflowService } from '../../services/workflow.service';
 import { WorkflowStepEditorComponent } from './workflow-step-editor/workflow-step-editor.component';
 import {
@@ -18,7 +18,7 @@ import {
 
 @Component({
   selector: 'app-workflow-create',
-  imports: [CommonModule, FormsModule, ReactiveFormsModule, WorkflowStepEditorComponent],
+  imports: [CommonModule, FormsModule, ReactiveFormsModule, WorkflowStepEditorComponent, RouterLink],
   templateUrl: './workflow-create.component.html',
   styleUrl: './workflow-create.component.scss'
 })

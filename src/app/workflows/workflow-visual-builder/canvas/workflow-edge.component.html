@@ -1,0 +1,11 @@
+<svg:path
+  class="edge-hit"
+  [attr.d]="path"
+  (click)="onClick($event)"></svg:path>
+<svg:path
+  class="edge-line"
+  [class.draft]="draft"
+  [class.highlighted]="highlighted"
+  [attr.data-severity]="severity"
+  [attr.d]="path"
+  [attr.marker-end]="draft ? null : 'url(#wf-arrow)'"></svg:path>

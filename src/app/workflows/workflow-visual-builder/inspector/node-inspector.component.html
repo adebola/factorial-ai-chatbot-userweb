@@ -1,0 +1,33 @@
+<aside class="inspector">
+  <div class="inspector-header" *ngIf="selected">
+    <span class="material-icons">{{ selected.kind === 'start' ? 'play_circle' : selected.kind === 'end' ? 'stop_circle' : 'tune' }}</span>
+    <div>
+      <div class="title">{{ selected.kind === 'start' ? 'Trigger' : selected.kind === 'end' ? 'End / Fallback' : 'Step settings' }}</div>
+      <div class="subtitle" *ngIf="selected.kind === 'start'">Configure the trigger that starts this workflow.</div>
+      <div class="subtitle" *ngIf="selected.kind === 'end'">Returns control to the AI assistant.</div>
+      <div class="subtitle" *ngIf="selected.kind === 'step'">Edit step properties. Connections are managed on the canvas.</div>
+    </div>
+  </div>
+
+  <div class="inspector-empty" *ngIf="!selected">
+    <span class="material-icons">touch_app</span>
+    <p>Select a node to view its settings.</p>
+    <p class="hint">Drag from the palette on the left to add a step. Drag between ports to connect.</p>
+  </div>
+
+  <div class="inspector-body" *ngIf="selected?.kind === 'start'">
+    <p>Trigger type: <strong>{{ triggerType() }}</strong></p>
+    <p class="muted">Trigger configuration is edited in the form view.</p>
+  </div>
+
+  <div class="inspector-body" *ngIf="selected?.kind === 'end'">
+    <p>Connect any step's output to this node to end the workflow and return control to the AI fallback.</p>
+  </div>
+
+  <div class="inspector-body" *ngIf="selected?.kind === 'step' && stepForm">
+    <app-workflow-step-editor
+      [stepForm]="stepForm"
+      [stepTypes]="stepTypes"
+      [availableSteps]="[]"></app-workflow-step-editor>
+  </div>
+</aside>

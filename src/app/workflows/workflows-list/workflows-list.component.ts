@@ -208,6 +208,10 @@ export class WorkflowsListComponent implements OnInit {
     this.router.navigate(['/workflows', workflowId, 'edit']);
   }
 
+  openVisualBuilder(workflowId: string): void {
+    this.router.navigate(['/workflows', workflowId, 'visual']);
+  }
+
   duplicateWorkflow(workflow: WorkflowSummary): void {
     const newName = `${workflow.name} (Copy)`;
     this.workflowService.duplicateWorkflow(workflow.id, newName).subscribe({

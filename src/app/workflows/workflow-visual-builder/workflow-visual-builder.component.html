@@ -1,0 +1,31 @@
+<div class="builder">
+  <app-workflow-toolbar
+    [workflowName]="workflow?.name || ''"
+    [workflowId]="workflow?.id || null"
+    [dirty]="dirty"
+    [saving]="saving"
+    [statusMessage]="statusMessage"
+    [statusKind]="statusKind"
+    (saveRequested)="onSave()"
+    (fitRequested)="onFit()"
+    (autoLayoutRequested)="onAutoLayout()"></app-workflow-toolbar>
+
+  <div class="workspace">
+    <app-node-palette class="left-panel"></app-node-palette>
+
+    <div class="center-panel">
+      <div class="loading" *ngIf="loading">
+        <span class="material-icons spin">autorenew</span>
+        Loading workflow…
+      </div>
+      <app-workflow-canvas
+        *ngIf="!loading"
+        (nodeSelected)="onNodeSelected($event)"
+        (edgeRequested)="onEdgeRequested($event)"
+        (edgeDeleteRequested)="onEdgeDeleteRequested($event)"
+        (paletteDrop)="onPaletteDrop($event)"></app-workflow-canvas>
+    </div>
+
+    <app-node-inspector class="right-panel"></app-node-inspector>
+  </div>
+</div>

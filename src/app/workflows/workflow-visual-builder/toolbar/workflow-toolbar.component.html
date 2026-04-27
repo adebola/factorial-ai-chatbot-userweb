@@ -1,0 +1,49 @@
+<div class="toolbar">
+  <div class="left">
+    <a class="back-link" routerLink="/workflows" title="Back to workflows">
+      <span class="material-icons">arrow_back</span>
+    </a>
+    <div class="title-block">
+      <div class="title" [title]="workflowName">{{ workflowName || 'Visual Workflow Builder' }}</div>
+      <div class="subtitle">
+        Visual editor
+        <span class="dot" *ngIf="dirty">&middot;</span>
+        <span class="dirty" *ngIf="dirty">unsaved changes</span>
+      </div>
+    </div>
+  </div>
+
+  <div class="status" *ngIf="statusMessage" [attr.data-kind]="statusKind">
+    <span class="material-icons">
+      {{ statusKind === 'success' ? 'check_circle' : statusKind === 'error' ? 'error' : 'info' }}
+    </span>
+    {{ statusMessage }}
+  </div>
+
+  <div class="right">
+    <button type="button" class="btn ghost" (click)="autoLayoutRequested.emit()" title="Auto layout">
+      <span class="material-icons">account_tree</span>
+      Auto layout
+    </button>
+    <button type="button" class="btn ghost" (click)="fitRequested.emit()" title="Fit to content">
+      <span class="material-icons">fit_screen</span>
+      Fit
+    </button>
+    <a
+      *ngIf="workflowId"
+      class="btn ghost"
+      [routerLink]="['/workflows', workflowId, 'edit']"
+      title="Switch to form view">
+      <span class="material-icons">list_alt</span>
+      Form view
+    </a>
+    <button
+      type="button"
+      class="btn primary"
+      [disabled]="!dirty || saving"
+      (click)="saveRequested.emit()">
+      <span class="material-icons">{{ saving ? 'hourglass_empty' : 'save' }}</span>
+      {{ saving ? 'Saving…' : 'Save' }}
+    </button>
+  </div>
+</div>

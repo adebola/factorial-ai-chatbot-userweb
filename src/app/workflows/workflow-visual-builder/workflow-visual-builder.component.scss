@@ -1,0 +1,64 @@
+:host {
+  display: block;
+  height: 100%;
+}
+
+.builder {
+  display: flex;
+  flex-direction: column;
+  height: calc(100vh - 64px);
+  min-height: 0;
+}
+
+.workspace {
+  display: grid;
+  grid-template-columns: 240px 1fr 360px;
+  flex: 1;
+  min-height: 0;
+}
+
+.left-panel {
+  min-width: 0;
+}
+
+.center-panel {
+  position: relative;
+  min-width: 0;
+  background: #f8fafc;
+  overflow: hidden;
+}
+
+.right-panel {
+  min-width: 0;
+}
+
+.loading {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  color: #64748b;
+  font-size: 14px;
+
+  .spin {
+    animation: spin 1.4s linear infinite;
+  }
+}
+
+@keyframes spin {
+  to { transform: rotate(360deg); }
+}
+
+@media (max-width: 1100px) {
+  .workspace {
+    grid-template-columns: 200px 1fr 320px;
+  }
+}
+
+@media (max-width: 900px) {
+  .workspace {
+    grid-template-columns: 60px 1fr 320px;
+  }
+}

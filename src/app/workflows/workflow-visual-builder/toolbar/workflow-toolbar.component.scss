@@ -1,0 +1,131 @@
+:host {
+  display: block;
+}
+
+.toolbar {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  padding: 10px 18px;
+  background: #ffffff;
+  border-bottom: 1px solid #e2e8f0;
+  min-height: 56px;
+}
+
+.left {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  min-width: 0;
+
+  .back-link {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 32px;
+    height: 32px;
+    color: #475569;
+    text-decoration: none;
+    border-radius: 8px;
+
+    &:hover {
+      background: #f1f5f9;
+      color: #0f172a;
+    }
+  }
+
+  .title-block {
+    min-width: 0;
+  }
+
+  .title {
+    font-weight: 600;
+    font-size: 15px;
+    color: #0f172a;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    max-width: 360px;
+  }
+
+  .subtitle {
+    font-size: 12px;
+    color: #64748b;
+
+    .dirty {
+      color: #f59e0b;
+    }
+
+    .dot {
+      margin: 0 6px;
+      color: #cbd5e1;
+    }
+  }
+}
+
+.status {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 13px;
+  color: #475569;
+  justify-content: center;
+
+  &[data-kind='success'] { color: #10b981; }
+  &[data-kind='error']   { color: #ef4444; }
+
+  .material-icons {
+    font-size: 18px;
+  }
+}
+
+.right {
+  margin-left: auto;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 7px 12px;
+  border-radius: 8px;
+  border: 1px solid transparent;
+  font-size: 13px;
+  font-weight: 500;
+  cursor: pointer;
+  text-decoration: none;
+  transition: background 120ms ease, color 120ms ease, border-color 120ms ease;
+
+  .material-icons {
+    font-size: 18px;
+  }
+
+  &.ghost {
+    background: transparent;
+    color: #475569;
+    border-color: #e2e8f0;
+
+    &:hover {
+      background: #f8fafc;
+      color: #0f172a;
+    }
+  }
+
+  &.primary {
+    background: #2B55FF;
+    color: #ffffff;
+
+    &:hover:not(:disabled) {
+      background: #1f44e0;
+    }
+
+    &:disabled {
+      background: #c7d2fe;
+      cursor: not-allowed;
+    }
+  }
+}

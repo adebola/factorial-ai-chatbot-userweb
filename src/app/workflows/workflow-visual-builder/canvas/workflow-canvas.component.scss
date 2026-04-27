@@ -1,0 +1,49 @@
+:host {
+  display: block;
+  width: 100%;
+  height: 100%;
+  position: relative;
+  overflow: hidden;
+}
+
+.canvas-root {
+  position: absolute;
+  inset: 0;
+  background:
+    radial-gradient(circle, rgba(15, 23, 42, 0.08) 1px, transparent 1px) 0 0 / 24px 24px,
+    #f8fafc;
+  cursor: grab;
+  user-select: none;
+  overflow: hidden;
+
+  &:active {
+    cursor: grabbing;
+  }
+}
+
+.edges-layer {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  pointer-events: none;
+
+  // hit areas inside still receive events
+  ::ng-deep .edge-hit {
+    pointer-events: stroke;
+  }
+}
+
+.nodes-layer {
+  position: absolute;
+  top: 0;
+  left: 0;
+  transform-origin: 0 0;
+  pointer-events: none;
+  width: 0;
+  height: 0;
+
+  > * {
+    pointer-events: auto;
+  }
+}

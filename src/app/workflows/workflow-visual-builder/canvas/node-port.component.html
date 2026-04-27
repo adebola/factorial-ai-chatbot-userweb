@@ -1,0 +1,10 @@
+<div
+  class="port port-{{ side }}"
+  [class.connected]="connected"
+  [attr.data-port-kind]="portKind"
+  [attr.data-port-index]="optionIndex"
+  [title]="label || ''"
+  (mousedown)="onMouseDown($event)"
+  (mouseup)="onMouseUp($event)">
+  <div class="port-dot"></div>
+</div>

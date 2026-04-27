@@ -1,0 +1,136 @@
+:host {
+  display: block;
+}
+
+.wf-node {
+  position: absolute;
+  top: 0;
+  left: 0;
+  background: #ffffff;
+  border: 2px solid #e2e8f0;
+  border-radius: 12px;
+  box-shadow: 0 6px 20px rgba(15, 23, 42, 0.08);
+  cursor: grab;
+  user-select: none;
+  transition: box-shadow 120ms ease, border-color 120ms ease, transform 0ms;
+  will-change: transform;
+  pointer-events: auto;
+
+  &:active {
+    cursor: grabbing;
+  }
+
+  &.selected {
+    border-color: #2B55FF;
+    box-shadow: 0 8px 28px rgba(43, 85, 255, 0.18);
+  }
+
+  &.severity-error {
+    border-color: #ef4444;
+  }
+
+  &.severity-warning:not(.selected) {
+    border-color: #f59e0b;
+  }
+
+  &.kind-start {
+    border-color: #10b981;
+    background: linear-gradient(135deg, #ecfdf5 0%, #ffffff 100%);
+  }
+
+  &.kind-end {
+    border-color: #94a3b8;
+    background: linear-gradient(135deg, #f1f5f9 0%, #ffffff 100%);
+  }
+
+  &[data-accent='message'] .icon  { color: #2B55FF; }
+  &[data-accent='choice']  .icon  { color: #8b5cf6; }
+  &[data-accent='input']   .icon  { color: #0ea5e9; }
+  &[data-accent='condition'] .icon { color: #f59e0b; }
+  &[data-accent='action']  .icon  { color: #ef4444; }
+  &[data-accent='start']   .icon  { color: #10b981; }
+  &[data-accent='end']     .icon  { color: #64748b; }
+}
+
+.wf-node-header {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 12px 14px;
+
+  .icon {
+    font-size: 22px;
+  }
+
+  .text {
+    flex: 1;
+    min-width: 0;
+  }
+
+  .title {
+    font-weight: 600;
+    font-size: 13px;
+    color: #0f172a;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+
+  .subtitle {
+    font-size: 11px;
+    color: #64748b;
+    margin-top: 2px;
+  }
+
+  .badge {
+    font-size: 18px;
+    color: #ef4444;
+  }
+
+  .severity-warning .badge {
+    color: #f59e0b;
+  }
+}
+
+.wf-node-body {
+  border-top: 1px solid #f1f5f9;
+  padding: 6px 0;
+
+  .option-row {
+    position: relative;
+    padding: 6px 14px;
+    font-size: 12px;
+    color: #334155;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+
+    .option-text {
+      max-width: 70%;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+    }
+
+    .port {
+      position: absolute;
+      right: -8px;
+      top: 50%;
+      transform: translateY(-50%);
+    }
+  }
+}
+
+.port-anchor {
+  position: absolute;
+
+  &.port-anchor-in {
+    left: -8px;
+    top: 30px;
+  }
+
+  &.port-anchor-out {
+    right: -8px;
+    top: 30px;
+  }
+}

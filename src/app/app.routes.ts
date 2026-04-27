@@ -59,6 +59,12 @@ export const routes: Routes = [
       { path: 'workflows/executions', component: WorkflowExecutionsComponent },
       { path: 'workflows/analytics', component: WorkflowAnalyticsComponent },
       { path: 'workflows/:id/edit', component: WorkflowCreateComponent },
+      {
+        path: 'workflows/:id/visual',
+        loadComponent: () =>
+          import('./workflows/workflow-visual-builder/workflow-visual-builder.component')
+            .then(m => m.WorkflowVisualBuilderComponent)
+      },
       { path: 'workflows/:id', component: WorkflowDetailsComponent },
       { path: 'messages', component: MessagesComponent },
       { path: 'communications', component: CommunicationsComponent },
